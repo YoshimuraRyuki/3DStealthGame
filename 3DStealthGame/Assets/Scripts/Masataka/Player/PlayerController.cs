@@ -8,7 +8,7 @@ public class PlayerController : MonoBehaviour
 
 	void Update()
 	{
-		// ① 移動処理（左Shiftキーでしゃがみ歩き）
+		//  移動処理（現在、左Shiftキーでしゃがみ歩き）
 		bool isCrouching = Input.GetKey(KeyCode.LeftShift);
 		float currentSpeed = isCrouching ? crouchSpeed : walkSpeed;
 
@@ -23,7 +23,6 @@ public class PlayerController : MonoBehaviour
 			transform.forward = moveDir;
 		}
 
-		// ② 攻撃処理（左クリック）
 		if (Input.GetMouseButtonDown(0))
 		{
 			Attack();
@@ -32,7 +31,6 @@ public class PlayerController : MonoBehaviour
 
 	void Attack()
 	{
-		// プレイヤーの正面（視界の方向）に攻撃判定などを出す
-		Debug.Log("正面に攻撃！方向: " + transform.forward);
+		//あとで
 	}
 }
