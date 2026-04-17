@@ -341,15 +341,36 @@ public class MapGenerate : MonoBehaviour
             {
                 //変更個所---------------------------------------------------------
                 //map[x,y]のパラメタ：0:壁、1:部屋、2:通路、10:プレイヤーが居る部屋
-                if (map[fromX, fromY] == 0)
-                {
-                    map[fromX, fromY] = 2;
-                }
-                else
-                {
-                    map[fromX, fromY] = 1;
-                }
+                //if (map[fromX, fromY] == 0)
+                //{
+                //    map[fromX, fromY] = 2;
+                //}
+                //else
+                //{
+                //    map[fromX, fromY] = 1;
+                //}
                 //変更個所---------------------------------------------------------
+
+                // 太い通路
+                int width = 1;
+
+                for (int dx = -width; dx <= width; dx++)
+                {
+                    for (int dy = -width; dy <= width; dy++)
+                    {
+                        int nx = fromX + dx;
+                        int ny = fromY + dy;
+
+                        if (nx >= 0 && nx < map.GetLength(0) &&
+                            ny >= 0 && ny < map.GetLength(1))
+                        {
+                            if (map[nx, ny] == 0)
+                            {
+                                map[nx, ny] = 2;
+                            }
+                        }
+                    }
+                }
 
                 if (fromX != toX && fromY != toY && UnityEngine.Random.Range(0, 2) == 0 || fromY == toY)
                 {
