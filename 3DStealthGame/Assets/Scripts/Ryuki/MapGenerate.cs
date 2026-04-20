@@ -8,7 +8,7 @@ public class MapGenerate : MonoBehaviour
 {
     [Range(4, 100)]
     public int width;
-    [Range(4, 100)]
+    [Range(4, 300)]
     public int height;
     [SerializeField]
     RoomSettings roomSettings;
