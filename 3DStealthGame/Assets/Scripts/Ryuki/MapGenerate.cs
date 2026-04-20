@@ -264,10 +264,10 @@ public class MapGenerate : MonoBehaviour
         // ƒGƒŠƒA“à‚É•”‰®‚ð¶¬‚µ‚Ü‚·
         Room GenerateRoom()
         {
-            var left = UnityEngine.Random.Range(1, Math.Min(1 + roomSettings.maxWallThicknessInArea, width - roomSettings.minWidth));
-            var right = UnityEngine.Random.Range(Math.Max(width - roomSettings.maxWallThicknessInArea, left + roomSettings.minWidth), width - 1);
-            var bottom = UnityEngine.Random.Range(1, Math.Min(1 + roomSettings.maxWallThicknessInArea, height - roomSettings.minHeight));
-            var top = UnityEngine.Random.Range(Math.Max(height - roomSettings.maxWallThicknessInArea, bottom + roomSettings.minHeight), height - 1);
+            var left = UnityEngine.Random.Range(2, Math.Min(1 + roomSettings.maxWallThicknessInArea, width - roomSettings.minWidth));
+            var right = UnityEngine.Random.Range(Math.Max(width - roomSettings.maxWallThicknessInArea, left + roomSettings.minWidth), width - 2);
+            var bottom = UnityEngine.Random.Range(2, Math.Min(1 + roomSettings.maxWallThicknessInArea, height - roomSettings.minHeight));
+            var top = UnityEngine.Random.Range(Math.Max(height - roomSettings.maxWallThicknessInArea, bottom + roomSettings.minHeight), height - 2);
             return new Room(x + left, y + bottom, right - left, top - bottom);
         }
 
@@ -361,8 +361,8 @@ public class MapGenerate : MonoBehaviour
                         int nx = fromX + dx;
                         int ny = fromY + dy;
 
-                        if (nx >= 0 && nx < map.GetLength(0) &&
-                            ny >= 0 && ny < map.GetLength(1))
+                        if (nx >= 0 && nx < map.GetLength(0) -1 &&
+                            ny >= 0 && ny < map.GetLength(1) -1)
                         {
                             if (map[nx, ny] == 0)
                             {

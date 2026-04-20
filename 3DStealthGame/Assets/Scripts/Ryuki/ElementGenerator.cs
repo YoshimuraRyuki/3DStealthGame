@@ -11,7 +11,15 @@ public class ElementGenerator : MonoBehaviour
     //リソース格納用
     Material material;                                              //壁のマテリアル
     GameObject objGoal;                                             //ゴール
+    GameObject[] objEnemyList = new GameObject[1];                  //敵リスト
+    public GameObject[] objItemList = new GameObject[1];            //アイテムリスト
     GameObject[] objMapTipList = new GameObject[4];                 //マップチップリスト
+
+    // 調整用パラメータ
+    [SerializeField] int LimitEnemyInitMin;                         //初期生成の敵の下限数
+    [SerializeField] int LimitEnemyInitMax;                         //初期生成の敵の上限数
+    [SerializeField] int LimitItemInitMin;                          //初期生成のアイテムの下限数
+    [SerializeField] int LimitItemInitMax;                          //初期生成のアイテムの上限数
 
     //2Dマップ生成スクリプト用
     MapGenerate mapGenerate;
@@ -19,6 +27,7 @@ public class ElementGenerator : MonoBehaviour
 
     //パス読み込み用
     GameObject objMap2D;                                            //Map2D
+    GameObject objPlayer;                                           //プレイヤー
 
     //生成したマップチップ
     GameObject[,] objMapExist;                                      //フィールド用
@@ -36,6 +45,32 @@ public class ElementGenerator : MonoBehaviour
         //二次元マップ生成
         GenerateMap2D(map);
     }
+
+    void Start()
+    {
+        //プレイヤーを部屋に配置(予め生成しておく)
+        objPlayer = GameObject.Find("Player");
+        GenerateObj(map, objPlayer);
+
+        //ゴールを部屋に配置
+        GenerateObj(map, objGoal);
+
+        //敵を部屋に配置(初期出現数はランダム)
+        int enemyNum = UnityEngine.Random.Range(LimitEnemyInitMin, LimitEnemyInitMax + 1);
+        for (int i = 0; i < enemyNum; i++)
+        {
+            int enemyIdx = UnityEngine.Random.Range(0, objEnemyList.Length);
+            GenerateObj(map, objEnemyList[enemyIdx]);
+        }
+
+        //アイテムを部屋に配置(初期出現数はランダム)
+        int itemNum = UnityEngine.Random.Range(LimitItemInitMin, LimitItemInitMax + 1);
+        for (int i = 0; i < itemNum; i++)
+        {
+            int itemIdx = UnityEngine.Random.Range(0, objItemList.Length);
+            GenerateObj(map, objItemList[itemIdx]);
+        }
+    }
     #endregion
 
     /// <summary>
@@ -48,6 +83,12 @@ public class ElementGenerator : MonoBehaviour
 
         //ゴール
         objGoal = (GameObject)Resources.Load("Prefabs/Ryuki/Goal");
+        
+        //敵リスト
+        objEnemyList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Enemy");
+
+        //アイテムリスト
+        objItemList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Item");
 
         //2Dのマップチップ読み込み
         objMapTipList[0] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_0");
@@ -107,9 +148,9 @@ public class ElementGenerator : MonoBehaviour
         objMapExist = new GameObject[map.GetLength(0), map.GetLength(1)];
 
         //map[x,y]のパラメタ：0:壁、1:部屋、2:通路、10:プレイヤーが居る部屋
-        for (int i = 0; i < 70; i++)
+        for (int i = 0; i < 60; i++)
         {
-            for (int j = 0; j < 70; j++)
+            for (int j = 0; j < 60; j++)
             {
                 int index = 0;
 
@@ -148,6 +189,35 @@ public class ElementGenerator : MonoBehaviour
                     }
                 }
 
+            }
+        }
+    }
+
+    /// <summary>
+    /// オブジェクト生成 (プレイヤー以外)
+    /// </summary>
+    /// <param name="map"></param>
+    /// <param name="obj"></param>
+    void GenerateObj(int[,] map, GameObject obj)
+    {
+        while (true)
+        {
+            int mapX = Random.Range(0, map.GetLength(0) - 1);
+            int mapY = Random.Range(0, map.GetLength(1) - 1);
+
+            if (map[mapX, mapY] == 1)
+            {
+                //プレイヤーは生成済みのため移動だけ
+                if (obj.CompareTag("Player") == true)
+                {
+                    obj.transform.position = new Vector3(mapX, 0, mapY);
+                }
+                //その他は生成と移動
+                else
+                {
+                    GameObject objInstant = Instantiate(obj, new Vector3(mapX, 0, mapY), Quaternion.Euler(0f, 0f, 0f));
+                }
+                break;
             }
         }
     }
