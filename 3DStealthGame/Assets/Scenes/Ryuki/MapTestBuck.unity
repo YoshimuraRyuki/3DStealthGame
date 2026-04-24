@@ -222,7 +222,7 @@ Transform:
   m_GameObject: {fileID: 109308001}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -4.1827755, y: 36.106747, z: 10.827175}
+  m_LocalPosition: {x: -4.1827755, y: 36.106747, z: 11.74}
   m_LocalScale: {x: 62.56837, y: 4.38078, z: 4.46}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1044,7 +1044,7 @@ GameObject:
   - component: {fileID: 1484845754}
   - component: {fileID: 1484845753}
   - component: {fileID: 1484845752}
-  - component: {fileID: 1484845751}
+  - component: {fileID: 1484845755}
   m_Layer: 0
   m_Name: StageMake
   m_TagString: Untagged
@@ -1052,25 +1052,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1484845751
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1484845750}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 568f24d9b24b7ae44a4b3a879c28f171, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  width: 50
-  height: 100
-  roomSettings:
-    minWidth: 10
-    minHeight: 10
-    bigRoomRate: 2
-    maxWallThicknessInArea: 5
 --- !u!114 &1484845752
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1085,12 +1066,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   objItemList:
   - {fileID: 1238433582729714118, guid: 27f6a8a4c70cebb4ba5a74fdcf08c37f, type: 3}
-  LimitEnemyInitMin: 3
-  LimitEnemyInitMax: 5
-  LimitSuperEnemyInitMin: 1
-  LimitSuperEnemyInitMax: 3
-  LimitItemInitMin: 3
-  LimitItemInitMax: 5
+  objSwitchList:
+  - {fileID: 0}
+  objPatrolPointList:
+  - {fileID: 0}
   wallPrefab: {fileID: 5244095481028098852, guid: 17b37abeb0a2d494494964f94f91af8f, type: 3}
 --- !u!114 &1484845753
 MonoBehaviour:
@@ -1138,6 +1117,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1484845755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1484845750}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1db0294bd6461847a114878ce64acf4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fileName: map
 --- !u!1 &1655844093
 GameObject:
   m_ObjectHideFlags: 0

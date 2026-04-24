@@ -60,8 +60,10 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\2022.3.22f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\Ryuki\FixedMap.cs" />
     <Compile Include="Assets\Scripts\Ryuki\MapGenerate.cs" />
     <Compile Include="Assets\Scripts\Ryuki\ElementGenerator.cs" />
+    <Compile Include="Assets\Scripts\Ryuki\EnemyManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
