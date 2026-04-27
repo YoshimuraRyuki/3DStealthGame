@@ -26,8 +26,12 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 5,
           "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{c9c0ae26-aa77-11d2-b3f0-0000f87570ee}"
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
@@ -52,7 +56,7 @@
               "RelativeDocumentMoniker": "Assets\\Scripts\\Ryuki\\EnemyManager.cs",
               "ToolTip": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Ryuki\\EnemyManager.cs",
               "RelativeToolTip": "Assets\\Scripts\\Ryuki\\EnemyManager.cs",
-              "ViewState": "AQIAABIAAAAAAAAAAAAAACgAAAAnAAAA",
+              "ViewState": "AQIAABsAAAAAAAAAAAAhwC8AAAARAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-24T01:49:10.414Z",
               "EditorCaption": ""
@@ -78,7 +82,7 @@
               "RelativeDocumentMoniker": "Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
               "ToolTip": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
               "RelativeToolTip": "Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
-              "ViewState": "AQIAADwAAAAAAAAAAAAhwE0AAABVAAAA",
+              "ViewState": "AQIAAMwAAAAAAAAAAAAhwPcAAAA2AAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-16T05:07:42.565Z",
               "EditorCaption": ""
@@ -93,8 +97,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Ryuki\\MapGenerate.cs",
               "ViewState": "AQIAADIBAAAAAAAAAAAxwHIBAAAZAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-16T04:51:31.652Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-16T04:51:31.652Z"
             }
           ]
         }
