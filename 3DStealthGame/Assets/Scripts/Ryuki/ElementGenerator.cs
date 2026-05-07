@@ -4,6 +4,7 @@ using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
+using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class ElementGenerator : MonoBehaviour
 {
@@ -21,14 +22,27 @@ public class ElementGenerator : MonoBehaviour
     // マップ軽くするためのプレファブ
     [SerializeField] GameObject wallPrefab;
 
-    // 2Dマップ生成スクリプト用
+    // ミニマップ生成スクリプト用
     //MapGenerate mapGenerate;
     FixedMap mapGenerate;
     int[,] map;
+    int playerX = 0;
+    int playerY = 0;
+    // 現在プレイヤーが居るマス
+    int currentPlayerX;
+    int currentPlayerY;
+    // 前回プレイヤーが居たマス
+    int oldPlayerX;
+    int oldPlayerY;
+    [SerializeField] RectTransform miniMapMaskRect;
 
     // パス読み込み用
     GameObject objMap2D;                                            // Map2D
     GameObject objPlayer;                                           // プレイヤー
+    [SerializeField] Transform player;
+    [SerializeField] RectTransform map2DRect;
+    float cellSize = 5f;
+    [SerializeField] float miniMapScale = 1.0f;
 
     // 生成したマップチップ
     GameObject[,] objMapExist;                                      // フィールド用
@@ -127,7 +141,7 @@ public class ElementGenerator : MonoBehaviour
                 CreateWallBlock(startX, width - 1, y, objWall);
             }
         }
-        GetComponent<NavMeshSurface>().BuildNavMesh();
+        //GetComponent<NavMeshSurface>().BuildNavMesh();
     }
 
     void CreateWallBlock(int startX, int endX, int y, GameObject parent)
@@ -155,8 +169,21 @@ public class ElementGenerator : MonoBehaviour
         objMap2D = GameObject.Find("Map2D").gameObject;
         objMapExist = new GameObject[map.GetLength(0), map.GetLength(1)];
 
+        // プレイヤー位置検索
+        for (int x = 0; x < map.GetLength(0); x++)
+        {
+            for (int y = 0; y < map.GetLength(1); y++)
+            {
+                if (map[x, y] == 10)
+                {
+                    playerX = x;
+                    playerY = y;
+                }
+            }
+        }
+
         // map[x,y]のパラメタ：0:壁、1:部屋、2:通路、10:プレイヤーが居る部屋
-        for (int i = 0; i < map.GetLength(0); i++)
+        for (int i = 0; i < map.GetLength(0); i++)  
         {
             for (int j = 0; j < map.GetLength(1); j++)
             {
@@ -170,14 +197,14 @@ public class ElementGenerator : MonoBehaviour
                 objMapExist[i, j] = Instantiate(objMapTipList[index]);
 
                 // Map2D直下に階層を移動
-                //objMapExist[i, j].transform.parent = objMap2D.transform;
                 objMapExist[i, j].transform.SetParent(objMap2D.transform, false);
                 objMapExist[i, j].transform.localScale = new Vector3(1, 1, 1);
 
                 // マップの位置調整
-                Vector2 vector2 = new Vector2(2.5f + 5f * i, 2.5f + 5f * j);
+                //Vector2 vector2 = new Vector2(5f * i, 5f * j);
+                Vector2 vector2 = new Vector2(cellSize * i, cellSize * j);
                 objMapExist[i, j].GetComponent<RectTransform>().anchoredPosition = vector2;
-
+                
                 // 初期状態では非表示
                 Color color = objMapExist[i, j].GetComponent<Image>().color;
                 color.a = 0;
@@ -196,13 +223,98 @@ public class ElementGenerator : MonoBehaviour
                         objMapExist[i, j].GetComponent<Image>().color = new Color(0, 1, 0, 0.5f);
                     }
                 }
-
             }
         }
+        CenterMiniMap(playerX, playerY);
+
+        currentPlayerX = playerX;
+        currentPlayerY = playerY;
+
+        oldPlayerX = playerX;
+        oldPlayerY = playerY;
     }
 
+    void CenterMiniMap(int mapX, int mapY)
+    {
+        // Mask中央
+        float centerX = miniMapMaskRect.rect.width * 0.5f;
+        float centerY = miniMapMaskRect.rect.height * 0.5f;
+
+        // プレイヤーマスの中心座標
+        float playerCellX = (mapX * cellSize) + (cellSize * 0.5f);
+        float playerCellY = (mapY * cellSize) + (cellSize * 0.5f);
+
+        // プレイヤーマス中心をMask中央へ
+        float posX = centerX - playerCellX;
+        float posY = centerY - playerCellY;
+
+        map2DRect.anchoredPosition = new Vector2(posX, posY);
+    }
+
+    #region Update処理
+    void Update()
+    {
+        UpdateMiniMap();
+    }
+
+    void UpdateMiniMap()
+    {
+        Vector3 playerPos = player.position;
+
+        // ワールド座標 → マップ座標変換
+        currentPlayerX = Mathf.RoundToInt(playerPos.x);
+        currentPlayerY = Mathf.RoundToInt(playerPos.z);
+
+        
+        // 前回位置の色を戻す
+        if (oldPlayerX != currentPlayerX || oldPlayerY != currentPlayerY)
+        {
+            if (IsInsideMap(oldPlayerX, oldPlayerY))
+            {
+                Image oldImage = objMapExist[oldPlayerX, oldPlayerY].GetComponent<Image>();
+
+                // 元の地形色に戻す
+                if (map[oldPlayerX, oldPlayerY] == 1)
+                {
+                    oldImage.color = new Color(1, 0, 0, 0.5f);
+                }
+                else if (map[oldPlayerX, oldPlayerY] == 2)
+                {
+                    oldImage.color = new Color(0, 1, 0, 0.5f);
+                }
+            }
+
+            
+            // 現在位置をプレイヤー色に
+            if (IsInsideMap(currentPlayerX, currentPlayerY))
+            {
+                Image currentImage =
+                    objMapExist[currentPlayerX, currentPlayerY]
+                    .GetComponent<Image>();
+
+                // プレイヤー位置
+                currentImage.color = new Color(1, 1, 0, 1);
+            }
+
+            oldPlayerX = currentPlayerX;
+            oldPlayerY = currentPlayerY;
+        }
+
+        // マップを逆方向へ動かす
+        CenterMiniMap(currentPlayerX, currentPlayerY);
+    }
+
+    bool IsInsideMap(int x, int y)
+    {
+        return x >= 0 &&
+               y >= 0 &&
+               x < objMapExist.GetLength(0) &&
+               y < objMapExist.GetLength(1);
+    }
+    #endregion
+
     /// <summary>
-    /// CSV1に敵やアイテムなども調整できるように
+    /// CSVに敵やアイテムなども調整できるように
     /// </summary>
     void GenerateObjectsCSV()
     {
@@ -219,7 +331,7 @@ public class ElementGenerator : MonoBehaviour
                         map[x, y] = 1; // 床に戻す
                         break;
 
-                    case 4:
+                    case 4: // 強化敵
                         Instantiate(objSuperEnemyList[0], pos, Quaternion.identity);
                         map[x, y] = 1;
                         break;
@@ -243,7 +355,14 @@ public class ElementGenerator : MonoBehaviour
                         objPlayer.transform.position = pos;
                         map[x, y] = 10; // プレイヤー位置マップ表示
                         break;
-
+                  /*  case 8: // プレイヤー
+                        var wsClient = FindObjectOfType<WebSocketClient>();
+                        if (wsClient != null)
+                        {
+                            wsClient.SetSpawnPosition(pos); // スポーン位置をWebSocketClientに渡す
+                        }
+                        map[x, y] = 10;
+                        break;*/
                     case 9: // 敵の巡回ポイント
                         Instantiate(objPatrolPointList[0], pos, Quaternion.identity);
                         map[x, y] = 1;
