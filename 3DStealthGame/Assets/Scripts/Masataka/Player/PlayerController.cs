@@ -1,37 +1,42 @@
+// 現在は挙動確認用のテスト実装。操作はWASD
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
 {
-	[Header("Movement Settings")]
+	[Header("移動速度設定")]
 	public float walkSpeed = 5.0f;
 	public float crouchSpeed = 2.5f;
 
 	private Rigidbody _rb;
 	private Vector2 _moveInput;
 	private bool _isCrouching;
+	public bool isLocalPlayer = false;
 
 	void Awake()
 	{
 		_rb = GetComponent<Rigidbody>();
-		_rb.constraints = RigidbodyConstraints.FreezeRotation; // 全回転固定
+
+		// 物理演算による予期せぬ転倒を防ぐため、回転を固定
+		_rb.constraints = RigidbodyConstraints.FreezeRotation;
 	}
 
 	void Update()
 	{
-		// エンジンの「Action」機能を使わず、生の入力を取得
+		if (!isLocalPlayer) return;
+
 		CaptureInput();
 
-		// 攻撃などはUpdate（フレーム単位）で検知
 		if (Input.GetKeyDown(KeyCode.Space))
 		{
 			Attack();
 		}
 	}
 
+	/// <summary>
+	/// キーボード入力を取得し、移動ベクトルを正規化
+	/// </summary>
 	private void CaptureInput()
 	{
-		// GetAxisRawを使うとエンジンの補間が入らないため、より低レイヤーに近い挙動になる
 		float x = 0;
 		if (Input.GetKey(KeyCode.D)) x += 1;
 		if (Input.GetKey(KeyCode.A)) x -= 1;
@@ -40,37 +45,46 @@ public class PlayerController : MonoBehaviour
 		if (Input.GetKey(KeyCode.W)) z += 1;
 		if (Input.GetKey(KeyCode.S)) z -= 1;
 
+		// 斜め移動で速度が速くならないよう正規化
 		_moveInput = new Vector2(x, z).normalized;
+
+		// しゃがみ状態の判定
 		_isCrouching = Input.GetKey(KeyCode.LeftControl);
 	}
 
 	void FixedUpdate()
 	{
+		if (!isLocalPlayer) return;
+
 		ApplyMovement();
 	}
 
+	/// <summary>
+	/// 入力に基づいた移動速度と回転の適用
+	/// </summary>
 	private void ApplyMovement()
 	{
-		// 入力がない時は水平速度のみリセット
+		// 入力がない場合は、水平方向の速度を即座に停止
 		if (_moveInput.sqrMagnitude < 0.01f)
 		{
 			_rb.velocity = new Vector3(0, _rb.velocity.y, 0);
 			return;
 		}
 
+		// 状態に合わせて移動速度を切り替え
 		float speed = _isCrouching ? crouchSpeed : walkSpeed;
 		Vector3 moveDir = new Vector3(_moveInput.x, 0, _moveInput.y);
 
-		// 物理演算（速度ベクトル）を直接計算
+		// 重力(y軸)の影響を維持しつつ、水平方向の速度を設定
 		Vector3 targetVelocity = moveDir * speed;
 		_rb.velocity = new Vector3(targetVelocity.x, _rb.velocity.y, targetVelocity.z);
 
-		// クォータニオン（回転）も自前で計算して適用
+		// 移動方向にキャラクターの向きを合わせる
 		if (moveDir != Vector3.zero)
 		{
 			transform.rotation = Quaternion.LookRotation(moveDir);
 		}
 	}
 
-	private void Attack() => Debug.Log("Attack!");
+	private void Attack() => Debug.Log("攻撃アクション実行");
 }

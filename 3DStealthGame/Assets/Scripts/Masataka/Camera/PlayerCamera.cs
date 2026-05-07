@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿// テスト用　おそらくGlobalCamera.csを使用します。
+using UnityEngine;
 
 public class TopDownCamera : MonoBehaviour
 {

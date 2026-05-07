@@ -60,10 +60,12 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\2022.3.22f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\Masataka\Player\PlayerDate.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Player\PlayerData.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Camera\GlobalCamera.cs" />
     <Compile Include="Assets\Scripts\Masataka\WebSocketClient.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\PlayerController.cs" />
     <Compile Include="Assets\Scripts\Masataka\Camera\PlayerCamera.cs" />
+    <Compile Include="Assets\Scripts\Masataka\RoomSelectManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
