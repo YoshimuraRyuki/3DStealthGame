@@ -4,9 +4,8 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - Player0
-  - Player1
-  - Player2
+  - Point
+  - playerTest
   layers:
   - Default
   - TransparentFX
