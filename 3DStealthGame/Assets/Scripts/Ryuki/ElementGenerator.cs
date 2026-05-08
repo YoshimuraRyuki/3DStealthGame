@@ -35,6 +35,10 @@ public class ElementGenerator : MonoBehaviour
     int oldPlayerX;
     int oldPlayerY;
     [SerializeField] RectTransform miniMapMaskRect;
+    // ミニマップ位置座標
+    int mapX = 45;
+    int mapY = 145;
+
 
     // パス読み込み用
     GameObject objMap2D;                                            // Map2D
@@ -193,7 +197,7 @@ public class ElementGenerator : MonoBehaviour
                 else if (map[i, j] == 1) index = 1; // 部屋
                 else if (map[i, j] == 2) index = 2; // 通路
                 else if (map[i, j] == 10) index = 3; // スタート
-
+                else if (map[i, j] == 3) index = 4; // 敵
                 objMapExist[i, j] = Instantiate(objMapTipList[index]);
 
                 // Map2D直下に階層を移動
@@ -202,16 +206,27 @@ public class ElementGenerator : MonoBehaviour
 
                 // マップの位置調整
                 //Vector2 vector2 = new Vector2(5f * i, 5f * j);
-                Vector2 vector2 = new Vector2(cellSize * i, cellSize * j);
-                objMapExist[i, j].GetComponent<RectTransform>().anchoredPosition = vector2;
+                if(objPlayer.tag == "playerTest")
+                {
+                    // 最初に入ったプレイヤー
+                    Vector2 vector2 = new Vector2(cellSize * i - mapX, cellSize * j - mapY);
+                    objMapExist[i, j].GetComponent<RectTransform>().anchoredPosition = vector2;
+                }
+                else
+                {
+                    // 後から入ったプレイヤー
+                    Vector2 vector2 = new Vector2(cellSize * i - mapX -100, cellSize * j - mapY);
+                    objMapExist[i, j].GetComponent<RectTransform>().anchoredPosition = vector2;
+                }
+                           
                 
                 // 初期状態では非表示
-                Color color = objMapExist[i, j].GetComponent<Image>().color;
-                color.a = 0;
-                objMapExist[i, j].GetComponent<Image>().color = color;
+                //Color color = objMapExist[i, j].GetComponent<Image>().color;
+                //color.a = 0;
+                //objMapExist[i, j].GetComponent<Image>().color = color;
 
 
-                if ((map[i, j] == 1) || (map[i, j] == 2))
+                if ((map[i, j] == 1) || (map[i, j] == 2) || (map[i, j] == 10))
                 {
                     // 2Dマップ生成のデバッグ用
                     if ((map[i, j] == 1))
@@ -221,6 +236,11 @@ public class ElementGenerator : MonoBehaviour
                     else if ((map[i, j] == 2))
                     {
                         objMapExist[i, j].GetComponent<Image>().color = new Color(0, 1, 0, 0.5f);
+                    }
+                    else if ((map[i, j] == 10))
+                    {
+                        objMapExist[i, j].GetComponent<Image>().color = new Color(1, 1, 0, 1);
+                        print("動いてる");
                     }
                 }
             }
@@ -281,6 +301,10 @@ public class ElementGenerator : MonoBehaviour
                 else if (map[oldPlayerX, oldPlayerY] == 2)
                 {
                     oldImage.color = new Color(0, 1, 0, 0.5f);
+                }
+                else if (map[oldPlayerX, oldPlayerY] == 10)
+                {
+                    oldImage.color = new Color(1, 0, 0, 0.5f);
                 }
             }
 

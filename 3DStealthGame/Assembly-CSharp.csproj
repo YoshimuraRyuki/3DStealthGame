@@ -61,7 +61,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Ryuki\FixedMap.cs" />
-    <Compile Include="Assets\Scripts\Ryuki\MapGenerate.cs" />
     <Compile Include="Assets\Scripts\Ryuki\ElementGenerator.cs" />
     <Compile Include="Assets\Scripts\Ryuki\TestPlayer.cs" />
     <Compile Include="Assets\Scripts\Ryuki\EnemyManager.cs" />
