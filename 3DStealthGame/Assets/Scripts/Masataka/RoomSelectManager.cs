@@ -23,7 +23,6 @@ public class RoomSelectManager : MonoBehaviour
 
 	public string serverBaseUrl = "http://192.168.56.102:8080";
 
-	// ルームボタン4つをInspectorでアサイン
 	public Button[] roomButtons;
 	public Text[] roomLabels; // 各ボタンのテキスト
 
@@ -61,7 +60,6 @@ public class RoomSelectManager : MonoBehaviour
 
 			if (req.result == UnityWebRequest.Result.Success)
 			{
-				// UnityのJsonUtilityは配列直接パース不可なのでラップ
 				string json = "{\"rooms\":" + req.downloadHandler.text + "}";
 				RoomListWrapper wrapper = JsonUtility.FromJson<RoomListWrapper>(json);
 
@@ -73,10 +71,8 @@ public class RoomSelectManager : MonoBehaviour
 					// ラベル更新
 					roomLabels[i].text = $"{room.name}: {room.current}/{room.max}人";
 
-					// 満員なら非活性
 					roomButtons[i].interactable = !isFull;
 
-					// クロージャ対策でローカル変数にコピー
 					string roomId = room.id;
 					roomButtons[i].onClick.RemoveAllListeners();
 					roomButtons[i].onClick.AddListener(() => OnRoomButtonClicked(roomId));

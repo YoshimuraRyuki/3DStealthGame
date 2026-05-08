@@ -84,8 +84,14 @@ public class WebSocketClient : MonoBehaviour
 	public Material localPlayerMaterial;  // 自分用マテリアル
 	public Material remotePlayerMaterial; // 他プレイヤー用マテリアル
 
+
+	// 竜希のスクリプトと連携用　けすな
 	private Vector3 pendingSpawnPos = Vector3.zero;
 	private bool hasSpawnPos = false;
+
+	// 各プレイヤーの目標座標を保持する辞書を追加
+	private Dictionary<string, Vector3> targetPositions = new Dictionary<string, Vector3>();
+	private Dictionary<string, Quaternion> targetRotations = new Dictionary<string, Quaternion>();
 
 	void Awake()
 	{
@@ -289,11 +295,16 @@ public class WebSocketClient : MonoBehaviour
 		}
 
 		*/
-		GameObject spawnPoint = GameObject.Find("SpawnPoint");
+		int playerNum = init.player_number;
+		GameObject spawnPoint = GameObject.Find("SpawnPoint" + playerNum);
+
+		if (spawnPoint == null)
+			spawnPoint = GameObject.Find("SpawnPoint");
+
 		if (spawnPoint != null)
 		{
 			myPlayer.transform.position = spawnPoint.transform.position;
-			Debug.Log("Unity側のSpawnPointに配置しました");
+			Debug.Log($"SpawnPoint{playerNum}に配置しました");
 		}
 		else if (init.position != null)
 		{
@@ -350,33 +361,30 @@ public class WebSocketClient : MonoBehaviour
 	private void HandlePlayerMoveMessage(string json)
 	{
 		var msg = JsonUtility.FromJson<PlayerMoveMessage>(json);
+		if (msg == null || msg.position == null) return;
+		if (!playerObjects.ContainsKey(msg.id)) return;
 
-		if (msg != null && msg.position != null && playerObjects.ContainsKey(msg.id))
+		GameObject targetPlayer = playerObjects[msg.id];
+		if (targetPlayer == null)
 		{
-			GameObject targetPlayer = playerObjects[msg.id];
-			if (targetPlayer == null)
-			{
-				playerObjects.Remove(msg.id); // 死んでいるオブジェクトを辞書から掃除
-				return;
-			}
-
-			Vector3 targetPos = new Vector3(
-				msg.position.x,
-				msg.position.y,
-				msg.position.z
-			);
-
-			playerObjects[msg.id].transform.position = Vector3.Lerp(
-				playerObjects[msg.id].transform.position,
-				targetPos,
-				Time.deltaTime * 10f
-			);
-
-			if (msg.rotation != null)
-			{
-				playerObjects[msg.id].transform.rotation = Quaternion.Euler(msg.rotation.x, msg.rotation.y, 0);
-			}
+			playerObjects.Remove(msg.id);
+			return;
 		}
+
+		targetPositions[msg.id] = new Vector3(msg.position.x, msg.position.y, msg.position.z);
+		if (msg.rotation != null)
+			targetRotations[msg.id] = Quaternion.Euler(msg.rotation.x, msg.rotation.y, 0);
+		/*Vector3 targetPos = new Vector3(
+			msg.position.x,
+			msg.position.y,
+			msg.position.z
+		);
+
+		playerObjects[msg.id].transform.position = Vector3.Lerp(
+			playerObjects[msg.id].transform.position,
+			targetPos,
+			Time.deltaTime * 10f*/
+
 	}
 
 	// プレイヤーが退出した際の削除処理
@@ -410,11 +418,9 @@ public class WebSocketClient : MonoBehaviour
 			Destroy(remoteListener);
 		}
 
-		// 1. 操作フラグをオフにする
 		var controller = newPlayer.GetComponent<PlayerController>();
 		if (controller != null) controller.isLocalPlayer = false;
 
-    // 2. 物理演算が同期の邪魔をしないように「キネマティック」にする
     var rb = newPlayer.GetComponent<Rigidbody>();
 		if (rb != null)
 		{
@@ -427,6 +433,8 @@ public class WebSocketClient : MonoBehaviour
 	}
 
 
+
+	//竜希のスクリプトと連携用。消さないように注意。
 	/*
 	// ElementGeneratorから呼ばれる
 	public void SetSpawnPosition(Vector3 pos)
@@ -449,9 +457,28 @@ public class WebSocketClient : MonoBehaviour
 
 	async void Update()
 	{
+		// 追従処理　後で改善
+		foreach (var id in targetPositions.Keys)
+		{
+			if (!playerObjects.ContainsKey(id)) continue;
+			var obj = playerObjects[id];
+			if (obj == null) continue;
+
+			obj.transform.position = Vector3.Lerp(
+				obj.transform.position,
+				targetPositions[id],
+				Time.deltaTime * 15f 
+			);
+
+			if (targetRotations.ContainsKey(id))
+				obj.transform.rotation = Quaternion.Lerp(
+					obj.transform.rotation,
+					targetRotations[id],
+					Time.deltaTime * 15f
+				);
+		}
 		if (websocket != null && websocket.State == WebSocketState.Open)
 		{
-			// 受信処理は絶対に毎フレーム必要（削るとカクつく）
 #if !UNITY_WEBGL || UNITY_EDITOR
 			websocket.DispatchMessageQueue();
 #endif
