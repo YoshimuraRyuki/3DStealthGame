@@ -33,6 +33,8 @@ public class RoomSelectManager : MonoBehaviour
 	private WebSocketClient wsClient;
 	private string selectedRoomId;
 
+	public RoomMemberPanel roomMemberPanel;
+
 	void Start()
 	{
 		wsClient = FindObjectOfType<WebSocketClient>();
@@ -49,6 +51,7 @@ public class RoomSelectManager : MonoBehaviour
 
 	private void FetchRoomList()
 	{
+		if (!gameObject.activeInHierarchy) return;
 		StartCoroutine(FetchRoomListCoroutine());
 	}
 
@@ -92,6 +95,17 @@ public class RoomSelectManager : MonoBehaviour
 
 		// WebSocketClientに選択したルームIDを渡して接続
 		wsClient.ConnectToRoom(roomId);
+
+		// ★ 自分をパネルに追加
+		if (roomMemberPanel != null)
+		{
+			roomMemberPanel.ClearAll(); // 前のルームの残骸をリセット
+			string myName = wsClient.GetPlayerName();
+			roomMemberPanel.AddOrUpdateMember("self", myName, false);
+		}
+		/*string myName = FindObjectOfType<WebSocketClient>().GetPlayerName();
+		if (roomMemberPanel != null)
+			roomMemberPanel.AddOrUpdateMember("self", myName, false);*/
 
 		// パネル切り替え
 		roomSelectPanel.SetActive(false);

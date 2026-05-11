@@ -62,12 +62,15 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Masataka\Player\PlayerData.cs" />
     <Compile Include="Assets\Scripts\Ryuki\FixedMap.cs" />
+    <Compile Include="Assets\Scripts\Masataka\NameTag.cs" />
     <Compile Include="Assets\Scripts\Masataka\Camera\GlobalCamera.cs" />
     <Compile Include="Assets\Scripts\Ryuki\ElementGenerator.cs" />
     <Compile Include="Assets\Scripts\Masataka\WebSocketClient.cs" />
     <Compile Include="Assets\Scripts\Ryuki\TestPlayer.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\PlayerController.cs" />
+    <Compile Include="Assets\Scripts\Masataka\NameInputManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Camera\PlayerCamera.cs" />
+    <Compile Include="Assets\Scripts\Masataka\RoomMemberPanel.cs" />
     <Compile Include="Assets\Scripts\Masataka\RoomSelectManager.cs" />
     <Compile Include="Assets\Scripts\Ryuki\EnemyManager.cs" />
   </ItemGroup>
@@ -1020,12 +1023,12 @@
       <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.State.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.VSCode.Editor">
-      <HintPath>Library\ScriptAssemblies\Unity.VSCode.Editor.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Unity.AI.Navigation.Editor.ConversionSystem">
       <HintPath>Library\ScriptAssemblies\Unity.AI.Navigation.Editor.ConversionSystem.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.VSCode.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.VSCode.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.2D.Tilemap.Editor">

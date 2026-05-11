@@ -17,3 +17,10 @@ public class PositionData
 	public float y;
 	public float z;
 }
+
+[System.Serializable]
+public class PlayerReadyMessage
+{
+	public string type;
+	public string id;
+}
