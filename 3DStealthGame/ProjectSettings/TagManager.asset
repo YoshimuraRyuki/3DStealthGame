@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Point
   - playerTest
+  - Enemy
   layers:
   - Default
   - TransparentFX

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.AI.Navigation;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
@@ -26,14 +27,24 @@ public class ElementGenerator : MonoBehaviour
     //MapGenerate mapGenerate;
     FixedMap mapGenerate;
     int[,] map;
+    // プレイヤー検索用
     int playerX = 0;
     int playerY = 0;
-    // 現在プレイヤーが居るマス
+    // 敵検索用
+    int enemyX = 0;
+    int enemyY = 0;
+    // 現在プレイヤーがいるマス
     int currentPlayerX;
     int currentPlayerY;
-    // 前回プレイヤーが居たマス
+    // 前回プレイヤーがいたマス
     int oldPlayerX;
     int oldPlayerY;
+    // 敵のマス
+    List<Vector2Int> oldEnemyPositions = new List<Vector2Int>();
+    // 敵の視野UI
+    [SerializeField] GameObject enemyViewPrefab;
+    List<GameObject> viewList = new List<GameObject>();
+
     [SerializeField] RectTransform miniMapMaskRect;
     // ミニマップ位置座標
     int mapX = 45;
@@ -43,6 +54,7 @@ public class ElementGenerator : MonoBehaviour
     // パス読み込み用
     GameObject objMap2D;                                            // Map2D
     GameObject objPlayer;                                           // プレイヤー
+    GameObject[] objEnemys;                                         // 敵
     [SerializeField] Transform player;
     [SerializeField] RectTransform map2DRect;
     float cellSize = 5f;
@@ -145,7 +157,6 @@ public class ElementGenerator : MonoBehaviour
                 CreateWallBlock(startX, width - 1, y, objWall);
             }
         }
-        //GetComponent<NavMeshSurface>().BuildNavMesh();
     }
 
     void CreateWallBlock(int startX, int endX, int y, GameObject parent)
@@ -173,15 +184,20 @@ public class ElementGenerator : MonoBehaviour
         objMap2D = GameObject.Find("Map2D").gameObject;
         objMapExist = new GameObject[map.GetLength(0), map.GetLength(1)];
 
-        // プレイヤー位置検索
+        // 位置検索
         for (int x = 0; x < map.GetLength(0); x++)
         {
             for (int y = 0; y < map.GetLength(1); y++)
             {
-                if (map[x, y] == 10)
+                if (map[x, y] == 10) // プレイヤー位置検索
                 {
                     playerX = x;
                     playerY = y;
+                }
+                if (map[x, y] == 3) // 敵位置検索
+                {
+                    enemyX = x;
+                    enemyY = y;
                 }
             }
         }
@@ -196,8 +212,8 @@ public class ElementGenerator : MonoBehaviour
                 if (map[i, j] == 0) index = 0;      // 壁
                 else if (map[i, j] == 1) index = 1; // 部屋
                 else if (map[i, j] == 2) index = 2; // 通路
-                else if (map[i, j] == 10) index = 3; // スタート
-                else if (map[i, j] == 3) index = 4; // 敵
+                else if (map[i, j] == 3) index = 3; // 敵
+                //else if (map[i, j] == 10) index = 3; // スタート
                 objMapExist[i, j] = Instantiate(objMapTipList[index]);
 
                 // Map2D直下に階層を移動
@@ -226,22 +242,22 @@ public class ElementGenerator : MonoBehaviour
                 //objMapExist[i, j].GetComponent<Image>().color = color;
 
 
-                if ((map[i, j] == 1) || (map[i, j] == 2) || (map[i, j] == 10))
+                // 2Dマップ生成のデバッグ用
+                if ((map[i, j] == 1)) // 部屋
                 {
-                    // 2Dマップ生成のデバッグ用
-                    if ((map[i, j] == 1))
-                    {
-                        objMapExist[i, j].GetComponent<Image>().color = new Color(1, 0, 0, 0.5f);
-                    }
-                    else if ((map[i, j] == 2))
-                    {
-                        objMapExist[i, j].GetComponent<Image>().color = new Color(0, 1, 0, 0.5f);
-                    }
-                    else if ((map[i, j] == 10))
-                    {
-                        objMapExist[i, j].GetComponent<Image>().color = new Color(1, 1, 0, 1);
-                        print("動いてる");
-                    }
+                    objMapExist[i, j].GetComponent<Image>().color = new Color(0, 0.8f, 1, 0.5f);　// 部屋の色
+                }
+                else if ((map[i, j] == 2)) // 通路
+                {
+                    objMapExist[i, j].GetComponent<Image>().color = new Color(0, 1, 0, 0.5f);
+                }
+                else if ((map[i, j] == 3)) // 敵
+                {
+                    objMapExist[i, j].GetComponent<Image>().color = new Color(1, 0, 0, 0.5f);
+                }
+                else if ((map[i, j] == 10)) // スタート位置
+                {
+                    objMapExist[i, j].GetComponent<Image>().color = new Color(1, 1, 0, 1);
                 }
             }
         }
@@ -252,6 +268,7 @@ public class ElementGenerator : MonoBehaviour
 
         oldPlayerX = playerX;
         oldPlayerY = playerY;
+      
     }
 
     void CenterMiniMap(int mapX, int mapY)
@@ -274,17 +291,25 @@ public class ElementGenerator : MonoBehaviour
     #region Update処理
     void Update()
     {
+        // ミニマップに反映
         UpdateMiniMap();
     }
 
+    /// <summary>
+    /// プレイヤーと敵の現在位置をミニマップに反映
+    /// </summary>
     void UpdateMiniMap()
-    {
+    {   
+        ///////////////////////
+        // プレイヤー
+        ///////////////////////
+        
         Vector3 playerPos = player.position;
-
+        
         // ワールド座標 → マップ座標変換
         currentPlayerX = Mathf.RoundToInt(playerPos.x);
         currentPlayerY = Mathf.RoundToInt(playerPos.z);
-
+       
         
         // 前回位置の色を戻す
         if (oldPlayerX != currentPlayerX || oldPlayerY != currentPlayerY)
@@ -296,15 +321,19 @@ public class ElementGenerator : MonoBehaviour
                 // 元の地形色に戻す
                 if (map[oldPlayerX, oldPlayerY] == 1)
                 {
-                    oldImage.color = new Color(1, 0, 0, 0.5f);
+                    oldImage.color = new Color(0, 0.8f, 1, 0.5f); // 部屋の色
                 }
                 else if (map[oldPlayerX, oldPlayerY] == 2)
                 {
                     oldImage.color = new Color(0, 1, 0, 0.5f);
                 }
+                else if (map[oldPlayerX, oldPlayerY] == 3)
+                {
+                    oldImage.color = new Color(0, 0.8f, 1, 0.5f);
+                }
                 else if (map[oldPlayerX, oldPlayerY] == 10)
                 {
-                    oldImage.color = new Color(1, 0, 0, 0.5f);
+                    oldImage.color = new Color(0, 0.8f, 1, 0.5f);
                 }
             }
 
@@ -312,22 +341,95 @@ public class ElementGenerator : MonoBehaviour
             // 現在位置をプレイヤー色に
             if (IsInsideMap(currentPlayerX, currentPlayerY))
             {
-                Image currentImage =
-                    objMapExist[currentPlayerX, currentPlayerY]
-                    .GetComponent<Image>();
+                print("プレイヤー色変える");
+
+                Image currentImage = objMapExist[currentPlayerX, currentPlayerY].GetComponent<Image>();
 
                 // プレイヤー位置
                 currentImage.color = new Color(1, 1, 0, 1);
             }
-
             oldPlayerX = currentPlayerX;
             oldPlayerY = currentPlayerY;
+         
         }
-
+        
         // マップを逆方向へ動かす
         CenterMiniMap(currentPlayerX, currentPlayerY);
-    }
 
+        ///////////////////////
+        // 敵
+        ///////////////////////
+        
+        // 前回の敵位置を元に戻す
+        foreach (Vector2Int pos in oldEnemyPositions)
+        {
+            if (IsInsideMap(pos.x, pos.y))
+            {
+                Image img = objMapExist[pos.x, pos.y].GetComponent<Image>();
+
+                if (map[pos.x, pos.y] == 1)
+                {
+                    img.color = new Color(0, 0.8f, 1, 0.5f);
+                }
+                else if (map[pos.x, pos.y] == 2)
+                {
+                    img.color = new Color(0, 1, 0, 0.5f);
+                }
+            }
+        }
+        // 今回の敵位置保存用
+        oldEnemyPositions.Clear();
+
+        // 全敵更新
+        foreach (GameObject enemyObj in objEnemys)
+        {
+            Vector3 enemyPos = enemyObj.transform.position;
+
+            int enemyX = Mathf.RoundToInt(enemyPos.x);
+
+            int enemyY = Mathf.RoundToInt(enemyPos.z);
+
+            if (IsInsideMap(enemyX, enemyY))
+            {
+                Image img = objMapExist[enemyX, enemyY].GetComponent<Image>();
+
+                // 敵色
+                img.color = new Color(1, 0, 0, 0.5f);
+
+                // 保存
+                oldEnemyPositions.Add(new Vector2Int(enemyX, enemyY));
+            }
+        }
+
+        for (int i = 0; i < objEnemys.Length; i++)
+        {
+            GameObject enemyObj = objEnemys[i];
+
+            Vector3 enemyPos = enemyObj.transform.position;
+
+            int enemyX = Mathf.RoundToInt(enemyPos.x);
+
+            int enemyY = Mathf.RoundToInt(enemyPos.z);
+
+            // UI位置
+            RectTransform rt = viewList[i].GetComponent<RectTransform>();
+
+            rt.anchoredPosition = new Vector2(enemyX * cellSize -mapX, enemyY * cellSize -mapY);
+
+            // 向き
+            float angle = enemyObj.transform.eulerAngles.y;
+
+            rt.rotation = Quaternion.Euler(0, 0, -angle);
+        }
+    }
+    #endregion
+
+    /// <summary>
+    /// 座標がマップ範囲内かどうか確認
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <returns></returns>
     bool IsInsideMap(int x, int y)
     {
         return x >= 0 &&
@@ -335,7 +437,7 @@ public class ElementGenerator : MonoBehaviour
                x < objMapExist.GetLength(0) &&
                y < objMapExist.GetLength(1);
     }
-    #endregion
+    
 
     /// <summary>
     /// CSVに敵やアイテムなども調整できるように
@@ -352,6 +454,9 @@ public class ElementGenerator : MonoBehaviour
                 {
                     case 3: // 敵
                         Instantiate(objEnemyList[0], pos, Quaternion.identity);
+                        GameObject view = Instantiate(enemyViewPrefab, map2DRect);
+                        viewList.Add(view);
+                        objEnemys = GameObject.FindGameObjectsWithTag("Enemy");
                         map[x, y] = 1; // 床に戻す
                         break;
 
@@ -377,7 +482,7 @@ public class ElementGenerator : MonoBehaviour
                     case 8: // プレイヤー
                         objPlayer = GameObject.Find("Player");
                         objPlayer.transform.position = pos;
-                        map[x, y] = 10; // プレイヤー位置マップ表示
+                        map[x, y] = 1; // プレイヤー位置マップ表示
                         break;
                   /*  case 8: // プレイヤー
                         var wsClient = FindObjectOfType<WebSocketClient>();
