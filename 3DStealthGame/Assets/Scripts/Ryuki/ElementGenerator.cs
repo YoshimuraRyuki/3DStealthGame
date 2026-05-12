@@ -490,7 +490,7 @@ public class ElementGenerator : MonoBehaviour
                         {
                             wsClient.SetSpawnPosition(pos); // スポーン位置をWebSocketClientに渡す
                         }
-                        map[x, y] = 10;
+                        map[x, y] = 1;
                         break;*/
                     case 9: // 敵の巡回ポイント
                         Instantiate(objPatrolPointList[0], pos, Quaternion.identity);
