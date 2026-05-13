@@ -11,4 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Masataka/TestScene.unity
     guid: 4234c57ad5d4dbc4082a5b0c8045a020
+  - enabled: 1
+    path: Assets/Scenes/Masataka/MapTest.unity
+    guid: 32bfc6e4e646a6c44bc4b16c1fed39d5
   m_configObjects: {}

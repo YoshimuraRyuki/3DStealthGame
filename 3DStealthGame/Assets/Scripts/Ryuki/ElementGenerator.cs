@@ -5,7 +5,9 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
+#if UNITY_EDITOR
 using static UnityEditor.Experimental.GraphView.GraphView;
+#endif
 
 public class ElementGenerator : MonoBehaviour
 {
@@ -248,7 +250,7 @@ public class ElementGenerator : MonoBehaviour
 
 				// マップの位置調整
 				//Vector2 vector2 = new Vector2(5f * i, 5f * j);
-				if (objPlayer.tag == "playerTest")
+				/*if (objPlayer.tag == "Player1")
 				{
 					// 最初に入ったプレイヤー
 					Vector2 vector2 = new Vector2(cellSize * i - mapX, cellSize * j - mapY);
@@ -259,7 +261,10 @@ public class ElementGenerator : MonoBehaviour
 					// 後から入ったプレイヤー
 					Vector2 vector2 = new Vector2(cellSize * i - mapX - 100, cellSize * j - mapY);
 					objMapExist[i, j].GetComponent<RectTransform>().anchoredPosition = vector2;
-				}
+				}*/
+
+				Vector2 vector2 = new Vector2(cellSize * i - mapX, cellSize * j - mapY);
+				objMapExist[i, j].GetComponent<RectTransform>().anchoredPosition = vector2;
 
 
 				// 初期状態では非表示
@@ -579,21 +584,25 @@ public class ElementGenerator : MonoBehaviour
 						map[x, y] = 1;
 						break;
 
-					case 8: // プレイヤー
+					/*case 8: // プレイヤー
 						objPlayer = GameObject.Find("Player");
 						objPlayer.transform.position = pos;
 						map[x, y] = 1; // プレイヤー位置マップ表示
+						break;*/
+					case 8: // プレイヤー1
+						var wsClient = FindObjectOfType<WebSocketClient>();
+						if (wsClient != null)
+							wsClient.SetSpawnPosition(1, pos);
+						map[x, y] = 1;
 						break;
-					/*  case 8: // プレイヤー
-						  var wsClient = FindObjectOfType<WebSocketClient>();
-						  if (wsClient != null)
-						  {
-							  wsClient.SetSpawnPosition(pos); // スポーン位置をWebSocketClientに渡す
-						  }
-						  map[x, y] = 10;
-						  break;*/
 					case 9: // 敵の巡回ポイント
 						Instantiate(objPatrolPointList[0], pos, Quaternion.identity);
+						map[x, y] = 1;
+						break;
+					case 10: // プレイヤー2
+						var wsClient2 = FindObjectOfType<WebSocketClient>();
+						if (wsClient2 != null)
+							wsClient2.SetSpawnPosition(2, pos);
 						map[x, y] = 1;
 						break;
 				}

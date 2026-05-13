@@ -66,7 +66,7 @@ public class WebSocketClient : MonoBehaviour
 {
 	public GameObject playerPrefab; // 他プレイヤーのモデル
 	public GameObject myPlayer;     // 自分自身のプレイヤーオブジェクト
-	//public GameObject readyPanel;    // 接続待機中のUIパネル
+									//public GameObject readyPanel;    // 接続待機中のUIパネル
 	public string serverUrl = "ws://192.168.56.102:8080/ws?room_id=test&name=Player1";
 
 	private WebSocket websocket;
@@ -96,7 +96,9 @@ public class WebSocketClient : MonoBehaviour
 	public string GetPlayerName() => playerName;
 	// ネームタグ・メンバーパネル連携
 	public RoomMemberPanel roomMemberPanel; // Inspectorで設定
-	//private string playerName;
+											//private string playerName;
+
+	private Dictionary<int, Vector3> spawnPositions = new Dictionary<int, Vector3>();
 
 	void Awake()
 	{
@@ -105,15 +107,15 @@ public class WebSocketClient : MonoBehaviour
 		// サーバーとの接続を維持するため、シーンをまたいでも破棄されないように設定
 		DontDestroyOnLoad(this.gameObject);
 		SceneManager.sceneLoaded += OnSceneLoaded;
-		isGameSceneLoaded = SceneManager.GetActiveScene().name == "TestScene";
+		isGameSceneLoaded = SceneManager.GetActiveScene().name == "MapTest";
 	}
 
 	void OnSceneLoaded(Scene scene, LoadSceneMode mode)
 	{
 		// ゲーム本編のシーンに切り替わったか判定
-		isGameSceneLoaded = scene.name == "TestScene";
+		isGameSceneLoaded = scene.name == "MapTest";
 
-		if (scene.name != "TestScene")
+		if (scene.name != "MapTest")
 		{
 			// ロビーに戻る際などは、一旦リモートプレイヤーの情報をリセット
 			ClearRemotePlayers();
@@ -211,11 +213,11 @@ public class WebSocketClient : MonoBehaviour
 		await websocket.SendText(json);
 
 		// 自分のパネルを準備完了に
-		if (roomMemberPanel != null)
+		/*if (roomMemberPanel != null)
 		{
 			string key = string.IsNullOrEmpty(myId) ? "self" : myId;
 			roomMemberPanel.SetReady(key, true);
-		}
+		}*/
 	}
 
 	// サーバーからデータを受信した際の窓口
@@ -268,14 +270,14 @@ public class WebSocketClient : MonoBehaviour
 		else if (json.Contains("\"type\":\"start_game\""))
 
 		{
-			if (SceneManager.GetActiveScene().name == "TestScene")
+			if (SceneManager.GetActiveScene().name == "MapTest")
 			{
 				// すでにゲームシーンにいる場合は即処理
 				ProcessPendingMessages();
 			}
 			else
 			{
-				SceneManager.LoadScene("TestScene");
+				SceneManager.LoadScene("MapTest");
 			}
 		}
 		else if (json.Contains("\"type\":\"player_ready\""))
@@ -290,7 +292,7 @@ public class WebSocketClient : MonoBehaviour
 	// 自分の初期化情報を処理
 	private void HandleInitMessage(string json)
 	{
-		if (SceneManager.GetActiveScene().name != "TestScene") return;
+		if (SceneManager.GetActiveScene().name != "MapTest") return;
 
 		InitMessage init = JsonUtility.FromJson<InitMessage>(json);
 		myId = init.id;
@@ -319,6 +321,15 @@ public class WebSocketClient : MonoBehaviour
 		DontDestroyOnLoad(myPlayer);
 		playerObjects[myId] = myPlayer;
 
+		if (spawnPositions.ContainsKey(init.player_number))
+		{
+			myPlayer.transform.position = spawnPositions[init.player_number];
+			Debug.Log($"プレイヤー{init.player_number}のSpawnPointに配置しました");
+		}
+		else if (init.position != null)
+		{
+			myPlayer.transform.position = new Vector3(init.position.x, init.position.y, init.position.z);
+		}
 		// スポーン地点の同期
 		/*
 		if (hasSpawnPos)
@@ -336,7 +347,7 @@ public class WebSocketClient : MonoBehaviour
 		}
 
 		*/
-		int playerNum = init.player_number;
+		/*int playerNum = init.player_number;
 		GameObject spawnPoint = GameObject.Find("SpawnPoint" + playerNum);
 
 		if (spawnPoint == null)
@@ -350,7 +361,7 @@ public class WebSocketClient : MonoBehaviour
 		else if (init.position != null)
 		{
 			myPlayer.transform.position = new Vector3(init.position.x, init.position.y, init.position.z);
-		}
+		*/
 
 		//playerObjects[myId] = myPlayer;
 
@@ -416,7 +427,7 @@ public class WebSocketClient : MonoBehaviour
 	// 既存のプレイヤーリストを処理するハンドラ
 	private void HandleExistingPlayersMessage(string json)
 	{
-		if (SceneManager.GetActiveScene().name != "TestScene") return;
+		if (SceneManager.GetActiveScene().name != "MapTest") return;
 		ExistingPlayersMessage msg = JsonUtility.FromJson<ExistingPlayersMessage>(json);
 		if (msg != null && msg.players != null)
 		{
@@ -437,7 +448,7 @@ public class WebSocketClient : MonoBehaviour
 	// 他のプレイヤーが新しく入ってきた時の処理
 	private void HandlePlayerJoinedMessage(string json)
 	{
-		if (SceneManager.GetActiveScene().name != "TestScene") return;
+		if (SceneManager.GetActiveScene().name != "MapTest") return;
 		var msg = JsonUtility.FromJson<PlayerJoinedMessage>(json);
 
 		// myId が未設定 or 自分自身なら無視
@@ -527,7 +538,7 @@ public class WebSocketClient : MonoBehaviour
 		var controller = newPlayer.GetComponent<PlayerController>();
 		if (controller != null) controller.isLocalPlayer = false;
 
-    var rb = newPlayer.GetComponent<Rigidbody>();
+		var rb = newPlayer.GetComponent<Rigidbody>();
 		if (rb != null)
 		{
 			rb.isKinematic = true; // サーバーからの座標上書きを優先させる
@@ -547,14 +558,15 @@ public class WebSocketClient : MonoBehaviour
 
 
 	//竜希のスクリプトと連携用。消さないように注意。
-	/*
+
 	// ElementGeneratorから呼ばれる
-	public void SetSpawnPosition(Vector3 pos)
+	public void SetSpawnPosition(int playerNum, Vector3 pos)
 	{
-		pendingSpawnPos = pos;
-		hasSpawnPos = true;
+		/*pendingSpawnPos = pos;
+		hasSpawnPos = true;*/
+		spawnPositions[playerNum] = pos;
 	}
-	*/
+
 
 
 	// シーン遷移時などにプレイヤーオブジェクトを一括削除
@@ -579,7 +591,7 @@ public class WebSocketClient : MonoBehaviour
 			obj.transform.position = Vector3.Lerp(
 				obj.transform.position,
 				targetPositions[id],
-				Time.deltaTime * 15f 
+				Time.deltaTime * 15f
 			);
 
 			if (targetRotations.ContainsKey(id))
@@ -595,14 +607,14 @@ public class WebSocketClient : MonoBehaviour
 			websocket.DispatchMessageQueue();
 #endif
 
-        // 送信処理だけ、タイマーを使って頻度を落とす
-        if (!string.IsNullOrEmpty(myId))
+			// 送信処理だけ、タイマーを使って頻度を落とす
+			if (!string.IsNullOrEmpty(myId))
 			{
 				timer += Time.deltaTime;
 				if (timer >= sendInterval)
 				{
 					SendPosition();
-                timer = 0f;
+					timer = 0f;
 				}
 			}
 		}
