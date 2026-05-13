@@ -193,8 +193,23 @@ public class WebSocketClient : MonoBehaviour
 			websocket = null;
 		}
 
+		// 自プレイヤーを削除
+		if (myPlayer != null)
+		{
+			Destroy(myPlayer);
+			myPlayer = null;
+		}
+
+		// 他プレイヤーを全削除
+		ClearRemotePlayers();
+
+		// IDとスポーン情報もリセット
+		myId = null;
+		spawnPositions.Clear();
 		//if (readyPanel != null) readyPanel.SetActive(false);
 		Debug.Log("接続を切断しました");
+
+		pendingMessages.Clear();
 	}
 
 	private void OnWebSocketOpened()
@@ -293,7 +308,7 @@ public class WebSocketClient : MonoBehaviour
 	private void HandleInitMessage(string json)
 	{
 		if (SceneManager.GetActiveScene().name != "MapTest") return;
-
+		if (myPlayer != null) return;
 		InitMessage init = JsonUtility.FromJson<InitMessage>(json);
 		myId = init.id;
 
