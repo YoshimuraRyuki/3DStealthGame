@@ -53,33 +53,10 @@ public class EnemyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 一番近いポイントの次に近いポイントを取得
+    /// ランダムで次の近くのポイントを探す
     /// </summary>
+    /// <param name="currentPoint"></param>
     /// <returns></returns>
-    GameObject NextPoint(GameObject exclude)
-    {
-        GameObject[] objs = GameObject.FindGameObjectsWithTag("Point");
-
-        GameObject nearest = null;
-        float minDistance = Mathf.Infinity;
-
-        Vector3 currentPos = exclude.transform.position;
-
-        foreach (GameObject obj in objs)
-        {
-            if (obj == exclude) continue;
-
-            float distance = Vector3.SqrMagnitude(obj.transform.position - currentPos);
-
-            if (distance < minDistance)
-            {
-                minDistance = distance;
-                nearest = obj;
-            }
-        }
-        return nearest;
-    }
-
     GameObject GetNearPoint(GameObject currentPoint)
     {
         GameObject[] objs = GameObject.FindGameObjectsWithTag("Point");
@@ -167,12 +144,6 @@ public class EnemyManager : MonoBehaviour
 
         // 一番近いポイント（＝スタート地点）
         startPoint = StartPoint();
-
-        // startPoint以外で一番近いポイントを探す
-        nextPoint = NextPoint(startPoint);
-
-        // 最初は nextPoint に向かう
-        //targetPoint = nextPoint;
 
         // 最初の目的地をランダムに決定
         targetPoint = GetNearPoint(startPoint);
