@@ -1286,6 +1286,7 @@ MonoBehaviour:
   objPatrolPointList:
   - {fileID: 0}
   wallPrefab: {fileID: 5244095481028098852, guid: 17b37abeb0a2d494494964f94f91af8f, type: 3}
+  enemyViewPrefab: {fileID: 5600239884965558956, guid: cb5b4d906db438946befd9dabf1bee9d, type: 3}
   miniMapMaskRect: {fileID: 1070339475}
   player: {fileID: 570700725}
   map2DRect: {fileID: 1655844094}

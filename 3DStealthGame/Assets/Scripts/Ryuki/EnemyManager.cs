@@ -12,9 +12,16 @@ public class EnemyManager : MonoBehaviour
     GameObject startPoint;   // 最初のポイント
     GameObject nextPoint;    // 近くのポイント
     GameObject targetPoint;  // 今向かっているポイント
-
-    float stopMoveCooldown = 5f;
+    [Header("巡回ポイント")]
+    public GameObject[] movePoints;
+    
+    [Header("移動速度")]
+    public float speed = 3f;
+    [Header("停止時間")]
+    public float stopMoveCooldown = 5f;
     float currentTime = 0f;
+
+    bool isStopMove = false; // 敵が止まっているときに動きを完全に止める
     #endregion
 
     #region 敵移動遷移
@@ -46,31 +53,37 @@ public class EnemyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 一番近いポイントの次に近いポイントを取得
+    /// ランダムで次の近くのポイントを探す
     /// </summary>
+    /// <param name="currentPoint"></param>
     /// <returns></returns>
-    GameObject NextPoint(GameObject exclude)
+    GameObject GetNearPoint(GameObject currentPoint)
     {
         GameObject[] objs = GameObject.FindGameObjectsWithTag("Point");
 
-        GameObject nearest = null;
-        float minDistance = Mathf.Infinity;
-
-        Vector3 currentPos = exclude.transform.position;
+        List<GameObject> nearPoints = new List<GameObject>();
 
         foreach (GameObject obj in objs)
         {
-            if (obj == exclude) continue;
+            if (obj == currentPoint) continue;
 
-            float distance = Vector3.SqrMagnitude(obj.transform.position - currentPos);
+            float distance = Vector3.Distance(currentPoint.transform.position, obj.transform.position);
 
-            if (distance < minDistance)
+            // 一定距離以内だけ候補にする
+            if (distance <= 10f)
             {
-                minDistance = distance;
-                nearest = obj;
+                nearPoints.Add(obj);
             }
         }
-        return nearest;
+
+        // 候補が無い場合
+        if (nearPoints.Count == 0)
+        {
+            return currentPoint;
+        }
+
+        // 候補からランダム選択
+        return nearPoints[Random.Range(0, nearPoints.Count)];
     }
 
     /// <summary>
@@ -78,30 +91,37 @@ public class EnemyManager : MonoBehaviour
     /// </summary>
     void MoveEnemy()
     {
-        MoveToPoint(targetPoint); // 実際に移動させる処理
+        if (targetPoint == null) return;
+
+        if (!isStopMove)
+        {
+            MoveToPoint(targetPoint); // 実際に移動させる処理
+        }
 
         // 近づいたら切り替え
-        if (Vector3.Distance(transform.position, targetPoint.transform.position) < 0.5f)
+        if (Vector3.Distance(transform.position, targetPoint.transform.position) < 0.1f)
         {
             currentTime += Time.deltaTime; // 目的の位置に着いたら少し止める
-            if (targetPoint == startPoint && currentTime >= stopMoveCooldown)
+            isStopMove = true;
+            
+            if (currentTime >= stopMoveCooldown)
             {
-                targetPoint = nextPoint;
+                GameObject oldPoint = targetPoint;
+
+                // 次のポイントをランダム取得
+                targetPoint = GetNearPoint(oldPoint);
+
                 currentTime = 0;
+                isStopMove = false;
             }
-            else if(targetPoint == nextPoint && currentTime >= stopMoveCooldown)
-            {
-                targetPoint = startPoint;
-                currentTime = 0;
-            }
+
         }
     }
 
     void MoveToPoint(GameObject point)
     {
-        float speed = 3f;
-
         Vector3 direction = (point.transform.position - transform.position).normalized;
+
         transform.position += direction * speed * Time.deltaTime;
     }
 
@@ -125,11 +145,8 @@ public class EnemyManager : MonoBehaviour
         // 一番近いポイント（＝スタート地点）
         startPoint = StartPoint();
 
-        // startPoint以外で一番近いポイントを探す
-        nextPoint = NextPoint(startPoint);
-
-        // 最初は nextPoint に向かう
-        targetPoint = nextPoint;
+        // 最初の目的地をランダムに決定
+        targetPoint = GetNearPoint(startPoint);
     }
 
     // Update is called once per frame
