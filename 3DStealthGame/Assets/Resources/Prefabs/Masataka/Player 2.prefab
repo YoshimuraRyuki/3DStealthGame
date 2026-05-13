@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 4762543413040634051}
   m_Layer: 0
   m_Name: Player 2
-  m_TagString: Player
+  m_TagString: playerTest
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -122,6 +122,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   walkSpeed: 5
   crouchSpeed: 2.5
+  isLocalPlayer: 0
 --- !u!54 &4762543413040634051
 Rigidbody:
   m_ObjectHideFlags: 0

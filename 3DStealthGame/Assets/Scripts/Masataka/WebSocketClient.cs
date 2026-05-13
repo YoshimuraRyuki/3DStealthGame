@@ -66,7 +66,7 @@ public class WebSocketClient : MonoBehaviour
 {
 	public GameObject playerPrefab; // 他プレイヤーのモデル
 	public GameObject myPlayer;     // 自分自身のプレイヤーオブジェクト
-	//public GameObject readyPanel;    // 接続待機中のUIパネル
+									//public GameObject readyPanel;    // 接続待機中のUIパネル
 	public string serverUrl = "ws://192.168.56.102:8080/ws?room_id=test&name=Player1";
 
 	private WebSocket websocket;
@@ -93,6 +93,13 @@ public class WebSocketClient : MonoBehaviour
 	private Dictionary<string, Vector3> targetPositions = new Dictionary<string, Vector3>();
 	private Dictionary<string, Quaternion> targetRotations = new Dictionary<string, Quaternion>();
 
+	public string GetPlayerName() => playerName;
+	// ネームタグ・メンバーパネル連携
+	public RoomMemberPanel roomMemberPanel; // Inspectorで設定
+											//private string playerName;
+
+	private Dictionary<int, Vector3> spawnPositions = new Dictionary<int, Vector3>();
+
 	void Awake()
 	{
 		Application.runInBackground = true;
@@ -100,15 +107,15 @@ public class WebSocketClient : MonoBehaviour
 		// サーバーとの接続を維持するため、シーンをまたいでも破棄されないように設定
 		DontDestroyOnLoad(this.gameObject);
 		SceneManager.sceneLoaded += OnSceneLoaded;
-		isGameSceneLoaded = SceneManager.GetActiveScene().name == "TestScene";
+		isGameSceneLoaded = SceneManager.GetActiveScene().name == "MapTest";
 	}
 
 	void OnSceneLoaded(Scene scene, LoadSceneMode mode)
 	{
 		// ゲーム本編のシーンに切り替わったか判定
-		isGameSceneLoaded = scene.name == "TestScene";
+		isGameSceneLoaded = scene.name == "MapTest";
 
-		if (scene.name != "TestScene")
+		if (scene.name != "MapTest")
 		{
 			// ロビーに戻る際などは、一旦リモートプレイヤーの情報をリセット
 			ClearRemotePlayers();
@@ -123,7 +130,7 @@ public class WebSocketClient : MonoBehaviour
 
 	async void Start()
 	{
-		
+		Application.runInBackground = true;
 		// 重複を避けるため簡易的なランダム名を設定
 		playerName = "Player_" + Random.Range(1000, 9999);
 
@@ -168,6 +175,10 @@ public class WebSocketClient : MonoBehaviour
 		await websocket.Connect();
 	}
 
+	public void SetPlayerName(string name)
+	{
+		playerName = name;
+	}
 	// UIの切断ボタンから呼び出し
 	public async void OnQuitButtonClicked()
 	{
@@ -195,17 +206,18 @@ public class WebSocketClient : MonoBehaviour
 	// 準備完了メッセージを送信（ゲーム開始の合図）
 	public async void OnReadyButtonClicked()
 	{
-		Vector3 spawnPos = GameObject.Find("SpawnPoint").transform.position;
-		if (websocket != null && websocket.State == WebSocketState.Open)
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
+
+		// ★ SpawnPointはゲームシーンにしかないので仮座標で送る
+		string json = "{\"type\":\"ready\",\"position\":{\"x\":0,\"y\":1,\"z\":0}}";
+		await websocket.SendText(json);
+
+		// 自分のパネルを準備完了に
+		/*if (roomMemberPanel != null)
 		{
-			string json = $"{{\"type\":\"ready\",\"position\":{{\"x\":{spawnPos.x},\"y\":{spawnPos.y},\"z\":{spawnPos.z}}}}}";
-			await websocket.SendText(json);
-			Debug.Log("準備完了をサーバーに送信");
-		}
-		else
-		{
-			Debug.LogWarning("WebSocketが接続されていないため、準備完了を送信できません");
-		}
+			string key = string.IsNullOrEmpty(myId) ? "self" : myId;
+			roomMemberPanel.SetReady(key, true);
+		}*/
 	}
 
 	// サーバーからデータを受信した際の窓口
@@ -214,8 +226,22 @@ public class WebSocketClient : MonoBehaviour
 		string json = Encoding.UTF8.GetString(bytes);
 		//Debug.Log("受信: " + json);
 
-		if (!isGameSceneLoaded && !json.Contains("\"type\":\"start_game\""))
+		if (!isGameSceneLoaded)
 		{
+			if (json.Contains("\"type\":\"start_game\""))
+			{
+				ProcessMessage(json);
+				return;
+			}
+
+			// パネル更新だけ先にやる
+			if (json.Contains("\"type\":\"init\"")) HandleInitForLobby(json);
+			else if (json.Contains("\"type\":\"player_joined\"")) HandlePlayerJoinedForLobby(json);
+			else if (json.Contains("\"type\":\"player_left\"")) HandlePlayerLeftForLobby(json);
+			else if (json.Contains("\"type\":\"player_ready\"")) HandlePlayerReadyForLobby(json);
+			else if (json.Contains("\"type\":\"existing_players\"")) HandleExistingPlayersForLobby(json);
+
+			// ゲームシーン用の処理は保留に積む
 			pendingMessages.Add(json);
 			return;
 		}
@@ -242,35 +268,52 @@ public class WebSocketClient : MonoBehaviour
 		else if (json.Contains("\"type\":\"player_move\"")) HandlePlayerMoveMessage(json);
 		else if (json.Contains("\"type\":\"player_left\"")) HandlePlayerLeftMessage(json);
 		else if (json.Contains("\"type\":\"start_game\""))
+
 		{
-			if (SceneManager.GetActiveScene().name == "TestScene")
+			if (SceneManager.GetActiveScene().name == "MapTest")
 			{
 				// すでにゲームシーンにいる場合は即処理
 				ProcessPendingMessages();
 			}
 			else
 			{
-				SceneManager.LoadScene("TestScene");
+				SceneManager.LoadScene("MapTest");
 			}
+		}
+		else if (json.Contains("\"type\":\"player_ready\""))
+		{
+			// 他プレイヤーの準備完了通知を受け取ってパネルを更新
+			var msg = JsonUtility.FromJson<PlayerReadyMessage>(json);
+			if (roomMemberPanel != null)
+				roomMemberPanel.SetReady(msg.id, true);
 		}
 	}
 
 	// 自分の初期化情報を処理
 	private void HandleInitMessage(string json)
 	{
-		if (SceneManager.GetActiveScene().name != "TestScene") return;
+		if (SceneManager.GetActiveScene().name != "MapTest") return;
 
 		InitMessage init = JsonUtility.FromJson<InitMessage>(json);
 		myId = init.id;
-		
 
+		if (roomMemberPanel != null)
+		{
+			roomMemberPanel.RemoveMember("self");
+			roomMemberPanel.AddOrUpdateMember(myId, playerName, false);
+		}
 		if (playerPrefab == null) return;
 
 		// 自分のプレイヤーを生成
 		myPlayer = Instantiate(playerPrefab);
+		AttachNameTag(myPlayer, playerName, false); // 自分は非表示
 		myPlayer.tag = "Player" + init.player_number;
 		if (localPlayerMaterial != null)
 			myPlayer.GetComponentInChildren<Renderer>().material = localPlayerMaterial;
+
+		var elementGenerator = FindObjectOfType<ElementGenerator>();
+		if (elementGenerator != null)
+			elementGenerator.SetPlayerTransform(myPlayer.transform);
 
 		var controller = myPlayer.GetComponent<PlayerController>();
 		if (controller != null) controller.isLocalPlayer = true;
@@ -278,6 +321,15 @@ public class WebSocketClient : MonoBehaviour
 		DontDestroyOnLoad(myPlayer);
 		playerObjects[myId] = myPlayer;
 
+		if (spawnPositions.ContainsKey(init.player_number))
+		{
+			myPlayer.transform.position = spawnPositions[init.player_number];
+			Debug.Log($"プレイヤー{init.player_number}のSpawnPointに配置しました");
+		}
+		else if (init.position != null)
+		{
+			myPlayer.transform.position = new Vector3(init.position.x, init.position.y, init.position.z);
+		}
 		// スポーン地点の同期
 		/*
 		if (hasSpawnPos)
@@ -295,7 +347,7 @@ public class WebSocketClient : MonoBehaviour
 		}
 
 		*/
-		int playerNum = init.player_number;
+		/*int playerNum = init.player_number;
 		GameObject spawnPoint = GameObject.Find("SpawnPoint" + playerNum);
 
 		if (spawnPoint == null)
@@ -309,18 +361,73 @@ public class WebSocketClient : MonoBehaviour
 		else if (init.position != null)
 		{
 			myPlayer.transform.position = new Vector3(init.position.x, init.position.y, init.position.z);
-		}
+		*/
 
 		//playerObjects[myId] = myPlayer;
 
 		if (GlobalCamera.Instance != null)
 			GlobalCamera.Instance.SetTarget(myPlayer.transform);
+
+		var eg = FindObjectOfType<ElementGenerator>();
+		if (eg != null) eg.SetPlayerTransform(myPlayer.transform);
+	}
+
+	// ロビー用：自分のIDを確定してパネルに自分を登録
+	private void HandleInitForLobby(string json)
+	{
+		InitMessage init = JsonUtility.FromJson<InitMessage>(json);
+		myId = init.id;
+
+		if (roomMemberPanel != null)
+		{
+			roomMemberPanel.RemoveMember("self");
+			roomMemberPanel.AddOrUpdateMember(myId, playerName, false);
+		}
+	}
+
+	// ロビー用：他プレイヤーが入ってきたらパネルに追加
+	private void HandlePlayerJoinedForLobby(string json)
+	{
+		var msg = JsonUtility.FromJson<PlayerJoinedMessage>(json);
+		if (msg == null || msg.id == myId) return;
+
+		if (roomMemberPanel != null)
+			roomMemberPanel.AddOrUpdateMember(msg.id, msg.name, false);
+	}
+
+	// ロビー用：既存プレイヤーをパネルに追加
+	private void HandleExistingPlayersForLobby(string json)
+	{
+		ExistingPlayersMessage msg = JsonUtility.FromJson<ExistingPlayersMessage>(json);
+		if (msg == null || msg.players == null) return;
+
+		foreach (var player in msg.players)
+		{
+			if (player.id != myId && roomMemberPanel != null)
+				roomMemberPanel.AddOrUpdateMember(player.id, player.name, false);
+		}
+	}
+
+	// ロビー用：退出したらパネルから削除
+	private void HandlePlayerLeftForLobby(string json)
+	{
+		var msg = JsonUtility.FromJson<PlayerLeftMessage>(json);
+		if (roomMemberPanel != null)
+			roomMemberPanel.RemoveMember(msg.id);
+	}
+
+	// ロビー用：準備完了状態をパネルに反映
+	private void HandlePlayerReadyForLobby(string json)
+	{
+		var msg = JsonUtility.FromJson<PlayerReadyMessage>(json);
+		if (roomMemberPanel != null)
+			roomMemberPanel.SetReady(msg.id, true);
 	}
 
 	// 既存のプレイヤーリストを処理するハンドラ
 	private void HandleExistingPlayersMessage(string json)
 	{
-		if (SceneManager.GetActiveScene().name != "TestScene") return;
+		if (SceneManager.GetActiveScene().name != "MapTest") return;
 		ExistingPlayersMessage msg = JsonUtility.FromJson<ExistingPlayersMessage>(json);
 		if (msg != null && msg.players != null)
 		{
@@ -329,6 +436,10 @@ public class WebSocketClient : MonoBehaviour
 				if (player.id != myId)
 				{
 					SpawnRemotePlayer(player);
+
+					// ★ パネルにも追加
+					if (roomMemberPanel != null)
+						roomMemberPanel.AddOrUpdateMember(player.id, player.name, false);
 				}
 			}
 		}
@@ -337,7 +448,7 @@ public class WebSocketClient : MonoBehaviour
 	// 他のプレイヤーが新しく入ってきた時の処理
 	private void HandlePlayerJoinedMessage(string json)
 	{
-		if (SceneManager.GetActiveScene().name != "TestScene") return;
+		if (SceneManager.GetActiveScene().name != "MapTest") return;
 		var msg = JsonUtility.FromJson<PlayerJoinedMessage>(json);
 
 		// myId が未設定 or 自分自身なら無視
@@ -355,6 +466,9 @@ public class WebSocketClient : MonoBehaviour
 			position = new PositionData { x = msg.position.x, y = msg.position.y, z = msg.position.z }
 		};
 		SpawnRemotePlayer(player);
+
+		if (roomMemberPanel != null)
+			roomMemberPanel.AddOrUpdateMember(msg.id, msg.name, false);
 	}
 
 	// 他プレイヤーの移動反映
@@ -398,6 +512,9 @@ public class WebSocketClient : MonoBehaviour
 			playerObjects.Remove(msg.id);
 			Debug.Log("プレイヤー退出: " + msg.name);
 		}
+
+		if (roomMemberPanel != null)
+			roomMemberPanel.RemoveMember(msg.id);
 	}
 
 	// 他プレイヤーのオブジェクトを生成し、管理用辞書に登録
@@ -421,7 +538,7 @@ public class WebSocketClient : MonoBehaviour
 		var controller = newPlayer.GetComponent<PlayerController>();
 		if (controller != null) controller.isLocalPlayer = false;
 
-    var rb = newPlayer.GetComponent<Rigidbody>();
+		var rb = newPlayer.GetComponent<Rigidbody>();
 		if (rb != null)
 		{
 			rb.isKinematic = true; // サーバーからの座標上書きを優先させる
@@ -430,19 +547,26 @@ public class WebSocketClient : MonoBehaviour
 
 		newPlayer.transform.position = new Vector3(player.position.x, player.position.y, player.position.z);
 		playerObjects[player.id] = newPlayer;
+		AttachNameTag(newPlayer, player.name, true);
+
+		var eg = FindObjectOfType<ElementGenerator>();
+		if (eg != null) eg.SetRemotePlayerTransform(newPlayer.transform);
+
+
 	}
 
 
 
 	//竜希のスクリプトと連携用。消さないように注意。
-	/*
+
 	// ElementGeneratorから呼ばれる
-	public void SetSpawnPosition(Vector3 pos)
+	public void SetSpawnPosition(int playerNum, Vector3 pos)
 	{
-		pendingSpawnPos = pos;
-		hasSpawnPos = true;
+		/*pendingSpawnPos = pos;
+		hasSpawnPos = true;*/
+		spawnPositions[playerNum] = pos;
 	}
-	*/
+
 
 
 	// シーン遷移時などにプレイヤーオブジェクトを一括削除
@@ -467,7 +591,7 @@ public class WebSocketClient : MonoBehaviour
 			obj.transform.position = Vector3.Lerp(
 				obj.transform.position,
 				targetPositions[id],
-				Time.deltaTime * 15f 
+				Time.deltaTime * 15f
 			);
 
 			if (targetRotations.ContainsKey(id))
@@ -483,14 +607,14 @@ public class WebSocketClient : MonoBehaviour
 			websocket.DispatchMessageQueue();
 #endif
 
-        // 送信処理だけ、タイマーを使って頻度を落とす
-        if (!string.IsNullOrEmpty(myId))
+			// 送信処理だけ、タイマーを使って頻度を落とす
+			if (!string.IsNullOrEmpty(myId))
 			{
 				timer += Time.deltaTime;
 				if (timer >= sendInterval)
 				{
 					SendPosition();
-                timer = 0f;
+					timer = 0f;
 				}
 			}
 		}
@@ -511,6 +635,15 @@ public class WebSocketClient : MonoBehaviour
 		{
 			await websocket.Close();
 		}
+	}
+
+	private void AttachNameTag(GameObject playerObj, string name, bool visible)
+	{
+		GameObject tagObj = new GameObject("NameTag");
+		tagObj.transform.SetParent(playerObj.transform, false);
+		NameTag tag = tagObj.AddComponent<NameTag>();
+		tag.SetName(name);
+		tag.SetVisible(visible);
 	}
 }
 
