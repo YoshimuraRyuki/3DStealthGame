@@ -33,7 +33,6 @@ public class PlayerJoinedMessage
 	public int player_number;
 	public PositionData position;
 	public PositionData rotation;
-
 }
 
 [System.Serializable]
@@ -59,44 +58,55 @@ public class ExistingPlayersWrapper
 	public PlayerData[] players;
 }
 
+// ★ 追加：タイマー更新
+[System.Serializable]
+public class TimerUpdateMessage
+{
+	public string type;           // "timer_update"
+	public int time_remaining; // 残り秒数
+}
+
+// ★ 追加：goal 受信（クリアタイム付き）
+[System.Serializable]
+public class GoalMessage
+{
+	public string type;    // "goal"
+	public string id;      // ゴールしたプレイヤーID
+	public string name;    // プレイヤー名
+	public float elapsed; // クリアタイム（秒）
+}
+
 
 // --- WebSocketクライアント本体 ---
 
 public class WebSocketClient : MonoBehaviour
 {
-	public GameObject playerPrefab; // 他プレイヤーのモデル
-	public GameObject myPlayer;     // 自分自身のプレイヤーオブジェクト
-									//public GameObject readyPanel;    // 接続待機中のUIパネル
+	public GameObject playerPrefab;
+	public GameObject myPlayer;
 	public string serverUrl = "ws://192.168.56.102:8080/ws?room_id=test&name=Player1";
 
 	private WebSocket websocket;
-	private string myId;
+	public string myId;
 	private Dictionary<string, GameObject> playerObjects = new Dictionary<string, GameObject>();
 	private bool isGameSceneLoaded;
-	private List<string> pendingMessages = new List<string>(); // シーン遷移中に届いたメッセージの保持用
+	private List<string> pendingMessages = new List<string>();
 
-
-	private float sendInterval = 0.05f; // 0.05秒（秒間20回）に制限
+	private float sendInterval = 0.05f;
 	private float timer = 0f;
 
 	private string playerName;
 
-	public Material localPlayerMaterial;  // 自分用マテリアル
-	public Material remotePlayerMaterial; // 他プレイヤー用マテリアル
+	public Material localPlayerMaterial;
+	public Material remotePlayerMaterial;
 
-
-	// 竜希のスクリプトと連携用　けすな
 	private Vector3 pendingSpawnPos = Vector3.zero;
 	private bool hasSpawnPos = false;
 
-	// 各プレイヤーの目標座標を保持する辞書を追加
 	private Dictionary<string, Vector3> targetPositions = new Dictionary<string, Vector3>();
 	private Dictionary<string, Quaternion> targetRotations = new Dictionary<string, Quaternion>();
 
 	public string GetPlayerName() => playerName;
-	// ネームタグ・メンバーパネル連携
-	public RoomMemberPanel roomMemberPanel; // Inspectorで設定
-											//private string playerName;
+	public RoomMemberPanel roomMemberPanel;
 
 	private Dictionary<int, Vector3> spawnPositions = new Dictionary<int, Vector3>();
 
@@ -104,7 +114,6 @@ public class WebSocketClient : MonoBehaviour
 	{
 		Application.runInBackground = true;
 		Application.targetFrameRate = 60;
-		// サーバーとの接続を維持するため、シーンをまたいでも破棄されないように設定
 		DontDestroyOnLoad(this.gameObject);
 		SceneManager.sceneLoaded += OnSceneLoaded;
 		isGameSceneLoaded = SceneManager.GetActiveScene().name == "MapTest";
@@ -112,17 +121,14 @@ public class WebSocketClient : MonoBehaviour
 
 	void OnSceneLoaded(Scene scene, LoadSceneMode mode)
 	{
-		// ゲーム本編のシーンに切り替わったか判定
 		isGameSceneLoaded = scene.name == "MapTest";
 
 		if (scene.name != "MapTest")
 		{
-			// ロビーに戻る際などは、一旦リモートプレイヤーの情報をリセット
 			ClearRemotePlayers();
 		}
 		else
 		{
-			// シーン読み込み完了後、少し遅らせて保留メッセージを処理（生成タイミングの調整）
 			Invoke("ProcessPendingMessages", 0.5f);
 		}
 		Debug.Log("シーン変更: " + scene.name);
@@ -131,36 +137,15 @@ public class WebSocketClient : MonoBehaviour
 	async void Start()
 	{
 		Application.runInBackground = true;
-		// 重複を避けるため簡易的なランダム名を設定
 		playerName = "Player_" + Random.Range(1000, 9999);
-
 		websocket = new WebSocket($"ws://192.168.56.102:8080/ws?room_id=test&name={playerName}");
 		websocket.OnOpen += () => Debug.Log("サーバーに接続");
 		websocket.OnMessage += OnMessageReceived;
 		websocket.OnError += (e) => Debug.Log("エラー: " + e);
 	}
 
-	/*
-	// UIの接続ボタンから呼び出し
-	public async void OnConnectButtonClicked()
-	{
-		if (websocket != null)
-		{
-			try { await websocket.Close(); } catch { }
-			websocket = null;
-		}
-
-		websocket = new WebSocket($"ws://192.168.56.102:8080/ws?room_id=test&name={playerName}");
-		websocket.OnOpen += OnWebSocketOpened;
-		websocket.OnMessage += OnMessageReceived;
-		websocket.OnError += (e) => Debug.Log("エラー: " + e);
-
-		await websocket.Connect();
-	}*/
-
 	public async void ConnectToRoom(string roomId)
 	{
-
 		if (websocket != null)
 		{
 			try { await websocket.Close(); } catch { }
@@ -175,71 +160,38 @@ public class WebSocketClient : MonoBehaviour
 		await websocket.Connect();
 	}
 
-	public void SetPlayerName(string name)
-	{
-		playerName = name;
-	}
-	// UIの切断ボタンから呼び出し
+	public void SetPlayerName(string name) { playerName = name; }
+
 	public async void OnQuitButtonClicked()
 	{
 		if (websocket != null)
 		{
 			websocket.OnMessage -= OnMessageReceived;
 			websocket.OnOpen -= OnWebSocketOpened;
-			if (websocket.State == WebSocketState.Open)
-			{
-				await websocket.Close();
-			}
+			if (websocket.State == WebSocketState.Open) await websocket.Close();
 			websocket = null;
 		}
 
-		// 自プレイヤーを削除
-		if (myPlayer != null)
-		{
-			Destroy(myPlayer);
-			myPlayer = null;
-		}
-
-		// 他プレイヤーを全削除
+		if (myPlayer != null) { Destroy(myPlayer); myPlayer = null; }
 		ClearRemotePlayers();
-
-		// IDとスポーン情報もリセット
 		myId = null;
 		spawnPositions.Clear();
-		//if (readyPanel != null) readyPanel.SetActive(false);
-		Debug.Log("接続を切断しました");
-
 		pendingMessages.Clear();
+		Debug.Log("接続を切断しました");
 	}
 
-	private void OnWebSocketOpened()
-	{
-		Debug.Log("接続成功");
-		//if (readyPanel != null) readyPanel.SetActive(true);
-	}
+	private void OnWebSocketOpened() { Debug.Log("接続成功"); }
 
-	// 準備完了メッセージを送信（ゲーム開始の合図）
 	public async void OnReadyButtonClicked()
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
-
-		// ★ SpawnPointはゲームシーンにしかないので仮座標で送る
 		string json = "{\"type\":\"ready\",\"position\":{\"x\":0,\"y\":1,\"z\":0}}";
 		await websocket.SendText(json);
-
-		// 自分のパネルを準備完了に
-		/*if (roomMemberPanel != null)
-		{
-			string key = string.IsNullOrEmpty(myId) ? "self" : myId;
-			roomMemberPanel.SetReady(key, true);
-		}*/
 	}
 
-	// サーバーからデータを受信した際の窓口
 	private void OnMessageReceived(byte[] bytes)
 	{
 		string json = Encoding.UTF8.GetString(bytes);
-		//Debug.Log("受信: " + json);
 
 		if (!isGameSceneLoaded)
 		{
@@ -249,14 +201,12 @@ public class WebSocketClient : MonoBehaviour
 				return;
 			}
 
-			// パネル更新だけ先にやる
 			if (json.Contains("\"type\":\"init\"")) HandleInitForLobby(json);
 			else if (json.Contains("\"type\":\"player_joined\"")) HandlePlayerJoinedForLobby(json);
 			else if (json.Contains("\"type\":\"player_left\"")) HandlePlayerLeftForLobby(json);
 			else if (json.Contains("\"type\":\"player_ready\"")) HandlePlayerReadyForLobby(json);
 			else if (json.Contains("\"type\":\"existing_players\"")) HandleExistingPlayersForLobby(json);
 
-			// ゲームシーン用の処理は保留に積む
 			pendingMessages.Add(json);
 			return;
 		}
@@ -264,17 +214,12 @@ public class WebSocketClient : MonoBehaviour
 		ProcessMessage(json);
 	}
 
-	// 貯めていたメッセージを順番に処理
 	private void ProcessPendingMessages()
 	{
-		foreach (var json in pendingMessages)
-		{
-			ProcessMessage(json);
-		}
+		foreach (var json in pendingMessages) ProcessMessage(json);
 		pendingMessages.Clear();
 	}
 
-	// 受信したJSONの"type"に応じて各ハンドラへ振り分け
 	private void ProcessMessage(string json)
 	{
 		if (json.Contains("\"type\":\"init\"")) HandleInitMessage(json);
@@ -282,29 +227,35 @@ public class WebSocketClient : MonoBehaviour
 		else if (json.Contains("\"type\":\"player_joined\"")) HandlePlayerJoinedMessage(json);
 		else if (json.Contains("\"type\":\"player_move\"")) HandlePlayerMoveMessage(json);
 		else if (json.Contains("\"type\":\"player_left\"")) HandlePlayerLeftMessage(json);
+		else if (json.Contains("\"type\":\"item_picked\"")) HandleItemPickedMessage(json);
+		else if (json.Contains("\"type\":\"goal\"")) HandleGoalMessage(json);
+		// ★ 追加：タイマー更新
+		else if (json.Contains("\"type\":\"timer_update\"")) HandleTimerUpdate(json);
 		else if (json.Contains("\"type\":\"start_game\""))
-
 		{
 			if (SceneManager.GetActiveScene().name == "MapTest")
 			{
-				// すでにゲームシーンにいる場合は即処理
 				ProcessPendingMessages();
+				// ★ ゲーム開始 → ミッションタイマースタート
+				MissionManager.Instance?.OnGameStart();
 			}
 			else
 			{
+				// ★ チュートリアルを挟んでからシーン遷移
 				SceneManager.LoadScene("MapTest");
+				// シーンロード後に TutorialManager.Instance.ShowTutorial() を
+				// OnSceneLoaded 内または MapTest シーンの TutorialManager.Start() で呼ぶ
 			}
 		}
 		else if (json.Contains("\"type\":\"player_ready\""))
 		{
-			// 他プレイヤーの準備完了通知を受け取ってパネルを更新
 			var msg = JsonUtility.FromJson<PlayerReadyMessage>(json);
-			if (roomMemberPanel != null)
-				roomMemberPanel.SetReady(msg.id, true);
+			if (roomMemberPanel != null) roomMemberPanel.SetReady(msg.id, true);
 		}
 	}
 
-	// 自分の初期化情報を処理
+	// ─── 既存ハンドラ（変更なし）───
+
 	private void HandleInitMessage(string json)
 	{
 		if (SceneManager.GetActiveScene().name != "MapTest") return;
@@ -319,16 +270,14 @@ public class WebSocketClient : MonoBehaviour
 		}
 		if (playerPrefab == null) return;
 
-		// 自分のプレイヤーを生成
 		myPlayer = Instantiate(playerPrefab);
-		AttachNameTag(myPlayer, playerName, false); // 自分は非表示
+		AttachNameTag(myPlayer, playerName, false);
 		myPlayer.tag = "Player" + init.player_number;
 		if (localPlayerMaterial != null)
 			myPlayer.GetComponentInChildren<Renderer>().material = localPlayerMaterial;
 
 		var elementGenerator = FindObjectOfType<ElementGenerator>();
-		if (elementGenerator != null)
-			elementGenerator.SetPlayerTransform(myPlayer.transform);
+		if (elementGenerator != null) elementGenerator.SetPlayerTransform(myPlayer.transform);
 
 		var controller = myPlayer.GetComponent<PlayerController>();
 		if (controller != null) controller.isLocalPlayer = true;
@@ -337,109 +286,29 @@ public class WebSocketClient : MonoBehaviour
 		playerObjects[myId] = myPlayer;
 
 		if (spawnPositions.ContainsKey(init.player_number))
-		{
 			myPlayer.transform.position = spawnPositions[init.player_number];
-			Debug.Log($"プレイヤー{init.player_number}のSpawnPointに配置しました");
-		}
 		else if (init.position != null)
-		{
 			myPlayer.transform.position = new Vector3(init.position.x, init.position.y, init.position.z);
-		}
-		// スポーン地点の同期
-		/*
-		if (hasSpawnPos)
-		{
-			myPlayer.transform.position = pendingSpawnPos;
-			Debug.Log("ElementGeneratorのSpawnPointに配置しました");
-		}
-		else
-		{
-			GameObject spawnPoint = GameObject.Find("SpawnPoint");
-			if (spawnPoint != null)
-				myPlayer.transform.position = spawnPoint.transform.position;
-			else if (init.position != null)
-				myPlayer.transform.position = new Vector3(init.position.x, init.position.y, init.position.z);
-		}
 
-		*/
-		/*int playerNum = init.player_number;
-		GameObject spawnPoint = GameObject.Find("SpawnPoint" + playerNum);
-
-		if (spawnPoint == null)
-			spawnPoint = GameObject.Find("SpawnPoint");
-
-		if (spawnPoint != null)
-		{
-			myPlayer.transform.position = spawnPoint.transform.position;
-			Debug.Log($"SpawnPoint{playerNum}に配置しました");
-		}
-		else if (init.position != null)
-		{
-			myPlayer.transform.position = new Vector3(init.position.x, init.position.y, init.position.z);
-		*/
-
-		//playerObjects[myId] = myPlayer;
-
-		if (GlobalCamera.Instance != null)
-			GlobalCamera.Instance.SetTarget(myPlayer.transform);
+		if (GlobalCamera.Instance != null) GlobalCamera.Instance.SetTarget(myPlayer.transform);
 
 		var eg = FindObjectOfType<ElementGenerator>();
 		if (eg != null) eg.SetPlayerTransform(myPlayer.transform);
-	}
 
-	// ロビー用：自分のIDを確定してパネルに自分を登録
-	private void HandleInitForLobby(string json)
-	{
-		InitMessage init = JsonUtility.FromJson<InitMessage>(json);
-		myId = init.id;
-
-		if (roomMemberPanel != null)
+		// ★ チュートリアル表示（MapTest ロード後の init で呼ぶ）
+		if (TutorialManager.Instance != null)
 		{
-			roomMemberPanel.RemoveMember("self");
-			roomMemberPanel.AddOrUpdateMember(myId, playerName, false);
+			TutorialManager.Instance.ShowTutorial(() =>
+			{
+				Debug.Log("★ゲームスタート（チュートリアル後）");
+			});
+		}
+		else
+		{
+
 		}
 	}
 
-	// ロビー用：他プレイヤーが入ってきたらパネルに追加
-	private void HandlePlayerJoinedForLobby(string json)
-	{
-		var msg = JsonUtility.FromJson<PlayerJoinedMessage>(json);
-		if (msg == null || msg.id == myId) return;
-
-		if (roomMemberPanel != null)
-			roomMemberPanel.AddOrUpdateMember(msg.id, msg.name, false);
-	}
-
-	// ロビー用：既存プレイヤーをパネルに追加
-	private void HandleExistingPlayersForLobby(string json)
-	{
-		ExistingPlayersMessage msg = JsonUtility.FromJson<ExistingPlayersMessage>(json);
-		if (msg == null || msg.players == null) return;
-
-		foreach (var player in msg.players)
-		{
-			if (player.id != myId && roomMemberPanel != null)
-				roomMemberPanel.AddOrUpdateMember(player.id, player.name, false);
-		}
-	}
-
-	// ロビー用：退出したらパネルから削除
-	private void HandlePlayerLeftForLobby(string json)
-	{
-		var msg = JsonUtility.FromJson<PlayerLeftMessage>(json);
-		if (roomMemberPanel != null)
-			roomMemberPanel.RemoveMember(msg.id);
-	}
-
-	// ロビー用：準備完了状態をパネルに反映
-	private void HandlePlayerReadyForLobby(string json)
-	{
-		var msg = JsonUtility.FromJson<PlayerReadyMessage>(json);
-		if (roomMemberPanel != null)
-			roomMemberPanel.SetReady(msg.id, true);
-	}
-
-	// 既存のプレイヤーリストを処理するハンドラ
 	private void HandleExistingPlayersMessage(string json)
 	{
 		if (SceneManager.GetActiveScene().name != "MapTest") return;
@@ -451,27 +320,18 @@ public class WebSocketClient : MonoBehaviour
 				if (player.id != myId)
 				{
 					SpawnRemotePlayer(player);
-
-					// ★ パネルにも追加
-					if (roomMemberPanel != null)
-						roomMemberPanel.AddOrUpdateMember(player.id, player.name, false);
+					if (roomMemberPanel != null) roomMemberPanel.AddOrUpdateMember(player.id, player.name, false);
 				}
 			}
 		}
 	}
 
-	// 他のプレイヤーが新しく入ってきた時の処理
 	private void HandlePlayerJoinedMessage(string json)
 	{
 		if (SceneManager.GetActiveScene().name != "MapTest") return;
 		var msg = JsonUtility.FromJson<PlayerJoinedMessage>(json);
-
-		// myId が未設定 or 自分自身なら無視
 		if (string.IsNullOrEmpty(myId) || msg.id == myId) return;
-		// すでに生成済みなら重複を防ぐ
 		if (playerObjects.ContainsKey(msg.id)) return;
-
-
 
 		var player = new PlayerData
 		{
@@ -481,12 +341,9 @@ public class WebSocketClient : MonoBehaviour
 			position = new PositionData { x = msg.position.x, y = msg.position.y, z = msg.position.z }
 		};
 		SpawnRemotePlayer(player);
-
-		if (roomMemberPanel != null)
-			roomMemberPanel.AddOrUpdateMember(msg.id, msg.name, false);
+		if (roomMemberPanel != null) roomMemberPanel.AddOrUpdateMember(msg.id, msg.name, false);
 	}
 
-	// 他プレイヤーの移動反映
 	private void HandlePlayerMoveMessage(string json)
 	{
 		var msg = JsonUtility.FromJson<PlayerMoveMessage>(json);
@@ -494,71 +351,117 @@ public class WebSocketClient : MonoBehaviour
 		if (!playerObjects.ContainsKey(msg.id)) return;
 
 		GameObject targetPlayer = playerObjects[msg.id];
-		if (targetPlayer == null)
-		{
-			playerObjects.Remove(msg.id);
-			return;
-		}
+		if (targetPlayer == null) { playerObjects.Remove(msg.id); return; }
 
 		targetPositions[msg.id] = new Vector3(msg.position.x, msg.position.y, msg.position.z);
 		if (msg.rotation != null)
 			targetRotations[msg.id] = Quaternion.Euler(msg.rotation.x, msg.rotation.y, 0);
-		/*Vector3 targetPos = new Vector3(
-			msg.position.x,
-			msg.position.y,
-			msg.position.z
-		);
-
-		playerObjects[msg.id].transform.position = Vector3.Lerp(
-			playerObjects[msg.id].transform.position,
-			targetPos,
-			Time.deltaTime * 10f*/
-
 	}
 
-	// プレイヤーが退出した際の削除処理
 	private void HandlePlayerLeftMessage(string json)
 	{
 		var msg = JsonUtility.FromJson<PlayerLeftMessage>(json);
-
 		if (playerObjects.ContainsKey(msg.id))
 		{
 			Destroy(playerObjects[msg.id]);
 			playerObjects.Remove(msg.id);
-			Debug.Log("プレイヤー退出: " + msg.name);
 		}
-
-		if (roomMemberPanel != null)
-			roomMemberPanel.RemoveMember(msg.id);
+		if (roomMemberPanel != null) roomMemberPanel.RemoveMember(msg.id);
 	}
 
-	// 他プレイヤーのオブジェクトを生成し、管理用辞書に登録
+	// ★ 追加：アイテム取得
+	private void HandleItemPickedMessage(string json)
+	{
+		// 自分が取得した場合だけミッションフラグを立てる
+		// （サーバーは全員にブロードキャストするので id で自分かどうか判定）
+		var msg = JsonUtility.FromJson<GoalMessage>(json); // id フィールドだけ使う
+		if (msg.id == myId)
+			MissionManager.Instance?.OnItemPicked();
+	}
+
+	// ★ 追加：ゴール受信
+	private void HandleGoalMessage(string json)
+	{
+		var msg = JsonUtility.FromJson<GoalMessage>(json);
+
+		if (msg.id == myId)
+		{
+			// 自分のゴール処理
+			MissionManager.Instance?.OnGoal();
+
+			int missionCount = MissionManager.Instance != null ? MissionManager.Instance.GetClearedMissionCount() : 0;
+
+		}
+		else
+		{
+			Debug.Log($"★ {msg.name} がゴールしました！");
+		}
+	}
+
+	private void HandleTimerUpdate(string json)
+	{
+		var msg = JsonUtility.FromJson<TimerUpdateMessage>(json);
+	}
+
+	// ─── ロビー用ハンドラ（変更なし）───
+
+	private void HandleInitForLobby(string json)
+	{
+		InitMessage init = JsonUtility.FromJson<InitMessage>(json);
+		myId = init.id;
+		if (roomMemberPanel != null)
+		{
+			roomMemberPanel.RemoveMember("self");
+			roomMemberPanel.AddOrUpdateMember(myId, playerName, false);
+		}
+	}
+
+	private void HandlePlayerJoinedForLobby(string json)
+	{
+		var msg = JsonUtility.FromJson<PlayerJoinedMessage>(json);
+		if (msg == null || msg.id == myId) return;
+		if (roomMemberPanel != null) roomMemberPanel.AddOrUpdateMember(msg.id, msg.name, false);
+	}
+
+	private void HandleExistingPlayersForLobby(string json)
+	{
+		ExistingPlayersMessage msg = JsonUtility.FromJson<ExistingPlayersMessage>(json);
+		if (msg == null || msg.players == null) return;
+		foreach (var player in msg.players)
+			if (player.id != myId && roomMemberPanel != null)
+				roomMemberPanel.AddOrUpdateMember(player.id, player.name, false);
+	}
+
+	private void HandlePlayerLeftForLobby(string json)
+	{
+		var msg = JsonUtility.FromJson<PlayerLeftMessage>(json);
+		if (roomMemberPanel != null) roomMemberPanel.RemoveMember(msg.id);
+	}
+
+	private void HandlePlayerReadyForLobby(string json)
+	{
+		var msg = JsonUtility.FromJson<PlayerReadyMessage>(json);
+		if (roomMemberPanel != null) roomMemberPanel.SetReady(msg.id, true);
+	}
+
+	// ─── プレイヤー生成 ───
+
 	private void SpawnRemotePlayer(PlayerData player)
 	{
 		if (playerObjects.ContainsKey(player.id)) return;
 
 		GameObject newPlayer = Instantiate(playerPrefab);
 		newPlayer.tag = "Player" + player.player_number;
-
-
-		if (remotePlayerMaterial != null)
-			newPlayer.GetComponentInChildren<Renderer>().material = remotePlayerMaterial;
+		if (remotePlayerMaterial != null) newPlayer.GetComponentInChildren<Renderer>().material = remotePlayerMaterial;
 
 		AudioListener remoteListener = newPlayer.GetComponent<AudioListener>();
-		if (remoteListener != null)
-		{
-			Destroy(remoteListener);
-		}
+		if (remoteListener != null) Destroy(remoteListener);
 
 		var controller = newPlayer.GetComponent<PlayerController>();
 		if (controller != null) controller.isLocalPlayer = false;
 
 		var rb = newPlayer.GetComponent<Rigidbody>();
-		if (rb != null)
-		{
-			rb.isKinematic = true; // サーバーからの座標上書きを優先させる
-			rb.useGravity = false;
-		}
+		if (rb != null) { rb.isKinematic = true; rb.useGravity = false; }
 
 		newPlayer.transform.position = new Vector3(player.position.x, player.position.y, player.position.z);
 		playerObjects[player.id] = newPlayer;
@@ -566,90 +469,58 @@ public class WebSocketClient : MonoBehaviour
 
 		var eg = FindObjectOfType<ElementGenerator>();
 		if (eg != null) eg.SetRemotePlayerTransform(newPlayer.transform);
-
-
 	}
 
-
-
-	//竜希のスクリプトと連携用。消さないように注意。
-
-	// ElementGeneratorから呼ばれる
-	public void SetSpawnPosition(int playerNum, Vector3 pos)
-	{
-		/*pendingSpawnPos = pos;
-		hasSpawnPos = true;*/
-		spawnPositions[playerNum] = pos;
-	}
-
-
-
-	// シーン遷移時などにプレイヤーオブジェクトを一括削除
 	private void ClearRemotePlayers()
 	{
 		foreach (var obj in playerObjects.Values)
-		{
 			if (obj != null) Destroy(obj);
-		}
 		playerObjects.Clear();
 	}
 
+	// 竜希のスクリプトと連携用。消さないように注意。
+	public void SetSpawnPosition(int playerNum, Vector3 pos) { spawnPositions[playerNum] = pos; }
+
 	async void Update()
 	{
-		// 追従処理　後で改善
 		foreach (var id in targetPositions.Keys)
 		{
 			if (!playerObjects.ContainsKey(id)) continue;
 			var obj = playerObjects[id];
 			if (obj == null) continue;
-
-			obj.transform.position = Vector3.Lerp(
-				obj.transform.position,
-				targetPositions[id],
-				Time.deltaTime * 15f
-			);
-
+			obj.transform.position = Vector3.Lerp(obj.transform.position, targetPositions[id], Time.deltaTime * 15f);
 			if (targetRotations.ContainsKey(id))
-				obj.transform.rotation = Quaternion.Lerp(
-					obj.transform.rotation,
-					targetRotations[id],
-					Time.deltaTime * 15f
-				);
+				obj.transform.rotation = Quaternion.Lerp(obj.transform.rotation, targetRotations[id], Time.deltaTime * 15f);
 		}
+
 		if (websocket != null && websocket.State == WebSocketState.Open)
 		{
 #if !UNITY_WEBGL || UNITY_EDITOR
 			websocket.DispatchMessageQueue();
 #endif
-
-			// 送信処理だけ、タイマーを使って頻度を落とす
 			if (!string.IsNullOrEmpty(myId))
 			{
 				timer += Time.deltaTime;
-				if (timer >= sendInterval)
-				{
-					SendPosition();
-					timer = 0f;
-				}
+				if (timer >= sendInterval) { SendPosition(); timer = 0f; }
 			}
 		}
 	}
 
-	// 自分の現在地と回転をJSON形式でサーバーへ送信
 	private async void SendPosition()
 	{
 		if (myPlayer == null) return;
-
-		string json = $"{{\"type\":\"player_move\",\"id\":\"{myId}\",\"position\":{{\"x\":{myPlayer.transform.position.x},\"y\":{myPlayer.transform.position.y},\"z\":{myPlayer.transform.position.z}}},\"rotation\":{{\"x\":{myPlayer.transform.rotation.eulerAngles.x},\"y\":{myPlayer.transform.rotation.eulerAngles.y}}}}}";
+		string json = $"{{\"type\":\"player_move\",\"id\":\"{myId}\"," +
+					  $"\"position\":{{\"x\":{myPlayer.transform.position.x}," +
+					  $"\"y\":{myPlayer.transform.position.y}," +
+					  $"\"z\":{myPlayer.transform.position.z}}}," +
+					  $"\"rotation\":{{\"x\":{myPlayer.transform.rotation.eulerAngles.x}," +
+					  $"\"y\":{myPlayer.transform.rotation.eulerAngles.y}}}}}";
 		await websocket.SendText(json);
 	}
 
 	private async void OnApplicationQuit()
 	{
-		if (websocket != null && websocket.State == WebSocketState.Open)
-		{
-			await websocket.Close();
-		}
+		if (websocket != null && websocket.State == WebSocketState.Open) await websocket.Close();
 	}
 
 	private void AttachNameTag(GameObject playerObj, string name, bool visible)
@@ -661,4 +532,3 @@ public class WebSocketClient : MonoBehaviour
 		tag.SetVisible(visible);
 	}
 }
-

@@ -119,7 +119,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 104
+  controlID: 39
 --- !u!114 &6
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -345,7 +345,7 @@ MonoBehaviour:
     m_HSlider: 0
     m_VSlider: 0
     m_IgnoreScrollWheelUntilClicked: 0
-    m_EnableMouseInput: 0
+    m_EnableMouseInput: 1
     m_EnableSliderZoomHorizontal: 0
     m_EnableSliderZoomVertical: 0
     m_UniformScale: 1
@@ -447,9 +447,9 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 928b0000
-      m_LastClickedID: 35730
-      m_ExpandedIDs: 24a2fbff20bffbffba09fdff1663feff6463feffac63fefff863feffecafffff80cfffff9edbfffff0dbffff6cddffff8addffffc4ddffff0adfffffe6eaffffacf0fffff6f0ffff42f2ffff4cf2ffff72f2ffffb4f6fffffef6ffff62f8ffff68f8ffff8af8ffff22fbffffbe650000f0850000c68a00009c8b0000
+      m_SelectedIDs: 
+      m_LastClickedID: 0
+      m_ExpandedIDs: 5aa4ffff96a4ffff02a6ffff1ea6ffff40a6ffffb4aaffff00abffff70acffff90acffffb6acffff8eb5ffffdab5ffff4ab7ffff6ab7ffff90b7ffff94b8ffffa4b8ffffb2b9ffff0abaffff74baffffdebfffff28c0ffff7cc1ffff9cc1ffffc4c1ffff22c3ffff5cc6ffffa8c6ffff1cc8ffff40c8ffff6cc8ffff1ad8ffffaedeffff5ce0ffff22fbffffea5e0000c05f0000d2620000d2670000ae6800003c6e0000da700000a0760000c6760000208000004280000068800000
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -855,9 +855,9 @@ MonoBehaviour:
   m_PlayAudio: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: 4.8532124, y: 24.281483, z: 8.371155}
+    m_Target: {x: 1261.8793, y: 328.0593, z: 223.7728}
     speed: 2
-    m_Value: {x: 4.8532124, y: 24.281483, z: 8.371155}
+    m_Value: {x: 1261.8793, y: 328.0593, z: 223.7728}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -903,13 +903,13 @@ MonoBehaviour:
     m_GridAxis: 1
     m_gridOpacity: 0.5
   m_Rotation:
-    m_Target: {x: 0.15123104, y: 0.00029208034, z: -0.00002788374, w: 0.98852205}
+    m_Target: {x: 0.13798718, y: -0.05079162, z: 0.007102133, w: 0.98912984}
     speed: 2
-    m_Value: {x: 0.1500412, y: 0.00029210676, z: -0.000027532547, w: 0.9886797}
+    m_Value: {x: 0.13798384, y: -0.05079039, z: 0.007101961, w: 0.9891059}
   m_Size:
-    m_Target: 46.357574
+    m_Target: 1126.4036
     speed: 2
-    m_Value: 44.361317
+    m_Value: 1126.4036
   m_Ortho:
     m_Target: 0
     speed: 2
@@ -1049,7 +1049,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/Scenes/Masataka
+    - Assets/Resources/Images/Masataka
     m_Globs: []
     m_OriginalText: 
     m_ImportLogFlags: 0
@@ -1057,16 +1057,16 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 64
   m_LastFolders:
-  - Assets/Scenes/Masataka
+  - Assets/Resources/Images/Masataka
   m_LastFoldersGridSize: -1
   m_LastProjectPath: C:\Users\ydauser01\Documents\Git\3DStealthGame\3DStealthGame
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 240}
-    m_SelectedIDs: 80600000
-    m_LastClickedID: 24704
-    m_ExpandedIDs: 0000000036600000386000003a6000003c6000003e600000406000007e60000000ca9a3bffffff7f
+    scrollPos: {x: 0, y: 195.49878}
+    m_SelectedIDs: f4600000
+    m_LastClickedID: 24820
+    m_ExpandedIDs: 0000000036600000386000003a6000003c6000003e600000406000007c6000008260000000ca9a3bffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 

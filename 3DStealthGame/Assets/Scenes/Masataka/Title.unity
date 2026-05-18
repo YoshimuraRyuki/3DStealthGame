@@ -1107,6 +1107,7 @@ MonoBehaviour:
   playerPrefab: {fileID: 2805939071344099194, guid: 95882d325c0c43e418a86ad4f20c76fe, type: 3}
   myPlayer: {fileID: 0}
   serverUrl: ws://192.168.56.102:8080/ws?room_id=test&name=Player1
+  myId: 
   localPlayerMaterial: {fileID: 2100000, guid: 71733687b08fe5245a500a0d622d93fc, type: 2}
   remotePlayerMaterial: {fileID: 2100000, guid: 374c239778b6c5e4fb42491f4d42a8ae, type: 2}
   roomMemberPanel: {fileID: 1019032279}
