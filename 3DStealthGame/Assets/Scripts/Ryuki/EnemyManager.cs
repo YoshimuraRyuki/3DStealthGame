@@ -343,7 +343,7 @@ public class EnemyManager : MonoBehaviour
         stopMoveCooldown = Random.Range(stopMoveCooldownMin, stopMoveCooldownMax);
 
         // 見つけるプレイヤー取得
-        targetPlayer = GameObject.FindWithTag("playerTest").transform; // 結合する際にこの処理を消して将貴のプレイヤープレファブを入れる
+        targetPlayer = GameObject.FindWithTag("Player").transform; // 結合する際にこの処理を消して将貴のプレイヤープレファブを入れる
     }
 
     // Update is called once per frame
@@ -356,8 +356,8 @@ public class EnemyManager : MonoBehaviour
                 PlayerFound(); // プレイヤーを見つける処理
                 break;
             case EnemyState.FocusPlayer:
-                FocusPlayer();
                 PlayerFound();
+                FocusPlayer();
                 break;
         }
 
