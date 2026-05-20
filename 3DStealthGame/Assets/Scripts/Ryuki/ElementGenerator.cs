@@ -508,21 +508,17 @@ public class ElementGenerator : MonoBehaviour
 		for (int i = 0; i < objEnemys.Length; i++)
 		{
 			GameObject enemyObj = objEnemys[i];
-
 			Vector3 enemyPos = enemyObj.transform.position;
 
 			int enemyX = Mathf.RoundToInt(enemyPos.x);
-
 			int enemyY = Mathf.RoundToInt(enemyPos.z);
 
-			// UI位置
 			RectTransform rt = viewList[i].GetComponent<RectTransform>();
 
+			// ミニマップ上の位置
 			rt.anchoredPosition = new Vector2(enemyX * cellSize - mapX, enemyY * cellSize - mapY);
 
-			// 向き
 			float angle = enemyObj.transform.eulerAngles.y;
-
 			rt.rotation = Quaternion.Euler(0, 0, -angle);
 		}
 	}
