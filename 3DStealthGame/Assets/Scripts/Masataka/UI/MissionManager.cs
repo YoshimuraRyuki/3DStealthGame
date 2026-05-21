@@ -159,56 +159,44 @@ public class MissionManager : MonoBehaviour
 	{
 		if (missionText == null) return;
 
-		string item1Status = GetStatusMark(_mission1Done, _isGoalReached);
-		string item3Status = _isGoalReached
-			? (_mission3Done ? "✔" : "✘")
-			: (_mission3Failed ? "✘" : "…");
+		// ミッション1
+		string item1Line = _isGoalReached
+			? $"{(_mission1Done ? "✔" : "✘")} アイテムを取ってクリア"
+			: "　アイテムを取ってクリア";
 
-		// ─── ミッション2：経過時間の表示 ───
-		// ゴール後は結果を固定表示
+		// ミッション2
 		string mission2Line;
+		int elapsed = Mathf.FloorToInt(_elapsedSeconds);
 		if (_isGoalReached)
 		{
-			string mark = _mission2Done ? "✔" : "✘";
-			int elapsed = Mathf.FloorToInt(_elapsedSeconds);
-			mission2Line = $"{mark} {timeLimitSeconds}秒以内にクリア（{elapsed}秒）";
+			mission2Line = $"{(_mission2Done ? "✔" : "✘")} {timeLimitSeconds}秒以内にクリア（{elapsed}秒）";
+		}
+		else if (_timerRunning)
+		{
+			if (_isTimeUp)
+				mission2Line = $"✘ {timeLimitSeconds}秒以内にクリア（{timeLimitSeconds}/{elapsed}秒 超過）";
+			else
+				mission2Line = $"　{timeLimitSeconds}秒以内にクリア（{timeLimitSeconds}/{elapsed}秒）";
 		}
 		else
 		{
-			// ゲーム中：経過秒数をリアルタイム表示。超えたら灰色テキストで示す
-			int elapsed = Mathf.FloorToInt(_elapsedSeconds);
-
-			if (_timerRunning)
-			{
-				if (_isTimeUp)
-				{
-					// 制限時間オーバー → 灰色っぽい表現（TextはRichTextが必要なので記号で代用）
-					mission2Line = $"✘ {timeLimitSeconds}秒以内にクリア（{elapsed}秒 / 超過）";
-				}
-				else
-				{
-					// 計測中
-					mission2Line = $"… {timeLimitSeconds}秒以内にクリア（{elapsed}秒 / {timeLimitSeconds}秒）";
-				}
-			}
-			else
-			{
-				// まだゲームが始まっていない
-				mission2Line = $"… {timeLimitSeconds}秒以内にクリア";
-			}
+			mission2Line = $"　{timeLimitSeconds}秒以内にクリア";
 		}
+
+		// ミッション3
+		string item3Line;
+		if (_isGoalReached)
+			item3Line = $"{(_mission3Done ? "✔" : "✘")} 敵に見つからずクリア";
+		else if (_mission3Failed)
+			item3Line = "✘ 敵に見つからずクリア";
+		else
+			item3Line = "　敵に見つからずクリア";
 
 		missionText.text =
 			$"【ミッション】\n" +
-			$"{item1Status} アイテムを取ってクリア\n" +
+			$"{item1Line}\n" +
 			$"{mission2Line}\n" +
-			$"{item3Status} 敵に見つからずクリア";
-	}
-
-	private string GetStatusMark(bool done, bool decided)
-	{
-		if (!decided) return "…";
-		return done ? "✔" : "✘";
+			$"{item3Line}";
 	}
 
 	private void CheckAllClear()
