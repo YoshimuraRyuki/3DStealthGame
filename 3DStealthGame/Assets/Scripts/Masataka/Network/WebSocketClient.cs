@@ -130,6 +130,8 @@ public class WebSocketClient : MonoBehaviour
 		else
 		{
 			Invoke("ProcessPendingMessages", 0.5f);
+			// ★ MapTest ロード完了 → ミッションタイマースタート
+			Invoke("DelayedGameStart", 0.6f);
 		}
 		Debug.Log("シーン変更: " + scene.name);
 	}
@@ -197,7 +199,7 @@ public class WebSocketClient : MonoBehaviour
 		{
 			if (json.Contains("\"type\":\"start_game\""))
 			{
-				ProcessMessage(json);
+				SceneManager.LoadScene("MapTest");
 				return;
 			}
 
@@ -290,7 +292,15 @@ public class WebSocketClient : MonoBehaviour
 		else if (init.position != null)
 			myPlayer.transform.position = new Vector3(init.position.x, init.position.y, init.position.z);
 
-		if (GlobalCamera.Instance != null) GlobalCamera.Instance.SetTarget(myPlayer.transform);
+		if (GlobalCamera.Instance != null)
+		{
+			GlobalCamera.Instance.SetTarget(myPlayer.transform);
+			Debug.Log("★カメラターゲット設定完了");
+		}
+		else
+		{
+			Debug.LogWarning("⚠️GlobalCamera.Instanceがnullです");
+		}
 
 		var eg = FindObjectOfType<ElementGenerator>();
 		if (eg != null) eg.SetPlayerTransform(myPlayer.transform);
@@ -516,6 +526,12 @@ public class WebSocketClient : MonoBehaviour
 					  $"\"rotation\":{{\"x\":{myPlayer.transform.rotation.eulerAngles.x}," +
 					  $"\"y\":{myPlayer.transform.rotation.eulerAngles.y}}}}}";
 		await websocket.SendText(json);
+	}
+
+	private void DelayedGameStart()
+	{
+		MissionManager.Instance?.OnGameStart();
+		Debug.Log("★DelayedGameStart: MissionManager.OnGameStart()呼び出し");
 	}
 
 	private async void OnApplicationQuit()
