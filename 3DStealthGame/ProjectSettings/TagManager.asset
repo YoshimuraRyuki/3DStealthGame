@@ -10,6 +10,10 @@ TagManager:
   - Player0
   - Player1
   - Player2
+  - Switch
+  - StrongEnemy
+  - Item
+  - Goal
   layers:
   - Default
   - TransparentFX
