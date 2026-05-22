@@ -2,26 +2,77 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.AI;
+using UnityEngine.Assertions;
+using UnityEngine.Experimental.GlobalIllumination;
+using static UnityEngine.GraphicsBuffer;
 
 public class EnemyManager : MonoBehaviour
 {
     #region 宣言
 
-    ElementGenerator Eg;
+   
+    public enum EnemyState
+    {
+        Patrol,
+        FocusPlayer,
+        LookSoundPoint
+    }
+    [SerializeField]
+    EnemyState currentState;
 
+    ElementGenerator Eg;
+    Light Sl;
+    TestPlayer Tp; // 仮プレイヤーでテスト
+
+    // プレイヤーの巡回処理
     GameObject startPoint;   // 最初のポイント
     GameObject nextPoint;    // 近くのポイント
     GameObject targetPoint;  // 今向かっているポイント
     [Header("巡回ポイント")]
     public GameObject[] movePoints;
-    
+
     [Header("移動速度")]
     public float speed = 3f;
-    [Header("停止時間")]
-    public float stopMoveCooldown = 5f;
+    [Header("回転速度")]
+    public float rotateSpeed = 3f;
+    public float stoprotateSpeed = 50f;
+    [Header("停止時間 最小")]
+    public float stopMoveCooldownMin = 5f;
+    [Header("停止時間 最大")]
+    public float stopMoveCooldownMax = 10f;
+    float stopMoveCooldown;
     float currentTime = 0f;
 
-    bool isStopMove = false; // 敵が止まっているときに動きを完全に止める
+    Transform targetPlayer; // プレイヤー検知
+    [Header("検知する距離")]
+    public float viewRadius = 10f;
+    [Header("検知する角度")]
+    public float viewAngle = 90f;
+
+    [Header("警戒カウント")]
+    public float alertCount = 6;
+    public float currentAlertCount;
+
+    [Header("見失ってから巡回に戻る時間")]
+    public float lostPlayerTime = 2f;
+    float lostTimer = 0f;
+
+    // 音でプレイヤーを感知する処理
+    [Header("プレイヤー")]
+    public Transform player;
+    [Header("敵が足音の聞こえる範囲")]
+    public float hearingRange = 15f;
+    [Header("音が聞こえなくなってからあきらめるまでの時間")]
+    public float alertDuration = 3f;
+    private float alertTimer = 0f;
+    private bool isHearingSound = false; // 今、音が聞こえているかどうかのフラグ
+    private Vector3 lastSoundPosition;   // 最後に音が聞こえた場所
+
+    bool isAlerted = false;
+    bool isFoundPlayer = false;
+    bool isCountStop = false;
+    public bool isStopMove = false; // 敵が止まっているときに動きを完全に止める
     #endregion
 
     #region 敵移動遷移
@@ -101,15 +152,19 @@ public class EnemyManager : MonoBehaviour
         // 近づいたら切り替え
         if (Vector3.Distance(transform.position, targetPoint.transform.position) < 0.1f)
         {
-            currentTime += Time.deltaTime; // 目的の位置に着いたら少し止める
             isStopMove = true;
-            
+            currentTime += Time.deltaTime; // 目的の位置に着いたら少し止める
+            SearchPlayer();                // 止まっている間視点を動かす
+
             if (currentTime >= stopMoveCooldown)
             {
                 GameObject oldPoint = targetPoint;
 
                 // 次のポイントをランダム取得
                 targetPoint = GetNearPoint(oldPoint);
+
+                // 停止時間を再抽選
+                stopMoveCooldown = Random.Range(stopMoveCooldownMin, stopMoveCooldownMax);
 
                 currentTime = 0;
                 isStopMove = false;
@@ -120,40 +175,408 @@ public class EnemyManager : MonoBehaviour
 
     void MoveToPoint(GameObject point)
     {
-        Vector3 direction = (point.transform.position - transform.position).normalized;
+        // 目的地方向
+        Vector3 direction = point.transform.position - transform.position;
 
-        transform.position += direction * speed * Time.deltaTime;
+        direction.y = 0;
+
+        // 向きたい回転
+        Quaternion lookRotation = Quaternion.LookRotation(direction);
+
+        // なめらか回転
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, rotateSpeed * Time.deltaTime);
+
+        // 角度差を取得
+        float angle = Quaternion.Angle(transform.rotation, lookRotation);
+
+        // ある程度向けたら移動
+        if (angle < 3f)
+        {
+            transform.position += transform.forward * speed * Time.deltaTime;
+        }
     }
-
-    // 索敵中(敵が左右に方向転換する)
-
-    // 次のポイントに向かって移動
-
     #endregion
+
+
 
     #region 敵を見つける処理
 
+    /// <summary>
+    /// 敵があたりを見渡す処理
+    /// </summary>
+    void SearchPlayer()
+    {
+        if (!isStopMove)
+        {
+            return;
+        }
+        if (currentTime >= 3)
+        {
+            return;
+        }
+        // 見回り動作
+        transform.Rotate(0, stoprotateSpeed * Time.deltaTime, 0); // 右回転
+    }
+
+    /// <summary>
+    /// プレイヤーを発見するさせる時の処理
+    /// </summary>
+    void PlayerFound()
+    {
+        isFoundPlayer = false;
+        // ターゲット方向計算
+        Vector3 dirToTarget = (targetPlayer.position - transform.position).normalized;
+        // 距離計算
+        float dstToTarget = Vector3.Distance(transform.position, targetPlayer.position);
+
+        // 距離が範囲内かチェック
+        if (dstToTarget < viewRadius)
+        {
+            // 正面方向となす角度を計算（内積を利用）
+            float angleToTarget = Vector3.Angle(transform.forward, dirToTarget);
+
+            // 角度が扇型の範囲内かチェック
+            if (angleToTarget < viewAngle / 2f)
+            {
+                // (オプション)間に障害物がないかレイキャストで確認
+                RaycastHit hit;
+                if (Physics.Raycast(transform.position, dirToTarget, out hit, dstToTarget))
+                {
+                    // 障害物に当たった場合
+                    if (hit.transform == targetPlayer)
+                    {
+                 
+                        Debug.Log("プレイヤー発見");
+                        isFoundPlayer = true;
+                        if (gameObject.tag == "StrongEnemy")
+                        { 
+                            return;
+                        }
+                        TowardThePlayer();
+                        currentState = EnemyState.FocusPlayer;
+                    }   
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 警戒状態処理
+    /// </summary>
+    void AlertFunction()
+    {
+        // 警戒時間
+        if (isFoundPlayer)
+        {
+            currentAlertCount -= Time.deltaTime;
+        }
+        else
+        {
+            currentAlertCount += Time.deltaTime;
+        }
+
+        currentAlertCount = Mathf.Clamp(currentAlertCount, 0, alertCount);
+
+        // 見失った時の処理
+        if (currentState == EnemyState.FocusPlayer && !isAlerted)
+        {
+            if (isFoundPlayer)
+            {
+                // 見えている間はリセット
+                lostTimer = lostPlayerTime;
+            }
+            else
+            {
+                // 見失ったら減算
+                lostTimer -= Time.deltaTime;
+
+                // 一定時間見失ったら巡回へ
+                if (lostTimer <= 0f)
+                {
+                    ResetPatrolState();
+                    currentState = EnemyState.Patrol;
+                }
+            }
+        }
+
+        AlertColor(); // スポットライト色変更
+
+        // 警戒状態のときのみタイマーを減算
+        if (isAlerted)
+        {
+            alertTimer -= Time.deltaTime;
+
+            // 音が聞こえなくなって一定時間経った
+            if (alertTimer <= 0)
+            {
+                CancelAlert();
+            }
+        }
+    }
+
+    /// <summary>
+    /// スポットライトの色変更
+    /// </summary>
+    void AlertColor()
+    {
+        if (currentAlertCount <= 1)
+        {
+            Sl.color = Color.red;
+        }
+        else if (currentAlertCount < 3)
+        {
+            Sl.color = new Color(1f, 0.5f, 0f);
+        }
+        else
+        {
+            Sl.color = new Color(0.827f, 0.851f, 0.439f);
+        }
+    }
+
+    // 範囲デバック用
+    private void OnDrawGizmos()
+    {
+        // 視界範囲の色
+        Gizmos.color = Color.yellow;
+
+        // 視界距離（円）
+        Gizmos.DrawWireSphere(transform.position, viewRadius);
+
+        // 左右の視界線
+        Vector3 leftBoundary =
+            Quaternion.Euler(0, -viewAngle / 2, 0) * transform.forward;
+
+        Vector3 rightBoundary =
+            Quaternion.Euler(0, viewAngle / 2, 0) * transform.forward;
+
+        // 線を描画
+        Gizmos.color = Color.blue;
+
+        Gizmos.DrawLine(
+            transform.position,
+            transform.position + leftBoundary * viewRadius
+        );
+
+        Gizmos.DrawLine(
+            transform.position,
+            transform.position + rightBoundary * viewRadius
+        );
+
+        // 正面方向
+        Gizmos.color = Color.green;
+
+        Gizmos.DrawLine(
+            transform.position,
+            transform.position + transform.forward * viewRadius
+        );
+
+        // ターゲットへの線
+        if (targetPlayer != null)
+        {
+            Gizmos.color = Color.red;
+
+            Gizmos.DrawLine(
+                transform.position,
+                targetPlayer.position
+            );
+        }
+    }
 
     #endregion
+
+    #region 音でプレイヤーの方向に向ける
+
+    /// <summary>
+    /// プレイヤーの方向に向かせる処理
+    /// </summary>
+    void FocusPlayer()
+    {
+        Vector3 direction = targetPlayer.position - transform.position;
+
+        // 高さ無視
+        direction.y = 0;
+
+        // 向きたい回転
+        Quaternion lookRotation = Quaternion.LookRotation(direction);
+
+        // なめらか回転
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, rotateSpeed * Time.deltaTime);
+    }
+
+    /// <summary>
+    /// 視野の範囲内ならプレイヤーの方向を見ながら移動
+    /// </summary>
+    void TowardThePlayer()
+    {
+        // 音が聞こえている間だけ、その場所に向かって移動する
+        if (isHearingSound)
+        {
+            // 音の位置
+            Vector3 targetPos = new Vector3(lastSoundPosition.x, transform.position.y, lastSoundPosition.z);
+
+            // 向きたい方向
+            Vector3 direction = targetPos - transform.position;
+
+            // 向きたい回転
+            Quaternion lookRotation = Quaternion.LookRotation(direction);
+
+            // なめらか回転
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, rotateSpeed * Time.deltaTime);
+
+            // 回転しながら移動
+            float towardSpeed = speed / 2;
+
+            transform.position = Vector3.MoveTowards(transform.position, targetPos, towardSpeed * Time.deltaTime);
+        }
+        isHearingSound = false;
+    }
+
+    /// <summary>
+    ///  プレイヤーの音検知
+    /// </summary>
+    /// <param name="soundPosition"></param>
+    /// <param name="volume"></param>
+    void HandleSound(Vector3 soundPosition, float volume)
+    {
+        // 音が聞こえる範囲内かどうかを計算
+        float distanceToSound = Vector3.Distance(transform.position, soundPosition);
+
+        // 音量と距離から最終的な検知距離を計算
+        if (distanceToSound <= hearingRange * volume)
+        {           
+            // 音を検知したら、警戒状態にしてタイマーを最大値にリセット
+            isAlerted = true;
+            alertTimer = alertDuration;
+
+            isHearingSound = true;           // 音が聞こえている状態にする
+            lastSoundPosition = soundPosition; // 音の位置を記憶
+            // 音の発生源に敵を向かわせる            
+            currentState = EnemyState.FocusPlayer;
+            Debug.Log("音を検知しました。追跡処理に移行");
+        }
+    }
+
+    void CancelAlert()
+    {
+        isAlerted = false;
+        isStopMove = false;
+        Debug.Log("最後に聞こえた地点に視点を向けます");
+
+        // 最後に聞こえた音の地点に視点を向ける
+        currentState = EnemyState.LookSoundPoint;
+
+    }
+
+    /// <summary>
+    /// 最後に聞こえた音の方向を見る
+    /// </summary>
+    void LookSoundPoint()
+    {
+        Vector3 direction = lastSoundPosition - transform.position;
+
+        direction.y = 0;
+
+        Quaternion lookRotation = Quaternion.LookRotation(direction);
+
+        // なめらか回転
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, rotateSpeed * Time.deltaTime);
+
+        // 向き終わったか判定
+        float angle = Quaternion.Angle(transform.rotation, lookRotation);
+
+        if (angle < 3f)
+        {
+            // 少し待ってから巡回へ戻す
+            currentTime += Time.deltaTime;
+            
+            if (currentTime >= 1.5f)
+            {
+                ResetPatrolState();
+                currentTime = 0;
+                currentState = EnemyState.Patrol;
+                Debug.Log("巡回に戻る");
+            }
+        }
+    }
+
+    #endregion
+
+    #region 初期化処理
+
+    /// <summary>
+    /// 巡回状態を初期化
+    /// </summary>
+    void ResetPatrolState()
+    {
+        currentTime = 0f;
+
+        isStopMove = false;
+
+        // 次のポイントを再設定
+        targetPoint = GetNearPoint(StartPoint());
+
+        // 停止時間を再抽選
+        stopMoveCooldown = Random.Range(stopMoveCooldownMin, stopMoveCooldownMax);
+    }
+
+    #endregion
+
 
     #region Unityイベント
     // Start is called before the first frame update
     void Start()
     {
-        Eg = GetComponent<ElementGenerator>();
+        currentState = EnemyState.Patrol;
 
-        // 一番近いポイント（＝スタート地点）
+        currentAlertCount = alertCount;
+
+        Eg = GetComponent<ElementGenerator>();
+        Sl = GetComponentInChildren<Light>();
+        Tp = GameObject.FindWithTag("Player").GetComponent<TestPlayer>();
+        
+        if (Tp != null)
+        {
+            Tp.OnMakeSound += HandleSound;
+        }
+
+        // 一番近いポイント（スタート地点）
         startPoint = StartPoint();
 
         // 最初の目的地をランダムに決定
         targetPoint = GetNearPoint(startPoint);
+
+        // 最初の停止時間をランダム化
+        stopMoveCooldown = Random.Range(stopMoveCooldownMin, stopMoveCooldownMax);
+
+        // 見つけるプレイヤー取得
+        targetPlayer = GameObject.FindWithTag("Player").transform; // 結合する際にこの処理を消して将貴のプレイヤープレファブを入れる
     }
 
     // Update is called once per frame
     void Update()
     {
-        // 敵が移動する処理
-        MoveEnemy();
+        PlayerFound();
+        AlertFunction();
+        if (gameObject.tag == "StrongEnemy")
+        {
+            FocusPlayer();
+            return;
+        }
+
+        switch (currentState)
+        {
+            case EnemyState.Patrol:
+                MoveEnemy();   // 敵が移動する処理
+                break;
+            case EnemyState.FocusPlayer:
+                FocusPlayer(); // プレイヤーに視点のほうに視点を向ける処理
+                break;
+            case EnemyState.LookSoundPoint:
+                LookSoundPoint(); // 最後に聞こえた音の地点に視点を向ける処理
+                break;
+        }
+        
+        
     }
     #endregion
 }
