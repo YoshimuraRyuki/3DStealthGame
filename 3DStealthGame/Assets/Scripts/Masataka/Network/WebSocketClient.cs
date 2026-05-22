@@ -58,7 +58,6 @@ public class ExistingPlayersWrapper
 	public PlayerData[] players;
 }
 
-// ★ 追加：タイマー更新
 [System.Serializable]
 public class TimerUpdateMessage
 {
@@ -66,7 +65,7 @@ public class TimerUpdateMessage
 	public int time_remaining; // 残り秒数
 }
 
-// ★ 追加：goal 受信（クリアタイム付き）
+// goal
 [System.Serializable]
 public class GoalMessage
 {
@@ -231,19 +230,17 @@ public class WebSocketClient : MonoBehaviour
 		else if (json.Contains("\"type\":\"player_left\"")) HandlePlayerLeftMessage(json);
 		else if (json.Contains("\"type\":\"item_picked\"")) HandleItemPickedMessage(json);
 		else if (json.Contains("\"type\":\"goal\"")) HandleGoalMessage(json);
-		// ★ 追加：タイマー更新
 		else if (json.Contains("\"type\":\"timer_update\"")) HandleTimerUpdate(json);
 		else if (json.Contains("\"type\":\"start_game\""))
 		{
 			if (SceneManager.GetActiveScene().name == "MapTest")
 			{
 				ProcessPendingMessages();
-				// ★ ゲーム開始 → ミッションタイマースタート
 				MissionManager.Instance?.OnGameStart();
 			}
 			else
 			{
-				// ★ チュートリアルを挟んでからシーン遷移
+				//  チュートリアルを挟んでからシーン遷移
 				SceneManager.LoadScene("MapTest");
 				// シーンロード後に TutorialManager.Instance.ShowTutorial() を
 				// OnSceneLoaded 内または MapTest シーンの TutorialManager.Start() で呼ぶ
@@ -255,8 +252,6 @@ public class WebSocketClient : MonoBehaviour
 			if (roomMemberPanel != null) roomMemberPanel.SetReady(msg.id, true);
 		}
 	}
-
-	// ─── 既存ハンドラ（変更なし）───
 
 	private void HandleInitMessage(string json)
 	{
@@ -295,11 +290,11 @@ public class WebSocketClient : MonoBehaviour
 		if (GlobalCamera.Instance != null)
 		{
 			GlobalCamera.Instance.SetTarget(myPlayer.transform);
-			Debug.Log("★カメラターゲット設定完了");
+			Debug.Log("カメラターゲット設定完了");
 		}
 		else
 		{
-			Debug.LogWarning("⚠️GlobalCamera.Instanceがnullです");
+			Debug.LogWarning("GlobalCamera.Instanceがnull");
 		}
 
 		var eg = FindObjectOfType<ElementGenerator>();
@@ -310,7 +305,7 @@ public class WebSocketClient : MonoBehaviour
 		{
 			TutorialManager.Instance.ShowTutorial(() =>
 			{
-				Debug.Log("★ゲームスタート（チュートリアル後）");
+				Debug.Log("ゲームスタート（チュートリアル後）");
 			});
 		}
 		else
@@ -379,7 +374,7 @@ public class WebSocketClient : MonoBehaviour
 		if (roomMemberPanel != null) roomMemberPanel.RemoveMember(msg.id);
 	}
 
-	// ★ 追加：アイテム取得
+
 	private void HandleItemPickedMessage(string json)
 	{
 		// 自分が取得した場合だけミッションフラグを立てる
@@ -389,7 +384,6 @@ public class WebSocketClient : MonoBehaviour
 			MissionManager.Instance?.OnItemPicked();
 	}
 
-	// ★ 追加：ゴール受信
 	private void HandleGoalMessage(string json)
 	{
 		var msg = JsonUtility.FromJson<GoalMessage>(json);
@@ -404,7 +398,7 @@ public class WebSocketClient : MonoBehaviour
 		}
 		else
 		{
-			Debug.Log($"★ {msg.name} がゴールしました！");
+			Debug.Log($" {msg.name} がゴールしました！");
 		}
 	}
 
@@ -531,7 +525,7 @@ public class WebSocketClient : MonoBehaviour
 	private void DelayedGameStart()
 	{
 		MissionManager.Instance?.OnGameStart();
-		Debug.Log("★DelayedGameStart: MissionManager.OnGameStart()呼び出し");
+		Debug.Log("DelayedGameStart: MissionManager.OnGameStart()呼び出し");
 	}
 
 	private async void OnApplicationQuit()

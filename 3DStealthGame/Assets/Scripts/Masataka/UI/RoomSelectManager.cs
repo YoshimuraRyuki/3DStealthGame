@@ -96,7 +96,7 @@ public class RoomSelectManager : MonoBehaviour
 		// WebSocketClientに選択したルームIDを渡して接続
 		wsClient.ConnectToRoom(roomId);
 
-		// ★ 自分をパネルに追加
+		//  自分をパネルに追加
 		if (roomMemberPanel != null)
 		{
 			roomMemberPanel.ClearAll(); // 前のルームの残骸をリセット

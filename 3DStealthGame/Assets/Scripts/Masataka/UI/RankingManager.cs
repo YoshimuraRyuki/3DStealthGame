@@ -4,17 +4,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
-/// <summary>
-/// ゲーム終了時にサーバーへスコアを送信し、Top3ランキングを表示する。
-///
-/// 【Unityでの設定手順】
-/// 1. ヒエラルキーに空のGameObjectを作り "RankingManager" とリネーム → アタッチ
-/// 2. Canvas配下に以下を作る
-///    └── RankingPanel (Panel)
-///         ├── RankingText (Text)     ← 順位一覧テキスト
-///         └── ReturnButton (Button) ← タイトルへ戻るボタン
-/// 3. serverUrl をサーバーのIPに合わせる（WebSocketClient と同じIP）
-/// </summary>
 public class RankingManager : MonoBehaviour
 {
 	public static RankingManager Instance;
@@ -47,7 +36,6 @@ public class RankingManager : MonoBehaviour
 
 	private IEnumerator SubmitCoroutine(string playerName, float clearTime, int missionCount)
 	{
-		// ─── スコア送信 ───
 		string json = JsonUtility.ToJson(new ScorePayload
 		{
 			name = playerName,
@@ -68,7 +56,6 @@ public class RankingManager : MonoBehaviour
 		if (postReq.result != UnityEngine.Networking.UnityWebRequest.Result.Success)
 			Debug.LogWarning("ランキング送信失敗: " + postReq.error);
 
-		// ─── ランキング取得 ───
 		yield return StartCoroutine(FetchAndShow());
 	}
 
@@ -94,7 +81,7 @@ public class RankingManager : MonoBehaviour
 
 		string[] medals = { "??", "??", "??" };
 		var sb = new System.Text.StringBuilder();
-		sb.AppendLine("─── ランキング ───");
+		sb.AppendLine(" ランキング ");
 
 		if (entries == null || entries.Length == 0)
 		{
@@ -134,7 +121,6 @@ public class RankingManager : MonoBehaviour
 		UnityEngine.SceneManagement.SceneManager.LoadScene("Title");
 	}
 
-	// ─── JSON 用データ型 ───
 	[System.Serializable]
 	private class ScorePayload
 	{

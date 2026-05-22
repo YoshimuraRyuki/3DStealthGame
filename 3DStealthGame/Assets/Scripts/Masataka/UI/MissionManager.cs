@@ -2,34 +2,17 @@
 using UnityEngine.UI;
 using System.Collections.Generic;
 
-/// <summary>
-/// ミッション管理。
-/// 現在のミッション：
-///   1. アイテムを取得してクリア   → item_picked 受信でフラグON、goal受信で達成
-///   2. ○○秒以内にクリア          → ゴールまでの経過時間で判定（ローカルタイマー）
-///   3. 敵に見つからずにクリア     → ★竜希待ち。フラグだけ用意。enemy_found 受信で失敗にする予定
-///
-/// 【Unityでの設定手順】
-/// 1. ヒエラルキーに空のGameObjectを作り "MissionManager" とリネーム → アタッチ
-/// 2. Canvas配下に以下を作る
-///    ├── MissionPanel (GameObject)  ← 左上あたりに置く
-///    │    └── MissionText (Text)    ← ミッション一覧テキスト
-///    └── MissionClearText (Text)    ← 全達成時の演出テキスト
-/// 3. WebSocketClient の start_game 受信時に MissionManager.Instance.OnGameStart() を呼ぶ
-/// 4. WebSocketClient の各受信で対応メソッドを呼ぶ
-/// </summary>
 public class MissionManager : MonoBehaviour
 {
 	public static MissionManager Instance;
 
 	[Header("UI")]
 	public Text missionText;        // ミッション一覧
-	public Text missionClearText;   // 全達成時の演出
+	public Text missionClearText;   // 全達成時の演出　画面にCLEAR!みたいな。じしゃくんとおなじ
 
 	[Header("制限時間ミッションの秒数")]
-	public int timeLimitSeconds = 180;     // デフォルト3分
+	public int timeLimitSeconds = 180;
 
-	// ─── ミッションの内部状態 ───
 	private bool _hasPickedItem = false;
 	private bool _mission1Done = false;
 	private bool _mission2Done = false;
@@ -38,7 +21,6 @@ public class MissionManager : MonoBehaviour
 	private bool _isGoalReached = false;
 	private bool _isTimeUp = false;
 
-	// ─── ローカルタイマー ───
 	private bool _timerRunning = false;
 	private float _elapsedSeconds = 0f;   // ゲーム開始からの経過秒数
 
@@ -74,9 +56,6 @@ public class MissionManager : MonoBehaviour
 		}
 	}
 
-	// ─────────────────────────────────────────
-	// 外部から呼ぶメソッド（WebSocketClient から）
-	// ─────────────────────────────────────────
 
 	/// <summary>start_game 受信時に呼ぶ → タイマーをスタート</summary>
 	public void OnGameStart()
@@ -84,7 +63,7 @@ public class MissionManager : MonoBehaviour
 		_elapsedSeconds = 0f;
 		_timerRunning = true;
 		_isTimeUp = false;
-		Debug.Log("★MissionManager: タイマースタート");
+		Debug.Log("タイムスタート");
 		RefreshUI();
 	}
 
@@ -93,7 +72,6 @@ public class MissionManager : MonoBehaviour
 	{
 		if (_hasPickedItem) return;
 		_hasPickedItem = true;
-		Debug.Log("★アイテム取得済み");
 		RefreshUI();
 	}
 
@@ -115,7 +93,7 @@ public class MissionManager : MonoBehaviour
 
 		RefreshUI();
 		CheckAllClear();
-		Debug.Log($"★ゴール！ 経過: {_elapsedSeconds:F1}秒 ミッション: アイテム={_mission1Done} 時間={_mission2Done} 敵={_mission3Done}");
+		Debug.Log($"ゴール 経過: {_elapsedSeconds:F1}秒 ミッション: アイテム={_mission1Done} 時間={_mission2Done} 敵={_mission3Done}");
 	}
 
 	/// <summary>
@@ -126,12 +104,9 @@ public class MissionManager : MonoBehaviour
 	{
 		_mission3Failed = true;
 		RefreshUI();
-		Debug.Log("★敵に発見された → ミッション3失敗");
+		Debug.Log("ミッション3失敗");
 	}
 
-	// ─────────────────────────────────────────
-	// スコア計算（RankingManager に渡す）
-	// ─────────────────────────────────────────
 
 	/// <summary>達成したミッション数を返す</summary>
 	public int GetClearedMissionCount()
