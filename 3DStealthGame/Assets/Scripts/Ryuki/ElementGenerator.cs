@@ -392,6 +392,8 @@ public class ElementGenerator : MonoBehaviour
 	/// </summary>
 	void UpdateMiniMap()
 	{
+		if (player == null) return; // プレイヤー生成前はスキップ
+
 		///////////////////////
 		// プレイヤー
 		///////////////////////
@@ -539,7 +541,7 @@ public class ElementGenerator : MonoBehaviour
 		return x >= 0 &&
 			   y >= 0 &&
 			   x < mapExist.GetLength(0) &&
-			   y < mapExist.GetLength(1);    
+			   y < mapExist.GetLength(1);
 	}
 
 
