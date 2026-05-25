@@ -119,12 +119,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 491f0d45594acd44c80c43640593472d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  walkSpeed: 5
-  crouchSpeed: 2.5
-  attackRange: 1.5
-  attackCooldown: 1
-  stunDuration: 3
   isLocalPlayer: 0
+  walkSpeed: 10
+  crouchSpeed: 5
+  sneakVolume: 0.5
+  walkVolume: 1
 --- !u!54 &6726028894355241790
 Rigidbody:
   m_ObjectHideFlags: 0

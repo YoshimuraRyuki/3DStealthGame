@@ -96,7 +96,7 @@ public class SwichManager : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag("Player1") || other.CompareTag("Player2"))
         {
             print("ƒvƒŒƒCƒ„[‚ª“ü‚Á‚½");
             isPlayerInRange = true;
@@ -109,7 +109,7 @@ public class SwichManager : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag("Player1") || other.CompareTag("Player2"))
         {
             isPlayerInRange = false;
             if (actionText != null)

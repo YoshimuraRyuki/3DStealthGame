@@ -561,6 +561,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1888993880285365305}
   - component: {fileID: 1729708135893954812}
+  - component: {fileID: 4280542629339181165}
   m_Layer: 0
   m_Name: SuperEnemy
   m_TagString: StrongEnemy
@@ -614,6 +615,19 @@ MonoBehaviour:
   hearingRange: 10
   alertDuration: 2
   isStopMove: 0
+--- !u!114 &4280542629339181165
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8641800539430789326}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2bc1347d82b61e94cb7191cdccf2c68c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stanTime: 3
 --- !u!1 &8690177676271085605
 GameObject:
   m_ObjectHideFlags: 0

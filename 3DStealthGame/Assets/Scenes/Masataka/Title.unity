@@ -1111,6 +1111,9 @@ MonoBehaviour:
   localPlayerMaterial: {fileID: 2100000, guid: 71733687b08fe5245a500a0d622d93fc, type: 2}
   remotePlayerMaterial: {fileID: 2100000, guid: 374c239778b6c5e4fb42491f4d42a8ae, type: 2}
   roomMemberPanel: {fileID: 1019032279}
+  myPlayerNumber: 0
+  ngrokUrl: https://rice-washer-suitcase.ngrok-free.dev
+  serverMode: 0
 --- !u!1 &777864025
 GameObject:
   m_ObjectHideFlags: 0
@@ -1219,7 +1222,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b49e4e739ff118641b9c50650c556c06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  serverBaseUrl: http://192.168.56.102:8080
+  serverBaseUrl: https://rice-washer-suitcase.ngrok-free.dev
   roomButtons:
   - {fileID: 1853382632}
   - {fileID: 1201590605}

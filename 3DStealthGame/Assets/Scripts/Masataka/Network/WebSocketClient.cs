@@ -76,6 +76,18 @@ public class GoalMessage
 }
 
 
+// 敵同期メッセージ
+[System.Serializable]
+public class EnemyMoveMessage
+{
+	public string type;      // "enemy_move"
+	public int enemy_index;  // シーン内の敵インデックス
+	public float x;
+	public float y;
+	public float z;
+	public float angle;      // Y軸回転
+}
+
 // --- WebSocketクライアント本体 ---
 
 public class WebSocketClient : MonoBehaviour
@@ -108,6 +120,27 @@ public class WebSocketClient : MonoBehaviour
 	public RoomMemberPanel roomMemberPanel;
 
 	private Dictionary<int, Vector3> spawnPositions = new Dictionary<int, Vector3>();
+	public int myPlayerNumber = 0; // 1=ホスト(敵を送信), 2=ゲスト(敵を受信)
+	private GameObject[] _enemyObjects; // シーン内の全敵
+	private Dictionary<int, Vector3> enemyTargetPositions = new Dictionary<int, Vector3>();
+	private Dictionary<int, float> enemyTargetAngles = new Dictionary<int, float>();
+	private float enemySendTimer = 0f;
+	private float enemySendInterval = 0.05f;
+
+	//public bool useLocalServer = true; // trueでローカル、falseでRender
+
+
+	public enum ServerMode
+	{
+		Local,      // 仮想環境
+		LocalHost,  // srver.exe用
+		Ngrok,      // ngrok
+		Render,     // Render
+		FlyIO       // Fly.io
+	}
+
+	public string ngrokUrl = "https://rice-washer-suitcase.ngrok-free.dev";
+	public ServerMode serverMode = ServerMode.Local;
 
 	void Awake()
 	{
@@ -116,6 +149,25 @@ public class WebSocketClient : MonoBehaviour
 		DontDestroyOnLoad(this.gameObject);
 		SceneManager.sceneLoaded += OnSceneLoaded;
 		isGameSceneLoaded = SceneManager.GetActiveScene().name == "MapTest";
+	}
+
+	private string GetServerUrl(string roomId)
+	{
+		switch (serverMode)
+		{
+			case ServerMode.Local:
+				return $"ws://192.168.56.102:8080/ws?room_id={roomId}&name={playerName}";
+			case ServerMode.LocalHost:
+				return $"ws://localhost:8080/ws?room_id={roomId}&name={playerName}";
+			case ServerMode.Ngrok:
+				return $"wss://{ngrokUrl.Replace("https://", "")}/ws?room_id={roomId}&name={playerName}";
+			case ServerMode.Render:
+				return $"wss://stealth-game-server.onrender.com/ws?room_id={roomId}&name={playerName}";
+			case ServerMode.FlyIO:
+				return $"wss://stealth-game-server.fly.dev/ws?room_id={roomId}&name={playerName}";
+			default:
+				return $"ws://192.168.56.102:8080/ws?room_id={roomId}&name={playerName}";
+		}
 	}
 
 	void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -129,7 +181,7 @@ public class WebSocketClient : MonoBehaviour
 		else
 		{
 			Invoke("ProcessPendingMessages", 0.5f);
-			// ★ MapTest ロード完了 → ミッションタイマースタート
+			// MapTest ロード完了 → ミッションタイマースタート
 			Invoke("DelayedGameStart", 0.6f);
 		}
 		Debug.Log("シーン変更: " + scene.name);
@@ -139,7 +191,7 @@ public class WebSocketClient : MonoBehaviour
 	{
 		Application.runInBackground = true;
 		playerName = "Player_" + Random.Range(1000, 9999);
-		websocket = new WebSocket($"ws://192.168.56.102:8080/ws?room_id=test&name={playerName}");
+		websocket = new WebSocket(GetServerUrl("test"));
 		websocket.OnOpen += () => Debug.Log("サーバーに接続");
 		websocket.OnMessage += OnMessageReceived;
 		websocket.OnError += (e) => Debug.Log("エラー: " + e);
@@ -153,7 +205,7 @@ public class WebSocketClient : MonoBehaviour
 			websocket = null;
 		}
 
-		websocket = new WebSocket($"ws://192.168.56.102:8080/ws?room_id={roomId}&name={playerName}");
+		websocket = new WebSocket(GetServerUrl(roomId));
 		websocket.OnOpen += OnWebSocketOpened;
 		websocket.OnMessage += OnMessageReceived;
 		websocket.OnError += (e) => Debug.Log("エラー: " + e);
@@ -231,6 +283,7 @@ public class WebSocketClient : MonoBehaviour
 		else if (json.Contains("\"type\":\"item_picked\"")) HandleItemPickedMessage(json);
 		else if (json.Contains("\"type\":\"goal\"")) HandleGoalMessage(json);
 		else if (json.Contains("\"type\":\"timer_update\"")) HandleTimerUpdate(json);
+		else if (json.Contains("\"type\":\"enemy_move\"")) HandleEnemyMoveMessage(json);
 		else if (json.Contains("\"type\":\"start_game\""))
 		{
 			if (SceneManager.GetActiveScene().name == "MapTest")
@@ -270,6 +323,26 @@ public class WebSocketClient : MonoBehaviour
 		myPlayer = Instantiate(playerPrefab);
 		AttachNameTag(myPlayer, playerName, false);
 		myPlayer.tag = "Player" + init.player_number;
+		myPlayerNumber = init.player_number;
+		// 自分のミニマップだけ表示
+		var eg = FindObjectOfType<ElementGenerator>();
+		/*if (eg != null)
+		{
+			if (myPlayerNumber == 1)
+				eg.ShowMiniMap(1);
+			else
+				eg.ShowMiniMap(2);
+		}*/
+		// ゲスト（player2）は敵のAIを止めてWebSocketで受信した位置で動かす
+		if (myPlayerNumber == 2)
+		{
+			var enemies = GameObject.FindGameObjectsWithTag("Enemy");
+			foreach (var e in enemies)
+			{
+				var em = e.GetComponent<EnemyManager>();
+				if (em != null) em.isRemoteControlled = true;
+			}
+		}
 		if (localPlayerMaterial != null)
 			myPlayer.GetComponentInChildren<Renderer>().material = localPlayerMaterial;
 
@@ -297,8 +370,8 @@ public class WebSocketClient : MonoBehaviour
 			Debug.LogWarning("GlobalCamera.Instanceがnull");
 		}
 
-		var eg = FindObjectOfType<ElementGenerator>();
-		if (eg != null) eg.SetPlayerTransform(myPlayer.transform);
+		//var eg = FindObjectOfType<ElementGenerator>();
+		if (elementGenerator != null) elementGenerator.SetRemotePlayerTransform(myPlayer.transform);
 
 		// ★ チュートリアル表示（MapTest ロード後の init で呼ぶ）
 		if (TutorialManager.Instance != null)
@@ -405,8 +478,16 @@ public class WebSocketClient : MonoBehaviour
 	private void HandleTimerUpdate(string json)
 	{
 		var msg = JsonUtility.FromJson<TimerUpdateMessage>(json);
+
 	}
 
+	private void HandleEnemyMoveMessage(string json)
+	{
+		if (myPlayerNumber == 1) return;
+		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json);
+		enemyTargetPositions[msg.enemy_index] = new Vector3(msg.x, msg.y, msg.z);
+		enemyTargetAngles[msg.enemy_index] = msg.angle;
+	}
 	// ─── ロビー用ハンドラ（変更なし）───
 
 	private void HandleInitForLobby(string json)
@@ -472,7 +553,7 @@ public class WebSocketClient : MonoBehaviour
 		AttachNameTag(newPlayer, player.name, true);
 
 		var eg = FindObjectOfType<ElementGenerator>();
-		if (eg != null) eg.SetRemotePlayerTransform(newPlayer.transform);
+		if (eg != null) eg.SetPlayerTransform(newPlayer.transform);
 	}
 
 	private void ClearRemotePlayers()
@@ -492,9 +573,9 @@ public class WebSocketClient : MonoBehaviour
 			if (!playerObjects.ContainsKey(id)) continue;
 			var obj = playerObjects[id];
 			if (obj == null) continue;
-			obj.transform.position = Vector3.Lerp(obj.transform.position, targetPositions[id], Time.deltaTime * 15f);
+			obj.transform.position = Vector3.Lerp(obj.transform.position, targetPositions[id], Time.deltaTime * 25f);
 			if (targetRotations.ContainsKey(id))
-				obj.transform.rotation = Quaternion.Lerp(obj.transform.rotation, targetRotations[id], Time.deltaTime * 15f);
+				obj.transform.rotation = Quaternion.Lerp(obj.transform.rotation, targetRotations[id], Time.deltaTime * 25f);
 		}
 
 		if (websocket != null && websocket.State == WebSocketState.Open)
@@ -506,8 +587,59 @@ public class WebSocketClient : MonoBehaviour
 			{
 				timer += Time.deltaTime;
 				if (timer >= sendInterval) { SendPosition(); timer = 0f; }
+				UpdateEnemySync();
 			}
 		}
+	}
+
+	private void UpdateEnemySync()
+	{
+		if (myPlayerNumber == 1)
+		{
+			// ホスト：敵の位置を送信
+			if (_enemyObjects == null || _enemyObjects.Length == 0)
+				_enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
+
+			enemySendTimer += Time.deltaTime;
+			if (enemySendTimer >= enemySendInterval)
+			{
+				enemySendTimer = 0f;
+				for (int i = 0; i < _enemyObjects.Length; i++)
+				{
+					if (_enemyObjects[i] == null) continue;
+					var pos = _enemyObjects[i].transform.position;
+					var angle = _enemyObjects[i].transform.eulerAngles.y;
+					SendEnemyMove(i, pos, angle);
+				}
+			}
+		}
+		else if (myPlayerNumber == 2)
+		{
+			// ゲスト：受信した位置に補間移動
+			if (_enemyObjects == null || _enemyObjects.Length == 0)
+				_enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
+
+			foreach (var kv in enemyTargetPositions)
+			{
+				int idx = kv.Key;
+				if (idx >= _enemyObjects.Length || _enemyObjects[idx] == null) continue;
+				_enemyObjects[idx].transform.position = Vector3.Lerp(
+					_enemyObjects[idx].transform.position, kv.Value, Time.deltaTime * 25f);
+				if (enemyTargetAngles.ContainsKey(idx))
+					_enemyObjects[idx].transform.rotation = Quaternion.Lerp(
+						_enemyObjects[idx].transform.rotation,
+						Quaternion.Euler(0, enemyTargetAngles[idx], 0),
+						Time.deltaTime * 25f);
+			}
+		}
+	}
+
+	private async void SendEnemyMove(int index, Vector3 pos, float angle)
+	{
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
+		string json = $"{{\"type\":\"enemy_move\",\"enemy_index\":{index}," +
+			$"\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z},\"angle\":{angle}}}";
+		await websocket.SendText(json);
 	}
 
 	private async void SendPosition()
@@ -519,6 +651,13 @@ public class WebSocketClient : MonoBehaviour
 					  $"\"z\":{myPlayer.transform.position.z}}}," +
 					  $"\"rotation\":{{\"x\":{myPlayer.transform.rotation.eulerAngles.x}," +
 					  $"\"y\":{myPlayer.transform.rotation.eulerAngles.y}}}}}";
+		await websocket.SendText(json);
+	}
+
+	public async void SendGoal()
+	{
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
+		string json = $"{{\"type\":\"goal\"}}";
 		await websocket.SendText(json);
 	}
 
