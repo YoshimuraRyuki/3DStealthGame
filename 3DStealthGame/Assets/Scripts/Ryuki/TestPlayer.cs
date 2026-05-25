@@ -12,6 +12,7 @@ public class TestPlayer : MonoBehaviour
     public delegate void SoundEventHandler(Vector3 position, float volume);
     public event SoundEventHandler OnMakeSound;
 
+    Animator Am;
 
     void MakeSound(Vector3 position, float volume)
     {
@@ -25,7 +26,7 @@ public class TestPlayer : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        Am = GetComponent<Animator>();
     }
 
     // Update is called once per frame
@@ -47,13 +48,19 @@ public class TestPlayer : MonoBehaviour
             {
                 // ‰¹‚ğÁ‚·
                 print("‰¹Á‚µ‚Ä‚Ü‚·");
+                Am.SetTrigger("Sneak");
             }
             else
             {
                 // ’ÊíˆÚ“®‚Ì‘å‚«‚È‰¹‚ğo‚·
                 MakeSound(transform.position, walkVolume);
                 print("‰¹o‚Ä‚Ü‚·");
+                Am.SetTrigger("Run");
             }
+        }
+        else
+        {
+            Am.SetTrigger("Idle");
         }
 
         if (Input.GetMouseButtonDown(0))

@@ -6,11 +6,16 @@ using UnityEngine;
 public class SwichManager : MonoBehaviour
 {
     #region 宣言
+
+    Renderer rd;
+
     private TextMeshProUGUI actionText;
     private Transform cameraTransform;
     private bool isPlayerInRange = false;
 
-    public static bool isEnemyMoveStop = false;
+    public bool isEnemyMoveStop = false;
+    bool isActionEnemy= false;
+    bool isActionSwitch = false;
 
     [Header("スタン時間"), SerializeField]
     float stanTime = 3f;
@@ -18,39 +23,33 @@ public class SwichManager : MonoBehaviour
     #endregion
 
     #region ボタン押下処理
-    // スイッチを押した時の処理
-    private void DoAction()
+
+    /// <summary>
+    /// 
+    /// </summary>    
+    void DoActionEnemy()
     {
         Debug.Log("殴る開始");
+        // 敵の動きを止める処理
+        isEnemyMoveStop = true;
 
-        // 自分のタグによって行動を変更
-
-        // スイッチだったらギミック処理
-        
-        if (CompareTag("Switch"))
+        currentStanTime += Time.deltaTime;
+        if (stanTime <= currentStanTime)
         {
-            // 壁を生成して隠れる場所を作る
-
+            isEnemyMoveStop = false;
+            currentStanTime = 0f;
+            isActionEnemy = false;
         }
 
-        // 敵だったら敵がスタン
-        if (CompareTag("Enemy"))
-        {
-            // 敵の動きを止める処理
-            isEnemyMoveStop = true;
+        // スタンしてるアニメーション
+    }
 
-            currentStanTime += Time.deltaTime;
-            if(stanTime <= currentStanTime)
-            {
-                isEnemyMoveStop = false;
-                currentStanTime = 0f;
-            }
-
-            // スタンしてるアニメーション
-
-        }
-
-
+    /// <summary>
+    /// スイッチを押したら対応した強化敵の遮る壁を出す
+    /// </summary>
+    void DoActionSwitch()
+    {
+        rd.material.color = Color.red;
     }
     #endregion
 
@@ -59,6 +58,8 @@ public class SwichManager : MonoBehaviour
     void Start()
     {
         currentStanTime = 0f;
+
+        rd = GetComponent<Renderer>();
 
         // メインカメラの向きを取得用
         if (Camera.main != null)
@@ -83,7 +84,24 @@ public class SwichManager : MonoBehaviour
         // プレイヤーが範囲内でEキーを押した時
         if (isPlayerInRange && Input.GetKeyDown(KeyCode.E))
         {
-            DoAction();
+            if (CompareTag("Enemy"))
+            {
+                isActionEnemy = true;
+            }
+            if (CompareTag("Switch"))
+            {
+                // 壁を生成して隠れる場所を作る
+                isActionSwitch = true;
+            }
+        }
+
+        if(isActionEnemy)
+        {
+            DoActionEnemy();
+        }
+        if (isActionSwitch)
+        {
+            DoActionSwitch();
         }
 
         // テキストが表示されている間、常にカメラの方を向かせる
@@ -96,7 +114,7 @@ public class SwichManager : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag("Player1"))
         {
             print("プレイヤーが入った");
             isPlayerInRange = true;
@@ -109,7 +127,7 @@ public class SwichManager : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag("Player1"))
         {
             isPlayerInRange = false;
             if (actionText != null)

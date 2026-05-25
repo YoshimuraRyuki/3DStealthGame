@@ -24,6 +24,7 @@ public class EnemyManager : MonoBehaviour
     ElementGenerator Eg;
     Light Sl;
     TestPlayer Tp; // 仮プレイヤーでテスト
+    SwichManager Sm;
 
     // プレイヤーの巡回処理
     GameObject startPoint;   // 最初のポイント
@@ -532,8 +533,10 @@ public class EnemyManager : MonoBehaviour
 
         Eg = GetComponent<ElementGenerator>();
         Sl = GetComponentInChildren<Light>();
-        Tp = GameObject.FindWithTag("Player").GetComponent<TestPlayer>();
-        
+        Tp = GameObject.FindWithTag("Player1").GetComponent<TestPlayer>();
+        Sm = GetComponent<SwichManager>();
+
+
         if (Tp != null)
         {
             Tp.OnMakeSound += HandleSound;
@@ -549,12 +552,15 @@ public class EnemyManager : MonoBehaviour
         stopMoveCooldown = Random.Range(stopMoveCooldownMin, stopMoveCooldownMax);
 
         // 見つけるプレイヤー取得
-        targetPlayer = GameObject.FindWithTag("Player").transform; // 結合する際にこの処理を消して将貴のプレイヤープレファブを入れる
+        targetPlayer = GameObject.FindWithTag("Player1").transform; // 結合する際にこの処理を消して将貴のプレイヤープレファブを入れる
     }
 
     // Update is called once per frame
     void Update()
     {
+
+        if (Sm.isEnemyMoveStop) return;
+
         PlayerFound();
         AlertFunction();
         if (gameObject.tag == "StrongEnemy")
