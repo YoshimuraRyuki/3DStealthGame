@@ -35,6 +35,10 @@ public class NameTag : MonoBehaviour
 		_textMesh.gameObject.SetActive(visible);
 	}
 
+	public string GetName()
+	{
+		return _textMesh.text;
+	}
 	void LateUpdate()
 	{
 		// 親プレイヤーの頭上に追従

@@ -25,12 +25,12 @@ public class GoalScript : MonoBehaviour
 			wsClient.SendGoal();
 		}
 
-		// 2人揃ったらリザルトへ
+		/*// 2人揃ったらリザルトへ
 		if (playersInGoal.Count >= 2)
 		{
 			isGoalTriggered = true;
-			GoToResult();
-		}
+			//GoToResult();
+		}*/
 	}
 
 	private void OnTriggerExit(Collider other)
@@ -39,7 +39,7 @@ public class GoalScript : MonoBehaviour
 			playersInGoal.Remove(other.tag);
 	}
 
-	private void GoToResult()
+	/*private void GoToResult() リザルトに２人同時に行くためにサーバーで管理
 	{
 		// データを静的クラスに保存
 		if (MissionManager.Instance != null)
@@ -53,5 +53,5 @@ public class GoalScript : MonoBehaviour
 			ResultData.playerName = wsClient.GetPlayerName();
 
 		SceneManager.LoadScene("Result");
-	}
+	}*/
 }

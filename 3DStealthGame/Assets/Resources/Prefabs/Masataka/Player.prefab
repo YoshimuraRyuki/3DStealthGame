@@ -120,10 +120,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isLocalPlayer: 0
-  walkSpeed: 10
-  crouchSpeed: 5
-  sneakVolume: 0.5
-  walkVolume: 1
+  walkSpeed: 30
+  crouchSpeed: 10
+  sneakVolume: 1
+  walkVolume: 2
 --- !u!54 &6726028894355241790
 Rigidbody:
   m_ObjectHideFlags: 0

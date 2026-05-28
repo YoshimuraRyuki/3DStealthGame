@@ -28,7 +28,8 @@ public class ElementGenerator : MonoBehaviour
 	// ミニマップ生成スクリプト用
 	//MapGenerate mapGenerate;
 	FixedMap mapGenerate;
-	int[,] map;
+	//int[,] map;
+	string[,] map;
 	// プレイヤー検索用
 	int playerX = 0;
 	int playerY = 0;
@@ -50,7 +51,9 @@ public class ElementGenerator : MonoBehaviour
 	List<GameObject> viewStrongList = new List<GameObject>();
 	[SerializeField] GameObject itemViewPrefab;
 	List<GameObject> viewItemList = new List<GameObject>();
-
+	List<EnemyManager> strongEnemyList = new List<EnemyManager>();
+	List<SwitchManager> switchList = new List<SwitchManager>();
+	int switchIndex = 0;
 
 	[SerializeField] RectTransform miniMapMaskRect;
 	// ミニマップ位置座標
@@ -175,7 +178,7 @@ public class ElementGenerator : MonoBehaviour
 
 			for (int x = 0; x < width; x++)
 			{
-				if (map[x, y] == 0)
+				if (map[x, y] == "0")
 				{
 					if (startX == -1) startX = x;
 				}
@@ -215,7 +218,7 @@ public class ElementGenerator : MonoBehaviour
 	/// 二次元マップ生成
 	/// </summary>
 	/// <param name="map"></param>
-	void GenerateMap2D(int[,] map, RectTransform targetRect, out GameObject[,] mapExist)
+	void GenerateMap2D(string[,] map, RectTransform targetRect, out GameObject[,] mapExist)
 	{
 		mapExist = new GameObject[map.GetLength(0), map.GetLength(1)];
 
@@ -227,12 +230,12 @@ public class ElementGenerator : MonoBehaviour
 		{
 			for (int y = 0; y < map.GetLength(1); y++)
 			{
-				if (map[x, y] == 10) // プレイヤー位置検索
+				if (map[x, y] == "10") // プレイヤー位置検索
 				{
 					playerX = x;
 					playerY = y;
 				}
-				if (map[x, y] == 3) // 敵位置検索
+				if (map[x, y] == "3") // 敵位置検索
 				{
 					enemyX = x;
 					enemyY = y;
@@ -247,9 +250,9 @@ public class ElementGenerator : MonoBehaviour
 			{
 				int index = 0;
 
-				if (map[i, j] == 0) index = 0;      // 壁
-				else if (map[i, j] == 1) index = 1; // 部屋
-				else if (map[i, j] == 2) index = 2; // 通路
+				if (map[i, j] == "0") index = 0;      // 壁
+				else if (map[i, j] == "1") index = 1; // 部屋
+				else if (map[i, j] == "2") index = 2; // 通路
 
 
 				objMapExist[i, j] = Instantiate(objMapTipList[index]);
@@ -284,15 +287,15 @@ public class ElementGenerator : MonoBehaviour
 
 
 				// 2Dマップ生成のデバッグ用
-				if ((map[i, j] == 1)) // 部屋
+				if ((map[i, j] == "1")) // 部屋
 				{
 					objMapExist[i, j].GetComponent<Image>().color = new Color(0, 0.8f, 1, 0.5f); // 部屋の色
 				}
-				else if ((map[i, j] == 2)) // 通路
+				else if ((map[i, j] == "2")) // 通路
 				{
 					objMapExist[i, j].GetComponent<Image>().color = new Color(0, 1, 0, 0.5f);
 				}
-				else if ((map[i, j] == 3)) // 敵
+				else if ((map[i, j] == "3")) // 敵
 				{
 					objMapExist[i, j].GetComponent<Image>().color = new Color(1, 0, 0, 0.5f);
 				}
@@ -368,8 +371,8 @@ public class ElementGenerator : MonoBehaviour
 			if (IsInsideMap(oldX, oldY, mapExist))
 			{
 				Image oldImg = mapExist[oldX, oldY].GetComponent<Image>();
-				if (map[oldX, oldY] == 1) oldImg.color = new Color(0, 0.8f, 1, 0.5f);
-				else if (map[oldX, oldY] == 2) oldImg.color = new Color(0, 1, 0, 0.5f);
+				if (map[oldX, oldY] == "1") oldImg.color = new Color(0, 0.8f, 1, 0.5f);
+				else if (map[oldX, oldY] == "2") oldImg.color = new Color(0, 1, 0, 0.5f);
 				else oldImg.color = new Color(0, 0.8f, 1, 0.5f);
 			}
 
@@ -423,19 +426,19 @@ public class ElementGenerator : MonoBehaviour
 				Image oldImage = objMapExist[oldPlayerX, oldPlayerY].GetComponent<Image>();
 
 				// 元の地形色に戻す
-				if (map[oldPlayerX, oldPlayerY] == 1)
+				if (map[oldPlayerX, oldPlayerY] == "1")
 				{
 					oldImage.color = new Color(0, 0.8f, 1, 0.5f); // 部屋の色
 				}
-				else if (map[oldPlayerX, oldPlayerY] == 2)
+				else if (map[oldPlayerX, oldPlayerY] == "2")
 				{
 					oldImage.color = new Color(0, 1, 0, 0.5f);
 				}
-				else if (map[oldPlayerX, oldPlayerY] == 3)
+				else if (map[oldPlayerX, oldPlayerY] == "3")
 				{
 					oldImage.color = new Color(0, 0.8f, 1, 0.5f);
 				}
-				else if (map[oldPlayerX, oldPlayerY] == 10)
+				else if (map[oldPlayerX, oldPlayerY] == "10")
 				{
 					oldImage.color = new Color(0, 0.8f, 1, 0.5f);
 				}
@@ -458,16 +461,16 @@ public class ElementGenerator : MonoBehaviour
 		}
 
 		// マップを逆方向へ動かす
-		//CenterMiniMap(currentPlayerX, currentPlayerY);
+		CenterMiniMap(currentPlayerX, currentPlayerY);
 
 		// P1（自分）
-		if (remotePlayer != null)
+		if (player != null)
 			UpdatePlayerOnMap(player, ref currentPlayerX, ref currentPlayerY,
 							  ref oldPlayerX, ref oldPlayerY,
 							  objMapExist_P1, map2DRect_P1, miniMapMaskRect_P1);
 
 		// P2（相手）
-		if (player != null)
+		if (remotePlayer != null)
 			UpdatePlayerOnMap(remotePlayer, ref currentRemoteX, ref currentRemoteY,
 							  ref oldRemoteX, ref oldRemoteY,
 							  objMapExist_P2, map2DRect_P2, miniMapMaskRect_P2);
@@ -483,11 +486,11 @@ public class ElementGenerator : MonoBehaviour
 			{
 				Image img = objMapExist[pos.x, pos.y].GetComponent<Image>();
 
-				if (map[pos.x, pos.y] == 1)
+				if (map[pos.x, pos.y] == "1")
 				{
 					img.color = new Color(0, 0.8f, 1, 0.5f);
 				}
-				else if (map[pos.x, pos.y] == 2)
+				else if (map[pos.x, pos.y] == "2")
 				{
 					img.color = new Color(0, 1, 0, 0.5f);
 				}
@@ -540,6 +543,21 @@ public class ElementGenerator : MonoBehaviour
 
 			rt.rotation = Quaternion.Euler(0, 0, -angle + offset);
 
+			var em = enemyObj.GetComponent<EnemyManager>();
+			if (em != null)
+			{
+				var img = rt.GetComponent<Image>();
+				if (img != null)
+				{
+					if (em.currentAlertCount <= 1)
+						img.color = Color.red;
+					else if (em.currentAlertCount < 3)
+						img.color = new Color(1f, 0.5f, 0f);
+					else
+						img.color = new Color(0.827f, 0.851f, 0.439f);
+				}
+			}
+
 		}
 
 
@@ -586,6 +604,8 @@ public class ElementGenerator : MonoBehaviour
 			float offset2 = 45f;
 
 			rt2.rotation = Quaternion.Euler(0, 0, -angle2 + offset2);
+
+
 
 		}
 
@@ -666,45 +686,70 @@ public class ElementGenerator : MonoBehaviour
 	/// </summary>
 	void GenerateObjectsCSV()
 	{
+
 		for (int x = 0; x < map.GetLength(0); x++)
 		{
 			for (int y = 0; y < map.GetLength(1); y++)
 			{
 				Vector3 pos = new Vector3(x, 0, y);
 
-				switch (map[x, y])
+				string cell = map[x, y];
+
+				if (string.IsNullOrEmpty(cell))
+				{
+					continue;
+				}
+
+				string[] data = cell.Split('_');
+
+				int type = int.Parse(data[0]);
+				int id = data.Length > 1 ? int.Parse(data[1]) : -1;
+
+				switch (type)
 				{
 					case 3: // 敵
 						Instantiate(objEnemyList[0], pos, Quaternion.identity);
 						GameObject view = Instantiate(enemyViewPrefab, map2DRect);
 						viewList.Add(view);
 						objEnemys = GameObject.FindGameObjectsWithTag("Enemy");
-						map[x, y] = 1; // 床に戻す
+						map[x, y] = "1"; // 床に戻す
 						break;
 
 					case 4: // 強化敵
-						Instantiate(objSuperEnemyList[0], pos, Quaternion.identity);
+						GameObject enemyObj = Instantiate(objSuperEnemyList[0], pos, Quaternion.identity);
 						GameObject viewStrong = Instantiate(enemyStrongViewPrefab, map2DRect);
 						viewStrongList.Add(viewStrong);
 						objEnemyStrongs = GameObject.FindGameObjectsWithTag("StrongEnemy");
-						map[x, y] = 1;
+
+						//ギミック用
+						EnemyManager em = enemyObj.GetComponent<EnemyManager>();
+						em.enemyID = id;
+						strongEnemyList.Add(em);
+
+						map[x, y] = "1";
 						break;
 
 					case 5: // アイテム
 						Instantiate(objItemList[0], pos, Quaternion.identity);
 						objItems = GameObject.FindGameObjectsWithTag("Item");
-						map[x, y] = 1;
+						map[x, y] = "1";
 						break;
 
 					case 6: // ゴール
 						Instantiate(objGoal, pos, Quaternion.identity);
 						objGoals = GameObject.FindGameObjectsWithTag("Goal");
-						map[x, y] = 1;
+						map[x, y] = "1";
 						break;
 					case 7: // スイッチ
-						Instantiate(objSwitchList[0], pos, Quaternion.identity);
+						GameObject switchObj = Instantiate(objSwitchList[0], pos, Quaternion.identity);
 						objSwitchs = GameObject.FindGameObjectsWithTag("Switch");
-						map[x, y] = 1;
+
+						// ギミック用
+						SwitchManager sw = switchObj.GetComponentInChildren<SwitchManager>();
+						sw.targetEnemyID = id;
+						switchList.Add(sw);
+
+						map[x, y] = "1";
 						break;
 
 					/*case 8: // プレイヤー
@@ -716,19 +761,54 @@ public class ElementGenerator : MonoBehaviour
 						var wsClient = FindObjectOfType<WebSocketClient>();
 						if (wsClient != null)
 							wsClient.SetSpawnPosition(1, pos);
-						map[x, y] = 1;
+						map[x, y] = "1";
 						break;
 					case 9: // 敵の巡回ポイント
 						Instantiate(objPatrolPointList[0], pos, Quaternion.identity);
-						map[x, y] = 1;
+						map[x, y] = "1";
 						break;
 					case 10: // プレイヤー2
 						var wsClient2 = FindObjectOfType<WebSocketClient>();
 						if (wsClient2 != null)
 							wsClient2.SetSpawnPosition(2, pos);
-						map[x, y] = 1;
+						map[x, y] = "1";
 						break;
 				}
+			}
+		}
+
+		foreach (SwitchManager sw in switchList)
+		{
+			if (sw == null)
+			{
+				Debug.LogError("SwitchManagerが取得できてない");
+				continue;
+			}
+
+			EnemyManager targetEnemy = null;
+
+			foreach (EnemyManager em in strongEnemyList)
+			{
+				if (em == null)
+					continue;
+
+				// ID一致チェック
+				if (em.enemyID == sw.targetEnemyID)
+				{
+					targetEnemy = em;
+					break;
+				}
+			}
+
+			if (targetEnemy != null)
+			{
+				sw.SetTarget(targetEnemy);
+
+				Debug.Log($"スイッチID:{sw.targetEnemyID} → 敵ID:{targetEnemy.enemyID} 接続");
+			}
+			else
+			{
+				Debug.LogWarning($"対応する敵が見つかりません ID:{sw.targetEnemyID}");
 			}
 		}
 	}

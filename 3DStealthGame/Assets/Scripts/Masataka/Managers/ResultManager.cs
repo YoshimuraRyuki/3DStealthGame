@@ -23,7 +23,7 @@ public class ResultManager : MonoBehaviour
 
 	void Start()
 	{
-		playerNameText.text = ResultData.playerName;
+		playerNameText.text = $"{ResultData.playerName} & {ResultData.remotePlayerName}";
 		clearTimeText.text = $"{(int)ResultData.elapsedTime}•b";
 		missionCountText.text = $"{ResultData.missionCount} / 3";
 

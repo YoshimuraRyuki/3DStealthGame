@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
@@ -25,7 +26,8 @@ public class EnemyManager : MonoBehaviour
 	ElementGenerator Eg;
 	Light Sl;
 	PlayerController Pc; // 仮プレイヤーでテスト
-	SwichManager Sm;
+	SwitchManager Sm;
+	TextMeshProUGUI reactionText;
 
 	// プレイヤーの巡回処理
 	GameObject startPoint;   // 最初のポイント
@@ -74,10 +76,16 @@ public class EnemyManager : MonoBehaviour
 	bool isAlerted = false;
 	[HideInInspector] public bool isRemoteControlled = false; // player2側はtrue
 	bool isFoundPlayer = false;
-	bool isCountStop = false;
 	public bool isStopMove = false; // 敵が止まっているときに動きを完全に止める
-
 	private bool _soundRegistered = false;
+
+	[Header("スイッチギミック用ID")]
+	public int enemyID;
+	Animator anim;
+
+	// Player2音検知用クールダウン
+	private float _remoteSoundCooldown = 0f;
+
 	#endregion
 
 	#region 敵移動遷移
@@ -202,8 +210,6 @@ public class EnemyManager : MonoBehaviour
 	}
 	#endregion
 
-
-
 	#region 敵を見つける処理
 
 	/// <summary>
@@ -225,15 +231,25 @@ public class EnemyManager : MonoBehaviour
 
 	/// <summary>
 	/// プレイヤーを発見するさせる時の処理
+	/// Player1とPlayer2両方を検知するように変更
 	/// </summary>
 	void PlayerFound()
 	{
-		if (targetPlayer == null)
+		// 両方のプレイヤーを確認して近い方をターゲットに
+		GameObject p1 = GameObject.FindWithTag("Player1");
+		GameObject p2 = GameObject.FindWithTag("Player2");
+		Transform closest = null;
+		float minDist = Mathf.Infinity;
+		foreach (var p in new[] { p1, p2 })
 		{
-			var p = GameObject.FindWithTag("Player1") ?? GameObject.FindWithTag("Player2");
-			if (p != null) targetPlayer = p.transform;
-			return;
+			if (p == null) continue;
+			float dist = Vector3.Distance(transform.position, p.transform.position);
+			if (dist < minDist) { minDist = dist; closest = p.transform; }
 		}
+		if (closest != null) targetPlayer = closest;
+
+		if (targetPlayer == null) return;
+
 		isFoundPlayer = false;
 		// ターゲット方向計算
 		Vector3 dirToTarget = (targetPlayer.position - transform.position).normalized;
@@ -254,9 +270,8 @@ public class EnemyManager : MonoBehaviour
 				if (Physics.Raycast(transform.position, dirToTarget, out hit, dstToTarget))
 				{
 					// 障害物に当たった場合
-					if (hit.transform == targetPlayer)
+					if (hit.transform == targetPlayer || hit.transform.IsChildOf(targetPlayer))
 					{
-
 						//Debug.Log("プレイヤー発見");
 						isFoundPlayer = true;
 						if (gameObject.tag == "StrongEnemy")
@@ -354,42 +369,28 @@ public class EnemyManager : MonoBehaviour
 		Gizmos.DrawWireSphere(transform.position, viewRadius);
 
 		// 左右の視界線
-		Vector3 leftBoundary =
-			Quaternion.Euler(0, -viewAngle / 2, 0) * transform.forward;
+		Vector3 leftBoundary = Quaternion.Euler(0, -viewAngle / 2, 0) * transform.forward;
 
-		Vector3 rightBoundary =
-			Quaternion.Euler(0, viewAngle / 2, 0) * transform.forward;
+		Vector3 rightBoundary = Quaternion.Euler(0, viewAngle / 2, 0) * transform.forward;
 
 		// 線を描画
 		Gizmos.color = Color.blue;
 
-		Gizmos.DrawLine(
-			transform.position,
-			transform.position + leftBoundary * viewRadius
-		);
+		Gizmos.DrawLine(transform.position, transform.position + leftBoundary * viewRadius);
 
-		Gizmos.DrawLine(
-			transform.position,
-			transform.position + rightBoundary * viewRadius
-		);
+		Gizmos.DrawLine(transform.position, transform.position + rightBoundary * viewRadius);
 
 		// 正面方向
 		Gizmos.color = Color.green;
 
-		Gizmos.DrawLine(
-			transform.position,
-			transform.position + transform.forward * viewRadius
-		);
+		Gizmos.DrawLine(transform.position, transform.position + transform.forward * viewRadius);
 
 		// ターゲットへの線
 		if (targetPlayer != null)
 		{
 			Gizmos.color = Color.red;
 
-			Gizmos.DrawLine(
-				transform.position,
-				targetPlayer.position
-			);
+			Gizmos.DrawLine(transform.position, targetPlayer.position);
 		}
 	}
 
@@ -462,10 +463,24 @@ public class EnemyManager : MonoBehaviour
 
 			isHearingSound = true;           // 音が聞こえている状態にする
 			lastSoundPosition = soundPosition; // 音の位置を記憶
-											   // 音の発生源に敵を向かわせる            
+											   // 音の発生源に敵を向かわせる
+											  
+			reactionText.gameObject.SetActive(true); // ビックリマーク表示
+
 			currentState = EnemyState.FocusPlayer;
 			Debug.Log("音を検知しました。追跡処理に移行");
 		}
+	}
+
+	/// <summary>
+	/// Player2の音検知（WebSocketClient経由で呼ばれる）
+	/// クールダウン付きでHandleSoundを呼ぶ
+	/// </summary>
+	public void HandleSoundFromRemote(Vector3 position, float volume)
+	{
+		if (_remoteSoundCooldown > 0) return; // クールダウン中は無視
+		HandleSound(position, volume);
+		_remoteSoundCooldown = 0.1f;
 	}
 
 	void CancelAlert()
@@ -505,10 +520,21 @@ public class EnemyManager : MonoBehaviour
 			{
 				ResetPatrolState();
 				currentTime = 0;
+				reactionText.gameObject.SetActive(false); // ビックリマーク非表示
 				currentState = EnemyState.Patrol;
 				Debug.Log("巡回に戻る");
 			}
 		}
+	}
+
+	#endregion
+
+	#region 強化敵の壁を出すアニメーション
+
+	public void PlayAnimation()
+	{
+		anim.SetTrigger("wallUp");
+		Sm.isEnemyMoveStop = true;
 	}
 
 	#endregion
@@ -531,20 +557,43 @@ public class EnemyManager : MonoBehaviour
 		stopMoveCooldown = Random.Range(stopMoveCooldownMin, stopMoveCooldownMax);
 	}
 
+
+	void InitText()
+	{
+		Transform child = transform.Find("ActionCanvas/ReactionText");
+		if (child != null)
+		{
+			reactionText = child.GetComponent<TextMeshProUGUI>();
+		}
+
+		if (reactionText != null)
+		{
+			reactionText.gameObject.SetActive(false); // 最初は非表示
+		}
+	}
+
 	#endregion
 
 
 	#region Unityイベント
 	// Start is called before the first frame update
+	// Startをプレイヤー生成待ちのために遅延実行に変更
 	void Start()
 	{
+		Invoke("DelayedStart", 0.5f);
+	}
+
+	void DelayedStart()
+	{
+		InitText();
 		currentState = EnemyState.Patrol;
 
 		currentAlertCount = alertCount;
 
 		Eg = GetComponent<ElementGenerator>();
 		Sl = GetComponentInChildren<Light>();
-		Sm = GetComponent<SwichManager>();
+		Sm = GetComponent<SwitchManager>();
+		anim = GetComponentInChildren<Animator>();
 		Pc = (GameObject.FindWithTag("Player1") ?? GameObject.FindWithTag("Player2"))?.GetComponent<PlayerController>();
 		if (Pc != null)
 			Pc.OnMakeSound += HandleSound;
@@ -567,6 +616,10 @@ public class EnemyManager : MonoBehaviour
 	// Update is called once per frame
 	void Update()
 	{
+		// Player2音検知クールダウン減算
+		if (_remoteSoundCooldown > 0)
+			_remoteSoundCooldown -= Time.deltaTime;
+
 		if (!_soundRegistered)
 		{
 			var p = GameObject.FindWithTag("Player1") ?? GameObject.FindWithTag("Player2");
@@ -582,7 +635,7 @@ public class EnemyManager : MonoBehaviour
 		}
 		// ゲスト側はAIを動かさない（WebSocketClientが位置を受信して動かす）
 		if (isRemoteControlled) return;
-		if (SwichManager.isEnemyMoveStop) return;
+		if (Sm.isEnemyMoveStop) return;
 		PlayerFound();
 		AlertFunction();
 		if (gameObject.tag == "StrongEnemy")
@@ -603,8 +656,6 @@ public class EnemyManager : MonoBehaviour
 				LookSoundPoint(); // 最後に聞こえた音の地点に視点を向ける処理
 				break;
 		}
-
-
 	}
 	#endregion
 }

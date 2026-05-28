@@ -86,6 +86,9 @@ public class EnemyMoveMessage
 	public float y;
 	public float z;
 	public float angle;      // Y軸回転
+	public float light_r; 
+	public float light_g; 
+	public float light_b; 
 }
 
 // --- WebSocketクライアント本体 ---
@@ -126,6 +129,8 @@ public class WebSocketClient : MonoBehaviour
 	private Dictionary<int, float> enemyTargetAngles = new Dictionary<int, float>();
 	private float enemySendTimer = 0f;
 	private float enemySendInterval = 0.05f;
+
+	private Vector3 _lastRemotePosition = Vector3.zero;
 
 	//public bool useLocalServer = true; // trueでローカル、falseでRender
 
@@ -281,9 +286,11 @@ public class WebSocketClient : MonoBehaviour
 		else if (json.Contains("\"type\":\"player_move\"")) HandlePlayerMoveMessage(json);
 		else if (json.Contains("\"type\":\"player_left\"")) HandlePlayerLeftMessage(json);
 		else if (json.Contains("\"type\":\"item_picked\"")) HandleItemPickedMessage(json);
-		else if (json.Contains("\"type\":\"goal\"")) HandleGoalMessage(json);
+		//else if (json.Contains("\"type\":\"goal\"")) HandleGoalMessage(json);
 		else if (json.Contains("\"type\":\"timer_update\"")) HandleTimerUpdate(json);
 		else if (json.Contains("\"type\":\"enemy_move\"")) HandleEnemyMoveMessage(json);
+		else if (json.Contains("\"type\":\"player_goal\"")) HandlePlayerGoalMessage(json);
+		else if (json.Contains("\"type\":\"all_goal\"")) HandleAllGoalMessage(json);
 		else if (json.Contains("\"type\":\"start_game\""))
 		{
 			if (SceneManager.GetActiveScene().name == "MapTest")
@@ -293,10 +300,7 @@ public class WebSocketClient : MonoBehaviour
 			}
 			else
 			{
-				//  チュートリアルを挟んでからシーン遷移
 				SceneManager.LoadScene("MapTest");
-				// シーンロード後に TutorialManager.Instance.ShowTutorial() を
-				// OnSceneLoaded 内または MapTest シーンの TutorialManager.Start() で呼ぶ
 			}
 		}
 		else if (json.Contains("\"type\":\"player_ready\""))
@@ -343,11 +347,13 @@ public class WebSocketClient : MonoBehaviour
 				if (em != null) em.isRemoteControlled = true;
 			}
 		}
-		if (localPlayerMaterial != null)
-			myPlayer.GetComponentInChildren<Renderer>().material = localPlayerMaterial;
+		if (init.player_number == 1)
+			myPlayer.GetComponentInChildren<Renderer>().material = localPlayerMaterial;  
+		else
+			myPlayer.GetComponentInChildren<Renderer>().material = remotePlayerMaterial;
 
 		var elementGenerator = FindObjectOfType<ElementGenerator>();
-		if (elementGenerator != null) elementGenerator.SetPlayerTransform(myPlayer.transform);
+		if (elementGenerator != null) elementGenerator.SetRemotePlayerTransform(myPlayer.transform);
 
 		var controller = myPlayer.GetComponent<PlayerController>();
 		if (controller != null) controller.isLocalPlayer = true;
@@ -384,6 +390,17 @@ public class WebSocketClient : MonoBehaviour
 		else
 		{
 
+		}
+
+		// 敵に自分のプレイヤーを渡す（Player1のみ）
+		if (myPlayerNumber == 1)
+		{
+			var enemyList = GameObject.FindGameObjectsWithTag("Enemy");
+			foreach (var e in enemyList)
+			{
+				var em = e.GetComponent<EnemyManager>();
+				//if (em != null) em.SetTargetPlayer(myPlayer.transform);
+			}
 		}
 	}
 
@@ -434,6 +451,19 @@ public class WebSocketClient : MonoBehaviour
 		targetPositions[msg.id] = new Vector3(msg.position.x, msg.position.y, msg.position.z);
 		if (msg.rotation != null)
 			targetRotations[msg.id] = Quaternion.Euler(msg.rotation.x, msg.rotation.y, 0);
+
+		// ホスト側だけリモートプレイヤーの音を敵に通知
+		if (myPlayerNumber == 1 && msg.id != myId)
+		{
+			Vector3 newPos = new Vector3(msg.position.x, msg.position.y, msg.position.z);
+			var enemies = GameObject.FindGameObjectsWithTag("Enemy");
+			foreach (var e in enemies)
+			{
+				var em = e.GetComponent<EnemyManager>();
+				if (em != null)
+					em.HandleSoundFromRemote(newPos, 1f);
+			}
+		}
 	}
 
 	private void HandlePlayerLeftMessage(string json)
@@ -452,27 +482,73 @@ public class WebSocketClient : MonoBehaviour
 	{
 		// 自分が取得した場合だけミッションフラグを立てる
 		// （サーバーは全員にブロードキャストするので id で自分かどうか判定）
-		var msg = JsonUtility.FromJson<GoalMessage>(json); // id フィールドだけ使う
-		if (msg.id == myId)
+		/*var msg = JsonUtility.FromJson<GoalMessage>(json); // id フィールドだけ使う
+		if (msg.id == myId)*/
 			MissionManager.Instance?.OnItemPicked();
 	}
 
-	private void HandleGoalMessage(string json)
+	private void HandlePlayerGoalMessage(string json)
 	{
 		var msg = JsonUtility.FromJson<GoalMessage>(json);
 
 		if (msg.id == myId)
 		{
-			// 自分のゴール処理
+			// 自分がゴールした
 			MissionManager.Instance?.OnGoal();
-
-			int missionCount = MissionManager.Instance != null ? MissionManager.Instance.GetClearedMissionCount() : 0;
-
+			// 「相手を待っています...」表示
+			if (MissionManager.Instance != null)
+				MissionManager.Instance.ShowWaitingMessage("相手を待っています...");
 		}
 		else
 		{
-			Debug.Log($" {msg.name} がゴールしました！");
+			// 相手がゴールした
+			// 「仲間がゴールで待っています！」表示
+			if (MissionManager.Instance != null)
+				MissionManager.Instance.ShowWaitingMessage("仲間がゴールで待っています！");
 		}
+	}
+
+	private void HandleAllGoalMessage(string json)
+	{
+		MissionManager.Instance?.StopTimer();
+
+		MissionManager.Instance?.ShowClearMessage();
+		Invoke("LoadResultScene", 2f);
+
+		var msg = JsonUtility.FromJson<GoalMessage>(json);
+
+		if (MissionManager.Instance != null)
+		{
+			ResultData.elapsedTime = MissionManager.Instance.GetElapsedSeconds();
+			ResultData.missionCount = MissionManager.Instance.GetClearedMissionCount();
+		}
+		ResultData.playerName = playerName;
+
+		foreach (var obj in playerObjects.Values)
+		{
+			var nameTag = obj.GetComponentInChildren<NameTag>();
+			if (nameTag != null)
+				ResultData.remotePlayerName = nameTag.GetName();
+		}
+		//SceneManager.LoadScene("Result");
+	}
+
+	private void LoadResultScene()
+	{
+		var msg_dummy = new GoalMessage();
+		if (MissionManager.Instance != null)
+		{
+			ResultData.elapsedTime = MissionManager.Instance.GetElapsedSeconds();
+			ResultData.missionCount = MissionManager.Instance.GetClearedMissionCount();
+		}
+		ResultData.playerName = playerName;
+		foreach (var obj in playerObjects.Values)
+		{
+			var nameTag = obj.GetComponentInChildren<NameTag>();
+			if (nameTag != null)
+				ResultData.remotePlayerName = nameTag.GetName();
+		}
+		SceneManager.LoadScene("Result");
 	}
 
 	private void HandleTimerUpdate(string json)
@@ -487,6 +563,17 @@ public class WebSocketClient : MonoBehaviour
 		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json);
 		enemyTargetPositions[msg.enemy_index] = new Vector3(msg.x, msg.y, msg.z);
 		enemyTargetAngles[msg.enemy_index] = msg.angle;
+
+		// ライトの色を反映
+		if (_enemyObjects == null || _enemyObjects.Length == 0)
+			_enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
+
+		if (msg.enemy_index < _enemyObjects.Length)
+		{
+			var light = _enemyObjects[msg.enemy_index].GetComponentInChildren<Light>();
+			if (light != null)
+				light.color = new Color(msg.light_r, msg.light_g, msg.light_b);
+		}
 	}
 	// ─── ロビー用ハンドラ（変更なし）───
 
@@ -537,7 +624,10 @@ public class WebSocketClient : MonoBehaviour
 
 		GameObject newPlayer = Instantiate(playerPrefab);
 		newPlayer.tag = "Player" + player.player_number;
-		if (remotePlayerMaterial != null) newPlayer.GetComponentInChildren<Renderer>().material = remotePlayerMaterial;
+		if (player.player_number == 1)
+			newPlayer.GetComponentInChildren<Renderer>().material = localPlayerMaterial;  
+		else
+			newPlayer.GetComponentInChildren<Renderer>().material = remotePlayerMaterial; 
 
 		AudioListener remoteListener = newPlayer.GetComponent<AudioListener>();
 		if (remoteListener != null) Destroy(remoteListener);
@@ -545,6 +635,8 @@ public class WebSocketClient : MonoBehaviour
 		var controller = newPlayer.GetComponent<PlayerController>();
 		if (controller != null) controller.isLocalPlayer = false;
 
+		var col = newPlayer.GetComponent<Collider>();
+		if (col != null) col.enabled = true;
 		var rb = newPlayer.GetComponent<Rigidbody>();
 		if (rb != null) { rb.isKinematic = true; rb.useGravity = false; }
 
@@ -637,8 +729,17 @@ public class WebSocketClient : MonoBehaviour
 	private async void SendEnemyMove(int index, Vector3 pos, float angle)
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
+
+		Color lightColor = Color.white;
+		if (_enemyObjects != null && index < _enemyObjects.Length && _enemyObjects[index] != null)
+		{
+			var light = _enemyObjects[index].GetComponentInChildren<Light>();
+			if (light != null) lightColor = light.color;
+		}
+
 		string json = $"{{\"type\":\"enemy_move\",\"enemy_index\":{index}," +
-			$"\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z},\"angle\":{angle}}}";
+			$"\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z},\"angle\":{angle}," +
+			$"\"light_r\":{lightColor.r},\"light_g\":{lightColor.g},\"light_b\":{lightColor.b}}}";
 		await websocket.SendText(json);
 	}
 
@@ -680,4 +781,11 @@ public class WebSocketClient : MonoBehaviour
 		tag.SetName(name);
 		tag.SetVisible(visible);
 	}
+
+	public Vector3 GetSpawnPosition()
+{
+    if (spawnPositions.ContainsKey(myPlayerNumber))
+        return spawnPositions[myPlayerNumber];
+    return Vector3.zero;
+}
 }
