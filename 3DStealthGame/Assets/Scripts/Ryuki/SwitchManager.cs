@@ -9,7 +9,7 @@ public class SwitchManager : MonoBehaviour
 
     Renderer rd;
     EnemyManager em;
-    TestPlayer Tp;
+    PlayerController Pc;
 
     private TextMeshProUGUI actionText;
     private Transform cameraTransform;
@@ -64,7 +64,7 @@ public class SwitchManager : MonoBehaviour
             em.PlayAnimation();
         }
         
-        if (Tp.isAction) return;
+        if (Pc.isAction) return;
         isEndAction = true;
         isPlayerInRange = false;
         rd.material.color = Color.red;
@@ -75,31 +75,37 @@ public class SwitchManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        currentStanTime = 0f;
+		Invoke("DelayedStart", 0.5f);
+	}
 
-        rd = GetComponent<Renderer>();
-        Tp = GameObject.Find("Player").GetComponent<TestPlayer>();
+	void DelayedStart()
+	{
+		var p = GameObject.FindWithTag("Player1") ?? GameObject.FindWithTag("Player2");
 
-        // メインカメラの向きを取得用
-        if (Camera.main != null)
-        {
-            cameraTransform = Camera.main.transform;
-        }
+		Pc = p.GetComponent<PlayerController>();
+		rd = GetComponent<Renderer>();
 
-        Transform child = transform.Find("ActionCanvas/ActionText");
-        if (child != null)
-        {
-            actionText = child.GetComponent<TextMeshProUGUI>();
-        }
 
-        if (actionText != null)
-        {
-            actionText.gameObject.SetActive(false); // 最初は非表示
-        }
-    }
+		currentStanTime = 0f;
+		// メインカメラの向きを取得用
+		if (Camera.main != null)
+		{
+			cameraTransform = Camera.main.transform;
+		}
 
-    // Update is called once per frame
-    void Update()
+		Transform child = transform.Find("ActionCanvas/ActionText");
+		if (child != null)
+		{
+			actionText = child.GetComponent<TextMeshProUGUI>();
+		}
+
+		if (actionText != null)
+		{
+			actionText.gameObject.SetActive(false); // 最初は非表示
+		}
+	}
+	// Update is called once per frame
+	void Update()
     {
         // プレイヤーが範囲内でEキーを押した時
         if (isPlayerInRange && Input.GetKeyDown(KeyCode.E))
@@ -111,9 +117,9 @@ public class SwitchManager : MonoBehaviour
             if (CompareTag("Switch"))
             {
                 // 壁を生成して隠れる場所を作る
-                Tp.isAction = true;
+                Pc.isAction = true;
                 isActionSwitch = true;
-                Tp.PunchSwitch();
+                Pc.PunchSwitch();
             }
         }
 
@@ -137,7 +143,7 @@ public class SwitchManager : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (isEndAction) return;
-        if (other.CompareTag("Player1"))
+        if (other.CompareTag("Player1") || other.CompareTag("Player2"))
         {
             print("プレイヤーが入った");
             isPlayerInRange = true;
@@ -151,7 +157,7 @@ public class SwitchManager : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player1"))
+        if (other.CompareTag("Player1") || other.CompareTag("Player2"))
         {
             isPlayerInRange = false;
             if (actionText != null)

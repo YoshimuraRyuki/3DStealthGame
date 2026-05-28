@@ -1104,7 +1104,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 403af224c943be5469625c47a6f18b6e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerPrefab: {fileID: 2805939071344099194, guid: 95882d325c0c43e418a86ad4f20c76fe, type: 3}
+  playerPrefab: {fileID: 9080468364348804320, guid: da99b9dbceb22af41884bfc73e3a87a0, type: 3}
   myPlayer: {fileID: 0}
   serverUrl: ws://192.168.56.102:8080/ws?room_id=test&name=Player1
   myId: 
