@@ -21,7 +21,7 @@ public class RoomSelectManager : MonoBehaviour
 		public RoomInfo[] rooms;
 	}
 
-	public string serverBaseUrl = "http://192.168.56.102:8080";
+	public string serverBaseUrl = "https://stealth-game-server.onrender.com";
 
 	public Button[] roomButtons;
 	public Text[] roomLabels; // 各ボタンのテキスト
@@ -38,8 +38,21 @@ public class RoomSelectManager : MonoBehaviour
 	void Start()
 	{
 		wsClient = FindObjectOfType<WebSocketClient>();
-		// 表示時に人数を更新
-		InvokeRepeating("FetchRoomList", 0f, 3f); // 3秒ごとに更新
+		switch (wsClient.serverMode)
+		{
+			case WebSocketClient.ServerMode.Local:
+				serverBaseUrl = "http://192.168.56.102:8080"; break;
+			case WebSocketClient.ServerMode.LocalHost:
+				serverBaseUrl = "http://localhost:8080"; break;
+			case WebSocketClient.ServerMode.Ngrok:
+				serverBaseUrl = wsClient.ngrokUrl; break;
+			case WebSocketClient.ServerMode.Render:
+				serverBaseUrl = "https://stealth-game-server.onrender.com"; break;
+			case WebSocketClient.ServerMode.FlyIO:
+				serverBaseUrl = "https://stealth-game-server.fly.dev"; break;
+		}
+
+		InvokeRepeating("FetchRoomList", 0f, 3f);
 	}
 
 	// 接続ボタン押下後にこのパネルを表示する想定
@@ -59,6 +72,7 @@ public class RoomSelectManager : MonoBehaviour
 	{
 		using (UnityWebRequest req = UnityWebRequest.Get($"{serverBaseUrl}/rooms"))
 		{
+			req.SetRequestHeader("ngrok-skip-browser-warning", "true");
 			yield return req.SendWebRequest();
 
 			if (req.result == UnityWebRequest.Result.Success)

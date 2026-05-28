@@ -9,6 +9,7 @@ public class MissionManager : MonoBehaviour
 	[Header("UI")]
 	public Text missionText;        // ミッション一覧
 	public Text missionClearText;   // 全達成時の演出　画面にCLEAR!みたいな。じしゃくんとおなじ
+	public Text ClearText;          //　クリア表示テキスト
 
 	[Header("制限時間ミッションの秒数")]
 	public int timeLimitSeconds = 180;
@@ -80,7 +81,7 @@ public class MissionManager : MonoBehaviour
 	{
 		if (_isGoalReached) return;
 		_isGoalReached = true;
-		_timerRunning = false;   // タイマー停止
+		//_timerRunning = false;   // タイマー停止 リザルト遷移時にへんこう
 
 		// ミッション1：アイテム取得 & ゴール
 		_mission1Done = _hasPickedItem;
@@ -132,12 +133,13 @@ public class MissionManager : MonoBehaviour
 
 	private void RefreshUI()
 	{
-		if (missionText == null) return;
-
-		// ミッション1
-		string item1Line = _isGoalReached
-			? $"{(_mission1Done ? "✔" : "✘")} アイテムを取ってクリア"
-			: "　アイテムを取ってクリア";
+		string item1Line;
+		if (_hasPickedItem)
+			item1Line = "✔ アイテムを取ってクリア";
+		else if (_isGoalReached)
+			item1Line = "✘ アイテムを取ってクリア";
+		else
+			item1Line = "　アイテムを取ってクリア";
 
 		// ミッション2
 		string mission2Line;
@@ -185,8 +187,30 @@ public class MissionManager : MonoBehaviour
 		}
 	}
 
+	public void ShowClearMessage()
+	{
+		if (ClearText != null)
+		{
+			ClearText.gameObject.SetActive(true);
+			ClearText.text = "クリア！";
+		}
+	}
+
 	private void HideClearText()
 	{
 		if (missionClearText != null) missionClearText.gameObject.SetActive(false);
+	}
+	public void ShowWaitingMessage(string message)
+	{
+		if (missionClearText != null)
+		{
+			missionClearText.gameObject.SetActive(true);
+			missionClearText.text = message;
+		}
+	}
+
+	public void StopTimer()
+	{
+		_timerRunning = false;
 	}
 }

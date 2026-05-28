@@ -11,259 +11,259 @@ using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class ElementGenerator : MonoBehaviour
 {
-    #region 宣言
-    // リソース格納用
-    Material material;                                              // 壁のマテリアル
-    GameObject objGoal;                                             // ゴール
-    GameObject[] objEnemyList = new GameObject[1];                  // 敵リスト
-    GameObject[] objSuperEnemyList = new GameObject[1];             // 強化敵リスト
-    public GameObject[] objItemList = new GameObject[1];            // アイテムリスト
-    public GameObject[] objSwitchList = new GameObject[1];          // スイッチリスト
-    public GameObject[] objPatrolPointList = new GameObject[1];     // 巡回ポイントリスト
-    GameObject[] objMapTipList = new GameObject[4];                 // マップチップリスト
+	#region 宣言
+	// リソース格納用
+	Material material;                                              // 壁のマテリアル
+	GameObject objGoal;                                             // ゴール
+	GameObject[] objEnemyList = new GameObject[1];                  // 敵リスト
+	GameObject[] objSuperEnemyList = new GameObject[1];             // 強化敵リスト
+	public GameObject[] objItemList = new GameObject[1];            // アイテムリスト
+	public GameObject[] objSwitchList = new GameObject[1];          // スイッチリスト
+	public GameObject[] objPatrolPointList = new GameObject[1];     // 巡回ポイントリスト
+	GameObject[] objMapTipList = new GameObject[4];                 // マップチップリスト
 
-    // マップ軽くするためのプレファブ
-    [SerializeField] GameObject wallPrefab;
+	// マップ軽くするためのプレファブ
+	[SerializeField] GameObject wallPrefab;
 
-    // ミニマップ生成スクリプト用
-    //MapGenerate mapGenerate;
-    FixedMap mapGenerate;
-    //int[,] map;
-    string[,] map;
-    // プレイヤー検索用
-    int playerX = 0;
-    int playerY = 0;
-    // 敵検索用
-    int enemyX = 0;
-    int enemyY = 0;
-    // 現在プレイヤーがいるマス
-    int currentPlayerX;
-    int currentPlayerY;
-    // 前回プレイヤーがいたマス
-    int oldPlayerX;
-    int oldPlayerY;
-    // 敵のマス
-    List<Vector2Int> oldEnemyPositions = new List<Vector2Int>();
-    // 敵の視野UI
-    [SerializeField] GameObject enemyViewPrefab;
-    List<GameObject> viewList = new List<GameObject>(); 
-    [SerializeField] GameObject enemyStrongViewPrefab;
-    List<GameObject> viewStrongList = new List<GameObject>();
-    [SerializeField] GameObject itemViewPrefab;
-    List<GameObject> viewItemList = new List<GameObject>();
-    List<EnemyManager> strongEnemyList = new List<EnemyManager>();
-    List<SwitchManager> switchList = new List<SwitchManager>();
-    int switchIndex = 0;
+	// ミニマップ生成スクリプト用
+	//MapGenerate mapGenerate;
+	FixedMap mapGenerate;
+	//int[,] map;
+	string[,] map;
+	// プレイヤー検索用
+	int playerX = 0;
+	int playerY = 0;
+	// 敵検索用
+	int enemyX = 0;
+	int enemyY = 0;
+	// 現在プレイヤーがいるマス
+	int currentPlayerX;
+	int currentPlayerY;
+	// 前回プレイヤーがいたマス
+	int oldPlayerX;
+	int oldPlayerY;
+	// 敵のマス
+	List<Vector2Int> oldEnemyPositions = new List<Vector2Int>();
+	// 敵の視野UI
+	[SerializeField] GameObject enemyViewPrefab;
+	List<GameObject> viewList = new List<GameObject>();
+	[SerializeField] GameObject enemyStrongViewPrefab;
+	List<GameObject> viewStrongList = new List<GameObject>();
+	[SerializeField] GameObject itemViewPrefab;
+	List<GameObject> viewItemList = new List<GameObject>();
+	List<EnemyManager> strongEnemyList = new List<EnemyManager>();
+	List<SwitchManager> switchList = new List<SwitchManager>();
+	int switchIndex = 0;
 
-    [SerializeField] RectTransform miniMapMaskRect;
-    // ミニマップ位置座標
-    int mapX = 45;
-    int mapY = 145;
+	[SerializeField] RectTransform miniMapMaskRect;
+	// ミニマップ位置座標
+	int mapX = 45;
+	int mapY = 145;
 
-    [Header("プレイヤー1のミニマップ")]
-    [SerializeField] RectTransform map2DRect_P1;
-    [SerializeField] RectTransform miniMapMaskRect_P1;
+	[Header("プレイヤー1のミニマップ")]
+	[SerializeField] RectTransform map2DRect_P1;
+	[SerializeField] RectTransform miniMapMaskRect_P1;
 
-    [Header("プレイヤー2のミニマップ")]
-    [SerializeField] RectTransform map2DRect_P2;
-    [SerializeField] RectTransform miniMapMaskRect_P2;
+	[Header("プレイヤー2のミニマップ")]
+	[SerializeField] RectTransform map2DRect_P2;
+	[SerializeField] RectTransform miniMapMaskRect_P2;
 
-    GameObject[,] objMapExist_P1;
-    GameObject[,] objMapExist_P2;
+	GameObject[,] objMapExist_P1;
+	GameObject[,] objMapExist_P2;
 
-    Transform remotePlayer;   // 相手のTransform
-    int currentRemoteX, currentRemoteY;
-    int oldRemoteX, oldRemoteY;
+	Transform remotePlayer;   // 相手のTransform
+	int currentRemoteX, currentRemoteY;
+	int oldRemoteX, oldRemoteY;
 
-    // パス読み込み用
-    GameObject objMap2D;                                            // Map2D
-    GameObject objPlayer;                                           // プレイヤー
-    GameObject[] objEnemys;                                         // 敵
-    GameObject[] objEnemyStrongs;                                   // 強化敵
-    GameObject[] objItems;                                           // アイテム
-    GameObject[] objGoals;                                           // ゴール
-    GameObject[] objSwitchs;                                           // スイッチ
+	// パス読み込み用
+	GameObject objMap2D;                                            // Map2D
+	GameObject objPlayer;                                           // プレイヤー
+	GameObject[] objEnemys;                                         // 敵
+	GameObject[] objEnemyStrongs;                                   // 強化敵
+	GameObject[] objItems;                                           // アイテム
+	GameObject[] objGoals;                                           // ゴール
+	GameObject[] objSwitchs;                                           // スイッチ
 
-    [SerializeField] Transform player;
-    [SerializeField] RectTransform map2DRect;
-    float cellSize = 5f;
-    [SerializeField] float miniMapScale = 1.0f;
+	[SerializeField] Transform player;
+	[SerializeField] RectTransform map2DRect;
+	float cellSize = 5f;
+	[SerializeField] float miniMapScale = 1.0f;
 
-    // 生成したマップチップ
-    GameObject[,] objMapExist;                                      // フィールド用
-    #endregion
+	// 生成したマップチップ
+	GameObject[,] objMapExist;                                      // フィールド用
+	#endregion
 
-    #region 初期化処理
-    void Awake()
-    {
-        // リソース読み込み
-        ReadResources();
+	#region 初期化処理
+	void Awake()
+	{
+		// リソース読み込み
+		ReadResources();
 
-        // 壁を生成
-        GenerateWall();
+		// 壁を生成
+		GenerateWall();
 
-        // 敵・アイテム・ゴール・プレイヤー初期配置決め
-        GenerateObjectsCSV();
+		// 敵・アイテム・ゴール・プレイヤー初期配置決め
+		GenerateObjectsCSV();
 
-        // 二次元マップ生成
-        //GenerateMap2D(map);
+		// 二次元マップ生成
+		//GenerateMap2D(map);
 
-        // WebSocketClientからプレイヤーを取得
-        var wsClient = FindObjectOfType<WebSocketClient>();
-        if (wsClient != null && wsClient.myPlayer != null)
-        {
-            player = wsClient.myPlayer.transform;
-        }
+		// WebSocketClientからプレイヤーを取得
+		var wsClient = FindObjectOfType<WebSocketClient>();
+		if (wsClient != null && wsClient.myPlayer != null)
+		{
+			player = wsClient.myPlayer.transform;
+		}
 
-        GenerateMap2D(map, map2DRect_P1, out objMapExist_P1);  // P1用
-        GenerateMap2D(map, map2DRect_P2, out objMapExist_P2);  // P2用
-    }
-    #endregion
+		GenerateMap2D(map, map2DRect_P1, out objMapExist_P1);  // P1用
+		GenerateMap2D(map, map2DRect_P2, out objMapExist_P2);  // P2用
+	}
+	#endregion
 
-    /// <summary>
-    /// リソース読み込み
-    /// </summary>
-    void ReadResources()
-    {
-        // 壁のマテリアル
-        material = Resources.Load<Material>("Prefabs/Ryuki/Wall");
+	/// <summary>
+	/// リソース読み込み
+	/// </summary>
+	void ReadResources()
+	{
+		// 壁のマテリアル
+		material = Resources.Load<Material>("Prefabs/Ryuki/Wall");
 
-        // ゴール
-        objGoal = (GameObject)Resources.Load("Prefabs/Ryuki/Goal");
+		// ゴール
+		objGoal = (GameObject)Resources.Load("Prefabs/Ryuki/Goal");
 
-        // 敵リスト
-        objEnemyList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Enemy");
+		// 敵リスト
+		objEnemyList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Enemy");
 
-        // 強化敵リスト
-        objSuperEnemyList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/SuperEnemy");
+		// 強化敵リスト
+		objSuperEnemyList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/SuperEnemy");
 
-        // アイテムリスト
-        objItemList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Item");
+		// アイテムリスト
+		objItemList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Item");
 
-        // スイッチ
-        objSwitchList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Switch");
+		// スイッチ
+		objSwitchList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Switch");
 
-        // 巡回ポイント
-        objPatrolPointList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/PatrolPoint");
+		// 巡回ポイント
+		objPatrolPointList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/PatrolPoint");
 
-        // 2Dのマップチップ読み込み
-        objMapTipList[0] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_0");
-        objMapTipList[1] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_1");
-        objMapTipList[2] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_2");
-        objMapTipList[3] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_3");
-    }
+		// 2Dのマップチップ読み込み
+		objMapTipList[0] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_0");
+		objMapTipList[1] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_1");
+		objMapTipList[2] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_2");
+		objMapTipList[3] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_3");
+	}
 
-    /// <summary>
-    /// 壁生成
-    /// </summary>
-    void GenerateWall()
-    {
-        // ダンジョンマップ
-        mapGenerate = GetComponent<FixedMap>();
-        // 2Dマップ生成
-        map = mapGenerate.Generate();
+	/// <summary>
+	/// 壁生成
+	/// </summary>
+	void GenerateWall()
+	{
+		// ダンジョンマップ
+		mapGenerate = GetComponent<FixedMap>();
+		// 2Dマップ生成
+		map = mapGenerate.Generate();
 
-        //CreateRoomIdMap();
+		//CreateRoomIdMap();
 
-        // 生成する壁の親となるGameObject
-        GameObject objWall = GameObject.Find("Wall");
+		// 生成する壁の親となるGameObject
+		GameObject objWall = GameObject.Find("Wall");
 
-        int width = map.GetLength(0);
-        int height = map.GetLength(1);
+		int width = map.GetLength(0);
+		int height = map.GetLength(1);
 
-        //自動生成したマップにCubeを配置
-        for (int y = 0; y < height; y++)
-        {
-            int startX = -1;
+		//自動生成したマップにCubeを配置
+		for (int y = 0; y < height; y++)
+		{
+			int startX = -1;
 
-            for (int x = 0; x < width; x++)
-            {
-                if (map[x, y] == "0")
-                {
-                    if (startX == -1) startX = x;
-                }
-                else
-                {
-                    if (startX != -1)
-                    {
-                        CreateWallBlock(startX, x - 1, y, objWall);
-                        startX = -1;
-                    }
-                }
-            }
-            if (startX != -1)
-            {
-                CreateWallBlock(startX, width - 1, y, objWall);
-            }
-        }
-    }
+			for (int x = 0; x < width; x++)
+			{
+				if (map[x, y] == "0")
+				{
+					if (startX == -1) startX = x;
+				}
+				else
+				{
+					if (startX != -1)
+					{
+						CreateWallBlock(startX, x - 1, y, objWall);
+						startX = -1;
+					}
+				}
+			}
+			if (startX != -1)
+			{
+				CreateWallBlock(startX, width - 1, y, objWall);
+			}
+		}
+	}
 
-    void CreateWallBlock(int startX, int endX, int y, GameObject parent)
-    {
-        int length = endX - startX + 1;
+	void CreateWallBlock(int startX, int endX, int y, GameObject parent)
+	{
+		int length = endX - startX + 1;
 
-        GameObject cube = Instantiate(wallPrefab);
+		GameObject cube = Instantiate(wallPrefab);
 
-        cube.transform.parent = parent.transform;
-        cube.transform.localScale = new Vector3(length, 4f, 1);
+		cube.transform.parent = parent.transform;
+		cube.transform.localScale = new Vector3(length, 4f, 1);
 
-        float centerX = startX + (length / 2f) - 0.5f;
-        cube.transform.position = new Vector3(centerX, 2f, y);
+		float centerX = startX + (length / 2f) - 0.5f;
+		cube.transform.position = new Vector3(centerX, 2f, y);
 
-        var col = cube.GetComponent<Collider>();
-        if (col != null) col.enabled = false;
-    }
+		var col = cube.GetComponent<Collider>();
+		if (col != null) col.enabled = false;
+	}
 
-    /// <summary>
-    /// 二次元マップ生成
-    /// </summary>
-    /// <param name="map"></param>
-    void GenerateMap2D(string[,] map, RectTransform targetRect, out GameObject[,] mapExist)
-    {
-        mapExist = new GameObject[map.GetLength(0), map.GetLength(1)];
+	/// <summary>
+	/// 二次元マップ生成
+	/// </summary>
+	/// <param name="map"></param>
+	void GenerateMap2D(string[,] map, RectTransform targetRect, out GameObject[,] mapExist)
+	{
+		mapExist = new GameObject[map.GetLength(0), map.GetLength(1)];
 
-        objMap2D = GameObject.Find("Map2D").gameObject;
-        objMapExist = new GameObject[map.GetLength(0), map.GetLength(1)];
+		objMap2D = GameObject.Find("Map2D").gameObject;
+		objMapExist = new GameObject[map.GetLength(0), map.GetLength(1)];
 
-        // 位置検索
-        for (int x = 0; x < map.GetLength(0); x++)
-        {
-            for (int y = 0; y < map.GetLength(1); y++)
-            {
-                if (map[x, y] == "10") // プレイヤー位置検索
-                {
-                    playerX = x;
-                    playerY = y;
-                }
-                if (map[x, y] == "3") // 敵位置検索
-                {
-                    enemyX = x;
-                    enemyY = y;
-                }
-            }
-        }
+		// 位置検索
+		for (int x = 0; x < map.GetLength(0); x++)
+		{
+			for (int y = 0; y < map.GetLength(1); y++)
+			{
+				if (map[x, y] == "10") // プレイヤー位置検索
+				{
+					playerX = x;
+					playerY = y;
+				}
+				if (map[x, y] == "3") // 敵位置検索
+				{
+					enemyX = x;
+					enemyY = y;
+				}
+			}
+		}
 
-        // map[x,y]のパラメタ：0:壁、1:部屋、2:通路、10:プレイヤーが居る部屋
-        for (int i = 0; i < map.GetLength(0); i++)
-        {
-            for (int j = 0; j < map.GetLength(1); j++)
-            {
-                int index = 0;
+		// map[x,y]のパラメタ：0:壁、1:部屋、2:通路、10:プレイヤーが居る部屋
+		for (int i = 0; i < map.GetLength(0); i++)
+		{
+			for (int j = 0; j < map.GetLength(1); j++)
+			{
+				int index = 0;
 
-                if (map[i, j] == "0") index = 0;      // 壁
-                else if (map[i, j] == "1") index = 1; // 部屋
-                else if (map[i, j] == "2") index = 2; // 通路
+				if (map[i, j] == "0") index = 0;      // 壁
+				else if (map[i, j] == "1") index = 1; // 部屋
+				else if (map[i, j] == "2") index = 2; // 通路
 
 
-                objMapExist[i, j] = Instantiate(objMapTipList[index]);
+				objMapExist[i, j] = Instantiate(objMapTipList[index]);
 
-                // Map2D直下に階層を移動
-                objMapExist[i, j].transform.SetParent(objMap2D.transform, false);
-                objMapExist[i, j].transform.localScale = new Vector3(1, 1, 1);
+				// Map2D直下に階層を移動
+				objMapExist[i, j].transform.SetParent(objMap2D.transform, false);
+				objMapExist[i, j].transform.localScale = new Vector3(1, 1, 1);
 
-                // マップの位置調整
-                //Vector2 vector2 = new Vector2(5f * i, 5f * j);
-                /*if (objPlayer.tag == "Player1")
+				// マップの位置調整
+				//Vector2 vector2 = new Vector2(5f * i, 5f * j);
+				/*if (objPlayer.tag == "Player1")
 				{
 					// 最初に入ったプレイヤー
 					Vector2 vector2 = new Vector2(cellSize * i - mapX, cellSize * j - mapY);
@@ -276,519 +276,540 @@ public class ElementGenerator : MonoBehaviour
 					objMapExist[i, j].GetComponent<RectTransform>().anchoredPosition = vector2;
 				}*/
 
-                Vector2 vector2 = new Vector2(cellSize * i - mapX, cellSize * j - mapY);
-                objMapExist[i, j].GetComponent<RectTransform>().anchoredPosition = vector2;
-
-
-                // 初期状態では非表示
-                //Color color = objMapExist[i, j].GetComponent<Image>().color;
-                //color.a = 0;
-                //objMapExist[i, j].GetComponent<Image>().color = color;
-
-
-                // 2Dマップ生成のデバッグ用
-                if ((map[i, j] == "1")) // 部屋
-                {
-                    objMapExist[i, j].GetComponent<Image>().color = new Color(0, 0.8f, 1, 0.5f); // 部屋の色
-                }
-                else if ((map[i, j] == "2")) // 通路
-                {
-                    objMapExist[i, j].GetComponent<Image>().color = new Color(0, 1, 0, 0.5f);
-                }
-                else if ((map[i, j] == "3")) // 敵
-                {
-                    objMapExist[i, j].GetComponent<Image>().color = new Color(1, 0, 0, 0.5f);
-                }            
-            }
-        }
-        CenterMiniMap(playerX, playerY);
-
-        currentPlayerX = playerX;
-        currentPlayerY = playerY;
-
-        oldPlayerX = playerX;
-        oldPlayerY = playerY;
-
-    }
-
-    void CenterMiniMap(int mapX, int mapY)
-    {
-        // Mask中央
-        float centerX = miniMapMaskRect.rect.width * 0.5f;
-        float centerY = miniMapMaskRect.rect.height * 0.5f;
-
-        // プレイヤーマスの中心座標
-        float playerCellX = (mapX * cellSize) + (cellSize * 0.5f);
-        float playerCellY = (mapY * cellSize) + (cellSize * 0.5f);
-
-        // プレイヤーマス中心をMask中央へ
-        float posX = centerX - playerCellX;
-        float posY = centerY - playerCellY;
-
-        map2DRect.anchoredPosition = new Vector2(posX, posY);
-    }
-
-    /// <summary>
-    /// ただしAwake時点ではmyPlayerがまだ生成されていない（init受信後に生成される）ので、コールバックで後から渡す方式にします。
-    /// </summary>
-    /// <param name="t"></param>
-    public void SetPlayerTransform(Transform t)
-    {
-        player = t;
-        // ミニマップの初期中心も更新
-        currentPlayerX = Mathf.RoundToInt(t.position.x);
-        currentPlayerY = Mathf.RoundToInt(t.position.z);
-        oldPlayerX = currentPlayerX;
-        oldPlayerY = currentPlayerY;
-        CenterMiniMap(currentPlayerX, currentPlayerY);
-    }
-
-    public void SetRemotePlayerTransform(Transform t)
-    {
-        remotePlayer = t;
-    }
-
-    void UpdatePlayerOnMap(
-    Transform target,
-    ref int curX, ref int curY,
-    ref int oldX, ref int oldY,
-    GameObject[,] mapExist,
-    RectTransform targetRect,
-    RectTransform maskRect)
-    {
-        if (mapExist == null || target == null) return;
-
-        curX = Mathf.RoundToInt(target.position.x);
-        curY = Mathf.RoundToInt(target.position.z);
-
-        if (oldX != curX || oldY != curY)
-        {
-            // 前のマスを地形色に戻す
-            if (IsInsideMap(oldX, oldY, mapExist))
-            {
-                Image oldImg = mapExist[oldX, oldY].GetComponent<Image>();
-                if (map[oldX, oldY] == "1") oldImg.color = new Color(0, 0.8f, 1, 0.5f);
-                else if (map[oldX, oldY] == "2") oldImg.color = new Color(0, 1, 0, 0.5f);
-                else oldImg.color = new Color(0, 0.8f, 1, 0.5f);
-            }
-
-            // 現在のマスをプレイヤー色に
-            if (IsInsideMap(curX, curY, mapExist))
-            {
-                mapExist[curX, curY].GetComponent<Image>().color = new Color(1, 1, 0, 1);
-            }
-
-            oldX = curX;
-            oldY = curY;
-        }
-
-        // ミニマップを中心に移動
-        float centerX = maskRect.rect.width * 0.5f;
-        float centerY = maskRect.rect.height * 0.5f;
-        float playerCellX = (curX * cellSize) + (cellSize * 0.5f);
-        float playerCellY = (curY * cellSize) + (cellSize * 0.5f);
-        targetRect.anchoredPosition = new Vector2(centerX - playerCellX, centerY - playerCellY);
-    }
-    #region Update処理
-    void Update()
-    {
-        // ミニマップに反映
-        UpdateMiniMap();
-    }
-
-    /// <summary>
-    /// プレイヤーと敵の現在位置をミニマップに反映
-    /// </summary>
-    void UpdateMiniMap()
-    {
-        if (player == null) return; // プレイヤー生成前はスキップ
-
-        ///////////////////////
-        // プレイヤー
-        ///////////////////////
-
-        Vector3 playerPos = player.position;
-
-        // ワールド座標 → マップ座標変換
-        currentPlayerX = Mathf.RoundToInt(playerPos.x);
-        currentPlayerY = Mathf.RoundToInt(playerPos.z);
-
-
-        // 前回位置の色を戻す
-        if (oldPlayerX != currentPlayerX || oldPlayerY != currentPlayerY)
-        {
-            if (IsInsideMap(oldPlayerX, oldPlayerY, objMapExist))
-            {
-                Image oldImage = objMapExist[oldPlayerX, oldPlayerY].GetComponent<Image>();
-
-                // 元の地形色に戻す
-                if (map[oldPlayerX, oldPlayerY] == "1")
-                {
-                    oldImage.color = new Color(0, 0.8f, 1, 0.5f); // 部屋の色
-                }
-                else if (map[oldPlayerX, oldPlayerY] == "2")
-                {
-                    oldImage.color = new Color(0, 1, 0, 0.5f);
-                }
-                else if (map[oldPlayerX, oldPlayerY] == "3")
-                {
-                    oldImage.color = new Color(0, 0.8f, 1, 0.5f);
-                }
-                else if (map[oldPlayerX, oldPlayerY] == "10")
-                {
-                    oldImage.color = new Color(0, 0.8f, 1, 0.5f);
-                }
-            }
-
-
-            // 現在位置をプレイヤー色に
-            if (IsInsideMap(currentPlayerX, currentPlayerY, objMapExist))
-            {
-                print("プレイヤー色変える");
-
-                Image currentImage = objMapExist[currentPlayerX, currentPlayerY].GetComponent<Image>();
-
-                // プレイヤー位置
-                currentImage.color = new Color(1, 1, 0, 1);
-            }
-            oldPlayerX = currentPlayerX;
-            oldPlayerY = currentPlayerY;
-
-        }
-
-        // マップを逆方向へ動かす
-        CenterMiniMap(currentPlayerX, currentPlayerY);
-
-        // P1（自分）
-        if (player != null)
-            UpdatePlayerOnMap(player, ref currentPlayerX, ref currentPlayerY,
-                              ref oldPlayerX, ref oldPlayerY,
-                              objMapExist_P1, map2DRect_P1, miniMapMaskRect_P1);
-
-        // P2（相手）
-        if (remotePlayer != null)
-            UpdatePlayerOnMap(remotePlayer, ref currentRemoteX, ref currentRemoteY,
-                              ref oldRemoteX, ref oldRemoteY,
-                              objMapExist_P2, map2DRect_P2, miniMapMaskRect_P2);
-
-        ///////////////////////
-        // 敵
-        ///////////////////////
-
-        // 前回の敵位置を元に戻す
-        foreach (Vector2Int pos in oldEnemyPositions)
-        {
-            if (IsInsideMap(pos.x, pos.y, objMapExist))
-            {
-                Image img = objMapExist[pos.x, pos.y].GetComponent<Image>();
-
-                if (map[pos.x, pos.y] == "1")
-                {
-                    img.color = new Color(0, 0.8f, 1, 0.5f);
-                }
-                else if (map[pos.x, pos.y] == "2")
-                {
-                    img.color = new Color(0, 1, 0, 0.5f);
-                }
-            }
-        }
-        // 今回の敵位置保存用
-        oldEnemyPositions.Clear();
+				Vector2 vector2 = new Vector2(cellSize * i - mapX, cellSize * j - mapY);
+				objMapExist[i, j].GetComponent<RectTransform>().anchoredPosition = vector2;
+
+
+				// 初期状態では非表示
+				//Color color = objMapExist[i, j].GetComponent<Image>().color;
+				//color.a = 0;
+				//objMapExist[i, j].GetComponent<Image>().color = color;
+
+
+				// 2Dマップ生成のデバッグ用
+				if ((map[i, j] == "1")) // 部屋
+				{
+					objMapExist[i, j].GetComponent<Image>().color = new Color(0, 0.8f, 1, 0.5f); // 部屋の色
+				}
+				else if ((map[i, j] == "2")) // 通路
+				{
+					objMapExist[i, j].GetComponent<Image>().color = new Color(0, 1, 0, 0.5f);
+				}
+				else if ((map[i, j] == "3")) // 敵
+				{
+					objMapExist[i, j].GetComponent<Image>().color = new Color(1, 0, 0, 0.5f);
+				}
+			}
+		}
+		CenterMiniMap(playerX, playerY);
+
+		currentPlayerX = playerX;
+		currentPlayerY = playerY;
+
+		oldPlayerX = playerX;
+		oldPlayerY = playerY;
+
+		for (int i = 0; i < map.GetLength(0); i++)
+			for (int j = 0; j < map.GetLength(1); j++)
+				mapExist[i, j] = objMapExist[i, j];
+
+	}
+
+	void CenterMiniMap(int mapX, int mapY)
+	{
+		// Mask中央
+		float centerX = miniMapMaskRect.rect.width * 0.5f;
+		float centerY = miniMapMaskRect.rect.height * 0.5f;
+
+		// プレイヤーマスの中心座標
+		float playerCellX = (mapX * cellSize) + (cellSize * 0.5f);
+		float playerCellY = (mapY * cellSize) + (cellSize * 0.5f);
+
+		// プレイヤーマス中心をMask中央へ
+		float posX = centerX - playerCellX;
+		float posY = centerY - playerCellY;
+
+		map2DRect.anchoredPosition = new Vector2(posX, posY);
+	}
+
+	/// <summary>
+	/// ただしAwake時点ではmyPlayerがまだ生成されていない（init受信後に生成される）ので、コールバックで後から渡す方式にします。
+	/// </summary>
+	/// <param name="t"></param>
+	public void SetPlayerTransform(Transform t)
+	{
+		player = t;
+		// ミニマップの初期中心も更新
+		currentPlayerX = Mathf.RoundToInt(t.position.x);
+		currentPlayerY = Mathf.RoundToInt(t.position.z);
+		oldPlayerX = currentPlayerX;
+		oldPlayerY = currentPlayerY;
+		CenterMiniMap(currentPlayerX, currentPlayerY);
+	}
+
+	public void SetRemotePlayerTransform(Transform t)
+	{
+		remotePlayer = t;
+	}
+
+	void UpdatePlayerOnMap(
+	Transform target,
+	ref int curX, ref int curY,
+	ref int oldX, ref int oldY,
+	GameObject[,] mapExist,
+	RectTransform targetRect,
+	RectTransform maskRect)
+	{
+		if (mapExist == null || target == null) return;
+
+		curX = Mathf.RoundToInt(target.position.x);
+		curY = Mathf.RoundToInt(target.position.z);
+
+		if (oldX != curX || oldY != curY)
+		{
+			// 前のマスを地形色に戻す
+			if (IsInsideMap(oldX, oldY, mapExist))
+			{
+				Image oldImg = mapExist[oldX, oldY].GetComponent<Image>();
+				if (map[oldX, oldY] == "1") oldImg.color = new Color(0, 0.8f, 1, 0.5f);
+				else if (map[oldX, oldY] == "2") oldImg.color = new Color(0, 1, 0, 0.5f);
+				else oldImg.color = new Color(0, 0.8f, 1, 0.5f);
+			}
+
+			// 現在のマスをプレイヤー色に
+			if (IsInsideMap(curX, curY, mapExist))
+			{
+				mapExist[curX, curY].GetComponent<Image>().color = new Color(1, 1, 0, 1);
+			}
+
+			oldX = curX;
+			oldY = curY;
+		}
+
+		// ミニマップを中心に移動
+		float centerX = maskRect.rect.width * 0.5f;
+		float centerY = maskRect.rect.height * 0.5f;
+		float playerCellX = (curX * cellSize) + (cellSize * 0.5f);
+		float playerCellY = (curY * cellSize) + (cellSize * 0.5f);
+		targetRect.anchoredPosition = new Vector2(centerX - playerCellX, centerY - playerCellY);
+	}
+	#region Update処理
+	void Update()
+	{
+		// ミニマップに反映
+		UpdateMiniMap();
+	}
+
+	/// <summary>
+	/// プレイヤーと敵の現在位置をミニマップに反映
+	/// </summary>
+	void UpdateMiniMap()
+	{
+		if (player == null) return; // プレイヤー生成前はスキップ
+
+		///////////////////////
+		// プレイヤー
+		///////////////////////
+
+		Vector3 playerPos = player.position;
+
+		// ワールド座標 → マップ座標変換
+		currentPlayerX = Mathf.RoundToInt(playerPos.x);
+		currentPlayerY = Mathf.RoundToInt(playerPos.z);
+
+
+		// 前回位置の色を戻す
+		if (oldPlayerX != currentPlayerX || oldPlayerY != currentPlayerY)
+		{
+			if (IsInsideMap(oldPlayerX, oldPlayerY, objMapExist))
+			{
+				Image oldImage = objMapExist[oldPlayerX, oldPlayerY].GetComponent<Image>();
+
+				// 元の地形色に戻す
+				if (map[oldPlayerX, oldPlayerY] == "1")
+				{
+					oldImage.color = new Color(0, 0.8f, 1, 0.5f); // 部屋の色
+				}
+				else if (map[oldPlayerX, oldPlayerY] == "2")
+				{
+					oldImage.color = new Color(0, 1, 0, 0.5f);
+				}
+				else if (map[oldPlayerX, oldPlayerY] == "3")
+				{
+					oldImage.color = new Color(0, 0.8f, 1, 0.5f);
+				}
+				else if (map[oldPlayerX, oldPlayerY] == "10")
+				{
+					oldImage.color = new Color(0, 0.8f, 1, 0.5f);
+				}
+			}
+
+
+			// 現在位置をプレイヤー色に
+			if (IsInsideMap(currentPlayerX, currentPlayerY, objMapExist))
+			{
+				print("プレイヤー色変える");
+
+				Image currentImage = objMapExist[currentPlayerX, currentPlayerY].GetComponent<Image>();
+
+				// プレイヤー位置
+				currentImage.color = new Color(1, 1, 0, 1);
+			}
+			oldPlayerX = currentPlayerX;
+			oldPlayerY = currentPlayerY;
+
+		}
+
+		// マップを逆方向へ動かす
+		CenterMiniMap(currentPlayerX, currentPlayerY);
+
+		// P1（自分）
+		if (player != null)
+			UpdatePlayerOnMap(player, ref currentPlayerX, ref currentPlayerY,
+							  ref oldPlayerX, ref oldPlayerY,
+							  objMapExist_P1, map2DRect_P1, miniMapMaskRect_P1);
+
+		// P2（相手）
+		if (remotePlayer != null)
+			UpdatePlayerOnMap(remotePlayer, ref currentRemoteX, ref currentRemoteY,
+							  ref oldRemoteX, ref oldRemoteY,
+							  objMapExist_P2, map2DRect_P2, miniMapMaskRect_P2);
+
+		///////////////////////
+		// 敵
+		///////////////////////
+
+		// 前回の敵位置を元に戻す
+		foreach (Vector2Int pos in oldEnemyPositions)
+		{
+			if (IsInsideMap(pos.x, pos.y, objMapExist))
+			{
+				Image img = objMapExist[pos.x, pos.y].GetComponent<Image>();
+
+				if (map[pos.x, pos.y] == "1")
+				{
+					img.color = new Color(0, 0.8f, 1, 0.5f);
+				}
+				else if (map[pos.x, pos.y] == "2")
+				{
+					img.color = new Color(0, 1, 0, 0.5f);
+				}
+			}
+		}
+		// 今回の敵位置保存用
+		oldEnemyPositions.Clear();
+
+		// 全敵更新
+		foreach (GameObject enemyObj in objEnemys)
+		{
+			Vector3 enemyPos = enemyObj.transform.position;
+
+			int enemyX = Mathf.RoundToInt(enemyPos.x);
+
+			int enemyY = Mathf.RoundToInt(enemyPos.z);
+
+			if (IsInsideMap(enemyX, enemyY, objMapExist))
+			{
+				Image img = objMapExist[enemyX, enemyY].GetComponent<Image>();
+
+				// 敵色
+				img.color = new Color(1, 0, 0, 0.5f);
+
+				// 保存
+				oldEnemyPositions.Add(new Vector2Int(enemyX, enemyY));
+			}
+		}
+
+		for (int i = 0; i < objEnemys.Length; i++)
+		{
+			GameObject enemyObj = objEnemys[i];
+
+			Vector3 enemyPos = enemyObj.transform.position;
+
+			int enemyX = Mathf.RoundToInt(enemyPos.x);
+
+			int enemyY = Mathf.RoundToInt(enemyPos.z);
+
+			// UI位置
+			RectTransform rt = viewList[i].GetComponent<RectTransform>();
+
+			rt.anchoredPosition = new Vector2(enemyX * cellSize - mapX, enemyY * cellSize - mapY);
+
+			// 向き
+			float angle = enemyObj.transform.eulerAngles.y;
+
+			// 画像のズレ補正
+			float offset = 20f;
 
-        // 全敵更新
-        foreach (GameObject enemyObj in objEnemys)
-        {
-            Vector3 enemyPos = enemyObj.transform.position;
+			rt.rotation = Quaternion.Euler(0, 0, -angle + offset);
+
+			var em = enemyObj.GetComponent<EnemyManager>();
+			if (em != null)
+			{
+				var img = rt.GetComponent<Image>();
+				if (img != null)
+				{
+					if (em.currentAlertCount <= 1)
+						img.color = Color.red;
+					else if (em.currentAlertCount < 3)
+						img.color = new Color(1f, 0.5f, 0f);
+					else
+						img.color = new Color(0.827f, 0.851f, 0.439f);
+				}
+			}
+
+		}
 
-            int enemyX = Mathf.RoundToInt(enemyPos.x);
 
-            int enemyY = Mathf.RoundToInt(enemyPos.z);
-
-            if (IsInsideMap(enemyX, enemyY, objMapExist))
-            {
-                Image img = objMapExist[enemyX, enemyY].GetComponent<Image>();
-
-                // 敵色
-                img.color = new Color(1, 0, 0, 0.5f);
-
-                // 保存
-                oldEnemyPositions.Add(new Vector2Int(enemyX, enemyY));
-            }
-        }
-
-        for (int i = 0; i < objEnemys.Length; i++)
-        {
-            GameObject enemyObj = objEnemys[i];
-
-            Vector3 enemyPos = enemyObj.transform.position;
-
-            int enemyX = Mathf.RoundToInt(enemyPos.x);
-
-            int enemyY = Mathf.RoundToInt(enemyPos.z);
-
-            // UI位置
-            RectTransform rt = viewList[i].GetComponent<RectTransform>();
-
-            rt.anchoredPosition = new Vector2(enemyX * cellSize - mapX, enemyY * cellSize - mapY);
-
-            // 向き
-            float angle = enemyObj.transform.eulerAngles.y;
-
-            // 画像のズレ補正
-            float offset = 20f;
-
-            rt.rotation = Quaternion.Euler(0, 0, -angle + offset);
-
-        }
-
-
-        // 全強化敵更新
-        foreach (GameObject enemyObj in objEnemyStrongs)
-        {
-            Vector3 enemyPos = enemyObj.transform.position;
-
-            int enemyX = Mathf.RoundToInt(enemyPos.x);
-
-            int enemyY = Mathf.RoundToInt(enemyPos.z);
-
-            if (IsInsideMap(enemyX, enemyY, objMapExist))
-            {
-                Image img = objMapExist[enemyX, enemyY].GetComponent<Image>();
-
-                // 敵色
-                img.color = new Color(1, 0, 0, 0.5f);
-
-                // 保存
-                oldEnemyPositions.Add(new Vector2Int(enemyX, enemyY));
-            }
-        }
-
-        for (int i = 0; i < objEnemyStrongs.Length; i++)
-        {
-            GameObject enemyStrongObj = objEnemyStrongs[i];
-
-            Vector3 enemyStrongPos = enemyStrongObj.transform.position;
-
-            int enemyStrongX = Mathf.RoundToInt(enemyStrongPos.x);
-
-            int enemyStrongY = Mathf.RoundToInt(enemyStrongPos.z);
-
-            // UI位置
-            RectTransform rt2 = viewStrongList[i].GetComponent<RectTransform>();
-
-            rt2.anchoredPosition = new Vector2(enemyStrongX * cellSize - mapX, enemyStrongY * cellSize - mapY);
-
-            // 向き
-            float angle2 = enemyStrongObj.transform.eulerAngles.y;
-
-            // 画像のズレ補正
-            float offset2 = 45f;
-
-            rt2.rotation = Quaternion.Euler(0, 0, -angle2 + offset2);
-
-        }
-
-        // 全アイテム更新
-        foreach (GameObject itemObj in objItems)
-        {
-            Vector3 itemPos = itemObj.transform.position;
-
-            int itemX = Mathf.RoundToInt(itemPos.x);
-
-            int itemY = Mathf.RoundToInt(itemPos.z);
-
-            if (IsInsideMap(itemX, itemY, objMapExist))
-            {
-                Image img = objMapExist[itemX, itemY].GetComponent<Image>();
-
-                // アイテムの色
-                img.color = new Color(1, 0, 1, 1f);
-            }
-        }
-
-        // ゴール更新
-        foreach (GameObject goalObj in objGoals)
-        {
-            Vector3 goalPos = goalObj.transform.position;
-
-            int goalX = Mathf.RoundToInt(goalPos.x);
-
-            int goalY = Mathf.RoundToInt(goalPos.z);
-
-            if (IsInsideMap(goalX, goalY, objMapExist))
-            {
-                Image img = objMapExist[goalX, goalY].GetComponent<Image>();
-
-                // ゴールの色
-                img.color = new Color(1, 1, 0, 1f);
-            }
-        }
-
-        // 全スイッチ更新
-        foreach (GameObject SwitchObj in objSwitchs)
-        {
-            Vector3 SwitchPos = SwitchObj.transform.position;
-
-            int SwitchX = Mathf.RoundToInt(SwitchPos.x);
-
-            int SwitchY = Mathf.RoundToInt(SwitchPos.z);
-
-            if (IsInsideMap(SwitchX, SwitchY, objMapExist))
-            {
-                Image img = objMapExist[SwitchX, SwitchY].GetComponent<Image>();
-
-                // スイッチの色
-                img.color = new Color(0, 1, 0, 1f);
-            }
-        }
-    }
-    #endregion
-
-    /// <summary>
-    /// 座標がマップ範囲内かどうか確認
-    /// </summary>
-    /// <param name="x"></param>
-    /// <param name="y"></param>
-    /// <returns></returns>
-    bool IsInsideMap(int x, int y, GameObject[,] mapExist)
-    {
-        return x >= 0 &&
-               y >= 0 &&
-               x < mapExist.GetLength(0) &&
-               y < mapExist.GetLength(1);
-    }
-
-
-
-    /// <summary>
-    /// CSVに敵やアイテムなども調整できるように
-    /// </summary>
-    void GenerateObjectsCSV()
-    {
-        
-        for (int x = 0; x < map.GetLength(0); x++)
-        {
-            for (int y = 0; y < map.GetLength(1); y++)
-            {
-                Vector3 pos = new Vector3(x, 0, y);
-
-                string cell = map[x, y];
-
-                if (string.IsNullOrEmpty(cell))
-                {
-                    continue;
-                }
-
-                string[] data = cell.Split('_');
-
-                int type = int.Parse(data[0]);
-                int id = data.Length > 1 ? int.Parse(data[1]) : -1;
-
-                switch (type)
-                {
-                    case 3: // 敵
-                        Instantiate(objEnemyList[0], pos, Quaternion.identity);
-                        GameObject view = Instantiate(enemyViewPrefab, map2DRect);
-                        viewList.Add(view);
-                        objEnemys = GameObject.FindGameObjectsWithTag("Enemy");
-                        map[x, y] = "1"; // 床に戻す
-                        break;
-
-                    case 4: // 強化敵
-                        GameObject enemyObj = Instantiate(objSuperEnemyList[0], pos, Quaternion.identity);
-                        GameObject viewStrong = Instantiate(enemyStrongViewPrefab, map2DRect);
-                        viewStrongList.Add(viewStrong);
-                        objEnemyStrongs = GameObject.FindGameObjectsWithTag("StrongEnemy");
-
-                        //ギミック用
-                        EnemyManager em = enemyObj.GetComponent<EnemyManager>();
-                        em.enemyID = id;
-                        strongEnemyList.Add(em);
-
-                        map[x, y] = "1";
-                        break;
-
-                    case 5: // アイテム
-                        Instantiate(objItemList[0], pos, Quaternion.identity);
-                        objItems = GameObject.FindGameObjectsWithTag("Item");
-                        map[x, y] = "1";
-                        break;
-
-                    case 6: // ゴール
-                        Instantiate(objGoal, pos, Quaternion.identity);
-                        objGoals = GameObject.FindGameObjectsWithTag("Goal");
-                        map[x, y] = "1";
-                        break;
-                    case 7: // スイッチ
-                        GameObject switchObj = Instantiate(objSwitchList[0], pos, Quaternion.identity);
-                        objSwitchs = GameObject.FindGameObjectsWithTag("Switch");
-
-                        // ギミック用
-                        SwitchManager sw = switchObj.GetComponentInChildren<SwitchManager>();
-                        sw.targetEnemyID = id;
-                        switchList.Add(sw);
-                                   
-                        map[x, y] = "1";
-                        break;
-
-                    /*case 8: // プレイヤー
+		// 全強化敵更新
+		foreach (GameObject enemyObj in objEnemyStrongs)
+		{
+			Vector3 enemyPos = enemyObj.transform.position;
+
+			int enemyX = Mathf.RoundToInt(enemyPos.x);
+
+			int enemyY = Mathf.RoundToInt(enemyPos.z);
+
+			if (IsInsideMap(enemyX, enemyY, objMapExist))
+			{
+				Image img = objMapExist[enemyX, enemyY].GetComponent<Image>();
+
+				// 敵色
+				img.color = new Color(1, 0, 0, 0.5f);
+
+				// 保存
+				oldEnemyPositions.Add(new Vector2Int(enemyX, enemyY));
+			}
+		}
+
+		for (int i = 0; i < objEnemyStrongs.Length; i++)
+		{
+			GameObject enemyStrongObj = objEnemyStrongs[i];
+
+			Vector3 enemyStrongPos = enemyStrongObj.transform.position;
+
+			int enemyStrongX = Mathf.RoundToInt(enemyStrongPos.x);
+
+			int enemyStrongY = Mathf.RoundToInt(enemyStrongPos.z);
+
+			// UI位置
+			RectTransform rt2 = viewStrongList[i].GetComponent<RectTransform>();
+
+			rt2.anchoredPosition = new Vector2(enemyStrongX * cellSize - mapX, enemyStrongY * cellSize - mapY);
+
+			// 向き
+			float angle2 = enemyStrongObj.transform.eulerAngles.y;
+
+			// 画像のズレ補正
+			float offset2 = 45f;
+
+			rt2.rotation = Quaternion.Euler(0, 0, -angle2 + offset2);
+
+
+
+		}
+
+		// 全アイテム更新
+		foreach (GameObject itemObj in objItems)
+		{
+			Vector3 itemPos = itemObj.transform.position;
+
+			int itemX = Mathf.RoundToInt(itemPos.x);
+
+			int itemY = Mathf.RoundToInt(itemPos.z);
+
+			if (IsInsideMap(itemX, itemY, objMapExist))
+			{
+				Image img = objMapExist[itemX, itemY].GetComponent<Image>();
+
+				// アイテムの色
+				img.color = new Color(1, 0, 1, 1f);
+			}
+		}
+
+		// ゴール更新
+		foreach (GameObject goalObj in objGoals)
+		{
+			Vector3 goalPos = goalObj.transform.position;
+
+			int goalX = Mathf.RoundToInt(goalPos.x);
+
+			int goalY = Mathf.RoundToInt(goalPos.z);
+
+			if (IsInsideMap(goalX, goalY, objMapExist))
+			{
+				Image img = objMapExist[goalX, goalY].GetComponent<Image>();
+
+				// ゴールの色
+				img.color = new Color(1, 1, 0, 1f);
+			}
+		}
+
+		// 全スイッチ更新
+		foreach (GameObject SwitchObj in objSwitchs)
+		{
+			Vector3 SwitchPos = SwitchObj.transform.position;
+
+			int SwitchX = Mathf.RoundToInt(SwitchPos.x);
+
+			int SwitchY = Mathf.RoundToInt(SwitchPos.z);
+
+			if (IsInsideMap(SwitchX, SwitchY, objMapExist))
+			{
+				Image img = objMapExist[SwitchX, SwitchY].GetComponent<Image>();
+
+				// スイッチの色
+				img.color = new Color(0, 1, 0, 1f);
+			}
+		}
+	}
+	#endregion
+
+	/// <summary>
+	/// 座標がマップ範囲内かどうか確認
+	/// </summary>
+	/// <param name="x"></param>
+	/// <param name="y"></param>
+	/// <returns></returns>
+	bool IsInsideMap(int x, int y, GameObject[,] mapExist)
+	{
+		return x >= 0 &&
+			   y >= 0 &&
+			   x < mapExist.GetLength(0) &&
+			   y < mapExist.GetLength(1);
+	}
+
+
+
+	/// <summary>
+	/// CSVに敵やアイテムなども調整できるように
+	/// </summary>
+	void GenerateObjectsCSV()
+	{
+
+		for (int x = 0; x < map.GetLength(0); x++)
+		{
+			for (int y = 0; y < map.GetLength(1); y++)
+			{
+				Vector3 pos = new Vector3(x, 0, y);
+
+				string cell = map[x, y];
+
+				if (string.IsNullOrEmpty(cell))
+				{
+					continue;
+				}
+
+				string[] data = cell.Split('_');
+
+				int type = int.Parse(data[0]);
+				int id = data.Length > 1 ? int.Parse(data[1]) : -1;
+
+				switch (type)
+				{
+					case 3: // 敵
+						Instantiate(objEnemyList[0], pos, Quaternion.identity);
+						GameObject view = Instantiate(enemyViewPrefab, map2DRect);
+						viewList.Add(view);
+						objEnemys = GameObject.FindGameObjectsWithTag("Enemy");
+						map[x, y] = "1"; // 床に戻す
+						break;
+
+					case 4: // 強化敵
+						GameObject enemyObj = Instantiate(objSuperEnemyList[0], pos, Quaternion.identity);
+						GameObject viewStrong = Instantiate(enemyStrongViewPrefab, map2DRect);
+						viewStrongList.Add(viewStrong);
+						objEnemyStrongs = GameObject.FindGameObjectsWithTag("StrongEnemy");
+
+						//ギミック用
+						EnemyManager em = enemyObj.GetComponent<EnemyManager>();
+						em.enemyID = id;
+						strongEnemyList.Add(em);
+
+						map[x, y] = "1";
+						break;
+
+					case 5: // アイテム
+						Instantiate(objItemList[0], pos, Quaternion.identity);
+						objItems = GameObject.FindGameObjectsWithTag("Item");
+						map[x, y] = "1";
+						break;
+
+					case 6: // ゴール
+						Instantiate(objGoal, pos, Quaternion.identity);
+						objGoals = GameObject.FindGameObjectsWithTag("Goal");
+						map[x, y] = "1";
+						break;
+					case 7: // スイッチ
+						GameObject switchObj = Instantiate(objSwitchList[0], pos, Quaternion.identity);
+						objSwitchs = GameObject.FindGameObjectsWithTag("Switch");
+
+						// ギミック用
+						SwitchManager sw = switchObj.GetComponentInChildren<SwitchManager>();
+						sw.targetEnemyID = id;
+						switchList.Add(sw);
+
+						map[x, y] = "1";
+						break;
+
+					/*case 8: // プレイヤー
 						objPlayer = GameObject.Find("Player");
 						objPlayer.transform.position = pos;
 						map[x, y] = 1; // プレイヤー位置マップ表示
 						break;*/
-                    case 8: // プレイヤー1
-                        var wsClient = FindObjectOfType<WebSocketClient>();
-                        if (wsClient != null)
-                            wsClient.SetSpawnPosition(1, pos);
-                        map[x, y] = "1";
-                        break;
-                    case 9: // 敵の巡回ポイント
-                        Instantiate(objPatrolPointList[0], pos, Quaternion.identity);
-                        map[x, y] = "1";
-                        break;
-                    case 10: // プレイヤー2
-                        var wsClient2 = FindObjectOfType<WebSocketClient>();
-                        if (wsClient2 != null)
-                            wsClient2.SetSpawnPosition(2, pos);
-                        map[x, y] = "1";
-                        break;
-                }
-            }
-        }
+					case 8: // プレイヤー1
+						var wsClient = FindObjectOfType<WebSocketClient>();
+						if (wsClient != null)
+							wsClient.SetSpawnPosition(1, pos);
+						map[x, y] = "1";
+						break;
+					case 9: // 敵の巡回ポイント
+						Instantiate(objPatrolPointList[0], pos, Quaternion.identity);
+						map[x, y] = "1";
+						break;
+					case 10: // プレイヤー2
+						var wsClient2 = FindObjectOfType<WebSocketClient>();
+						if (wsClient2 != null)
+							wsClient2.SetSpawnPosition(2, pos);
+						map[x, y] = "1";
+						break;
+				}
+			}
+		}
 
-        foreach (SwitchManager sw in switchList)
-        {
-            if (sw == null)
-            {
-                Debug.LogError("SwitchManagerが取得できてない");
-                continue;
-            }
+		foreach (SwitchManager sw in switchList)
+		{
+			if (sw == null)
+			{
+				Debug.LogError("SwitchManagerが取得できてない");
+				continue;
+			}
 
-            EnemyManager targetEnemy = null;
+			EnemyManager targetEnemy = null;
 
-            foreach (EnemyManager em in strongEnemyList)
-            {
-                if (em == null)
-                    continue;
+			foreach (EnemyManager em in strongEnemyList)
+			{
+				if (em == null)
+					continue;
 
-                // ID一致チェック
-                if (em.enemyID == sw.targetEnemyID)
-                {
-                    targetEnemy = em;
-                    break;
-                }
-            }
+				// ID一致チェック
+				if (em.enemyID == sw.targetEnemyID)
+				{
+					targetEnemy = em;
+					break;
+				}
+			}
 
-            if (targetEnemy != null)
-            {
-                sw.SetTarget(targetEnemy);
+			if (targetEnemy != null)
+			{
+				sw.SetTarget(targetEnemy);
 
-                Debug.Log($"スイッチID:{sw.targetEnemyID} → 敵ID:{targetEnemy.enemyID} 接続");
-            }
-            else
-            {
-                Debug.LogWarning($"対応する敵が見つかりません ID:{sw.targetEnemyID}");
-            }
-        }
-    }
+				Debug.Log($"スイッチID:{sw.targetEnemyID} → 敵ID:{targetEnemy.enemyID} 接続");
+			}
+			else
+			{
+				Debug.LogWarning($"対応する敵が見つかりません ID:{sw.targetEnemyID}");
+			}
+		}
+	}
 }
