@@ -8,13 +8,13 @@ public class FixedMap : MonoBehaviour
     public string fileName = "map"; // Resources/map.csv
 
     // 読み込んだマップを保存する二次元配列
-    private int[,] map;
+    private string[,] map;
 
     /// <summary>
     /// int型の二次元配列を返す関数
     /// </summary>
     /// <returns></returns>
-    public int[,] Generate()
+    public string[,] Generate()
     {
         // CSVファイルを読み込む
         TextAsset csvFile = Resources.Load<TextAsset>(fileName);
@@ -33,7 +33,7 @@ public class FixedMap : MonoBehaviour
         int width = lines[0].Split(',').Length;
 
         // 配列の作成
-        map = new int[width, height];
+        map = new string[width, height];
 
         // CSVを1マスずつ読む
         for (int y = 0; y < height; y++)
@@ -48,14 +48,13 @@ public class FixedMap : MonoBehaviour
             // 数値に変換
             for (int x = 0; x < width; x++)
             {
-                int value = 0;
+                string value = "0";
 
                 if (x < values.Length)
                 {
-                    int.TryParse(values[x], out value);
+                    value = values[x].Trim();
                 }
 
-                // Unityの座標にあわせるため上下を反転
                 map[x, height - 1 - y] = value;
             }
         }

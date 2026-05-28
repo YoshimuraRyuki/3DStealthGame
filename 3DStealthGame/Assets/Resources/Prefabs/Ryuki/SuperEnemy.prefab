@@ -208,6 +208,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6923259648213005330}
+  - component: {fileID: 2482435208663036734}
   m_Layer: 0
   m_Name: Walls
   m_TagString: Untagged
@@ -234,6 +235,27 @@ Transform:
   - {fileID: 1145763812481020592}
   m_Father: {fileID: 699575507265787256}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!95 &2482435208663036734
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6091104878008081757}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 93270dfac32ce8f4d924537b3b3af84f, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &7396299866618998096
 GameObject:
   m_ObjectHideFlags: 0
@@ -402,7 +424,9 @@ MonoBehaviour:
   player: {fileID: 2072795091767466297, guid: da99b9dbceb22af41884bfc73e3a87a0, type: 3}
   hearingRange: 10
   alertDuration: 2
+  isRemoteControlled: 0
   isStopMove: 0
+  enemyID: 0
 --- !u!114 &6275340195325619431
 MonoBehaviour:
   m_ObjectHideFlags: 0

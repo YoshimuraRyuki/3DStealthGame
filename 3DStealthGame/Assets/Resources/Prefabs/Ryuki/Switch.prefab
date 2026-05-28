@@ -227,6 +227,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isEnemyMoveStop: 0
   stanTime: 3
+  targetEnemyID: 0
 --- !u!1 &5834951719018012210
 GameObject:
   m_ObjectHideFlags: 0
@@ -261,7 +262,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 31.2}
+  m_AnchoredPosition: {x: 0, y: 109}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8609370607077150240
@@ -292,10 +293,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u6BB4\u308C"
+  m_text: "\u653B\u6483"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 3a40ce83608e6454986a3fd81be0bb52, type: 2}
-  m_sharedMaterial: {fileID: 274701234739421444, guid: 3a40ce83608e6454986a3fd81be0bb52, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: d559572691a252b4caf142838500b9fb, type: 2}
+  m_sharedMaterial: {fileID: -996570199654432458, guid: d559572691a252b4caf142838500b9fb, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
