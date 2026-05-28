@@ -345,6 +345,7 @@ public class EnemyManager : MonoBehaviour
 	/// </summary>
 	void AlertColor()
 	{
+		if (Sl == null) return;
 		if (currentAlertCount <= 1)
 		{
 			Sl.color = Color.red;
@@ -464,8 +465,9 @@ public class EnemyManager : MonoBehaviour
 			isHearingSound = true;           // 音が聞こえている状態にする
 			lastSoundPosition = soundPosition; // 音の位置を記憶
 											   // 音の発生源に敵を向かわせる
-											  
-			reactionText.gameObject.SetActive(true); // ビックリマーク表示
+
+			if (reactionText != null)
+				reactionText.gameObject.SetActive(true); // ビックリマーク表示
 
 			currentState = EnemyState.FocusPlayer;
 			Debug.Log("音を検知しました。追跡処理に移行");
@@ -616,7 +618,9 @@ public class EnemyManager : MonoBehaviour
 	// Update is called once per frame
 	void Update()
 	{
-		// Player2音検知クールダウン減算
+		if (isRemoteControlled) return;
+		if (Sm == null || Sm.isEnemyMoveStop) return; // ←Sm nullチェック追加
+													  // Player2音検知クールダウン減算
 		if (_remoteSoundCooldown > 0)
 			_remoteSoundCooldown -= Time.deltaTime;
 

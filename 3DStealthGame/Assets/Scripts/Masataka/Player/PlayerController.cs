@@ -18,12 +18,17 @@ public class PlayerController : MonoBehaviour
     private Rigidbody _rb;
     private Vector2 _moveInput;
 
-    void Awake()
+	Animator Am;
+
+	public bool isAction = false;
+
+	void Awake()
     {
         _rb = GetComponent<Rigidbody>();
         if (_rb != null)
             _rb.constraints = RigidbodyConstraints.FreezeRotation;
-    }
+		Am = GetComponent<Animator>();
+	}
 
     void Update()
     {
@@ -33,14 +38,45 @@ public class PlayerController : MonoBehaviour
 
     private void CaptureInput()
     {
-        float x = 0;
-        if (Input.GetKey(KeyCode.D)) x += 1;
-        if (Input.GetKey(KeyCode.A)) x -= 1;
-        float z = 0;
-        if (Input.GetKey(KeyCode.W)) z += 1;
-        if (Input.GetKey(KeyCode.S)) z -= 1;
-        _moveInput = new Vector2(x, z).normalized;
-    }
+		float x = 0;
+		float z = 0;
+		if (!isAction)
+		{
+			
+			if (Input.GetKey(KeyCode.D)) x += 1;
+			if (Input.GetKey(KeyCode.A)) x -= 1;
+			
+			if (Input.GetKey(KeyCode.W)) z += 1;
+			if (Input.GetKey(KeyCode.S)) z -= 1;
+			_moveInput = new Vector2(x, z).normalized;
+		}
+
+		bool isMoving = (x != 0 || z != 0);
+
+		// Sneak
+		if (isMoving && Input.GetKey(KeyCode.LeftShift))
+		{
+			Am.SetBool("Sneak", true);
+			Am.SetBool("Run", false);
+			Debug.Log("音消してます。");
+		}
+		// Run
+		else if (isMoving)
+		{
+			MakeSound(transform.position, walkVolume);
+
+			Am.SetBool("Run", true);
+			Am.SetBool("Sneak", false);
+			Debug.Log("音出てます");
+		}
+		// Idle
+		else
+		{
+			Am.SetBool("Run", false);
+			Am.SetBool("Sneak", false);
+		}
+
+	}
 
     void FixedUpdate()
     {
@@ -78,7 +114,32 @@ public class PlayerController : MonoBehaviour
             MakeSound(transform.position, walkVolume);
     }
 
-    void MakeSound(Vector3 position, float volume)
+
+	public void PunchEnemy()
+	{
+		if (isAction) return;
+		isAction = true;
+		Am.SetTrigger("PunchEnemy");
+	}
+
+	public void PunchSwitch()
+	{
+		//if (isAction) return;
+		print("スイッチアニメーション起動");
+
+		// 移動系を止める
+		Am.SetBool("Run", false);
+		Am.SetBool("Sneak", false);
+
+		Am.SetTrigger("PunchSwitch");
+	}
+
+	public void EndAction()
+	{
+		isAction = false;
+	}
+
+	void MakeSound(Vector3 position, float volume)
     {
         OnMakeSound?.Invoke(position, volume);
     }
