@@ -22,6 +22,8 @@ public class PlayerController : MonoBehaviour
 
 	public bool isAction = false;
 
+	public string lastTrigger = "";
+
 	void Awake()
     {
         _rb = GetComponent<Rigidbody>();
@@ -67,7 +69,7 @@ public class PlayerController : MonoBehaviour
 
 			Am.SetBool("Run", true);
 			Am.SetBool("Sneak", false);
-			Debug.Log("âπèoÇƒÇ‹Ç∑");
+			//Debug.Log("âπèoÇƒÇ‹Ç∑");
 		}
 		// Idle
 		else
@@ -120,6 +122,7 @@ public class PlayerController : MonoBehaviour
 		if (isAction) return;
 		isAction = true;
 		Am.SetTrigger("PunchEnemy");
+		lastTrigger = "PunchEnemy";
 	}
 
 	public void PunchSwitch()
@@ -132,8 +135,15 @@ public class PlayerController : MonoBehaviour
 		Am.SetBool("Sneak", false);
 
 		Am.SetTrigger("PunchSwitch");
+		lastTrigger = "PunchSwitch";
 	}
 
+	public string GetAnimState()
+	{
+		if (Am.GetBool("Run")) return "run";
+		if (Am.GetBool("Sneak")) return "sneak";
+		return "idle";
+	}
 	public void EndAction()
 	{
 		isAction = false;
