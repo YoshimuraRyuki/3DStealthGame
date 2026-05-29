@@ -19,8 +19,10 @@ public class PlayerController : MonoBehaviour
     private Vector2 _moveInput;
 
 	Animator Am;
+    public bool isAnimationStart = false;
 
 	public bool isAction = false;
+	public bool isPlayerMoveStop = false;
 
 	public string lastTrigger = "";
 
@@ -42,18 +44,33 @@ public class PlayerController : MonoBehaviour
     {
 		float x = 0;
 		float z = 0;
-		if (!isAction)
-		{
-			
-			if (Input.GetKey(KeyCode.D)) x += 1;
-			if (Input.GetKey(KeyCode.A)) x -= 1;
-			
-			if (Input.GetKey(KeyCode.W)) z += 1;
-			if (Input.GetKey(KeyCode.S)) z -= 1;
-			_moveInput = new Vector2(x, z).normalized;
-		}
 
-		bool isMoving = (x != 0 || z != 0);
+        // 移動停止中
+        if (isPlayerMoveStop)
+        {
+            _moveInput = Vector2.zero;
+
+            if (_rb != null)
+            {
+                _rb.velocity = Vector3.zero;
+            }
+
+            // アニメーション停止
+            Am.SetBool("Run", false);
+            Am.SetBool("Sneak", false);
+
+            return;
+        }
+        // 通常入力
+        if (Input.GetKey(KeyCode.D)) x += 1;
+        if (Input.GetKey(KeyCode.A)) x -= 1;
+
+        if (Input.GetKey(KeyCode.W)) z += 1;
+        if (Input.GetKey(KeyCode.S)) z -= 1;
+
+        _moveInput = new Vector2(x, z).normalized;
+
+        bool isMoving = (x != 0 || z != 0);
 
 		// Sneak
 		if (isMoving && Input.GetKey(KeyCode.LeftShift))
@@ -125,7 +142,12 @@ public class PlayerController : MonoBehaviour
 		lastTrigger = "PunchEnemy";
 	}
 
-	public void PunchSwitch()
+    public void StartAnimationEnemy()
+    {
+        isAnimationStart = true;
+    }
+
+    public void PunchSwitch()
 	{
 		//if (isAction) return;
 		print("スイッチアニメーション起動");
@@ -147,7 +169,12 @@ public class PlayerController : MonoBehaviour
 	public void EndAction()
 	{
 		isAction = false;
-	}
+    }
+
+	public void EndMove()
+	{
+		isPlayerMoveStop = false;
+    }
 
 	void MakeSound(Vector3 position, float volume)
     {

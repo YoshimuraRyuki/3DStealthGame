@@ -11,10 +11,9 @@ using static UnityEngine.GraphicsBuffer;
 
 public class EnemyManager : MonoBehaviour
 {
-	#region 宣言
+    #region 宣言
 
-
-	public enum EnemyState
+    public enum EnemyState
 	{
 		Patrol,
 		FocusPlayer,
@@ -27,7 +26,7 @@ public class EnemyManager : MonoBehaviour
 	Light Sl;
 	PlayerController Pc; // 仮プレイヤーでテスト
 	SwitchManager Sm;
-	TextMeshProUGUI reactionText;
+	public TextMeshProUGUI reactionText;
     private Transform cameraTransform;
 
     // プレイヤーの巡回処理
@@ -84,10 +83,11 @@ public class EnemyManager : MonoBehaviour
 
     [Header("スイッチギミック用ID")]
 	public int enemyID;
-	Animator anim;
+	Animator animWall;
+    Animator animEnemy;
 
-	// Player2音検知用クールダウン
-	private float _remoteSoundCooldown = 0f;
+    // Player2音検知用クールダウン
+    private float _remoteSoundCooldown = 0f;
 
 	#endregion
 
@@ -535,22 +535,49 @@ public class EnemyManager : MonoBehaviour
 
 	#endregion
 
-	#region 強化敵の壁を出すアニメーション
+	#region アニメーション
 
-	public void PlayAnimation()
+	/// <summary>
+	/// 強化敵の壁をだす処理
+	/// </summary>
+	public void PlayAnimationWall()
 	{
-		anim.SetTrigger("wallUp");
+        animWall.SetTrigger("wallUp");
 		Sm.isEnemyMoveStop = true;
 	}
 
-	#endregion
-
-	#region 初期化処理
-
-	/// <summary>
-	/// 巡回状態を初期化
+    /// <summary>
+	/// 敵が攻撃されてスタン状態にする処理
 	/// </summary>
-	void ResetPatrolState()
+    public void PlayAnimationEnemy()
+    {
+        animEnemy.SetTrigger("Stun");
+        Sm.isEnemyMoveStop = true;
+        
+		var col = GetComponent<Collider>();
+		if (col != null)
+        {
+            col.enabled = false;
+        }
+    }
+
+	public void StunCancel()
+	{
+        animEnemy.SetTrigger("StunCancel");
+        var col = GetComponent<Collider>();
+        if (col != null)
+        {
+            col.enabled = true;
+        }
+    }
+    #endregion
+
+    #region 初期化処理
+
+    /// <summary>
+    /// 巡回状態を初期化
+    /// </summary>
+    public void ResetPatrolState()
 	{
 		currentTime = 0f;
 
@@ -561,12 +588,15 @@ public class EnemyManager : MonoBehaviour
 
 		// 停止時間を再抽選
 		stopMoveCooldown = Random.Range(stopMoveCooldownMin, stopMoveCooldownMax);
-	}
+
+		// テキスト非表示
+		reactionText.gameObject.SetActive(false);
+    }
 
 
 	void InitText()
 	{
-		Transform child = transform.Find("ActionCanvas/ReactionText");
+		Transform child = transform.Find("Model/ActionCanvas/ReactionText");
 		if (child != null)
 		{
 			reactionText = child.GetComponent<TextMeshProUGUI>();
@@ -599,7 +629,8 @@ public class EnemyManager : MonoBehaviour
 		Eg = GetComponent<ElementGenerator>();
 		Sl = GetComponentInChildren<Light>();
 		Sm = GetComponent<SwitchManager>();
-		anim = GetComponentInChildren<Animator>();
+        animEnemy = GetComponentInChildren<Animator>();
+        animWall = GetComponentInChildren<Animator>();
 		Pc = (GameObject.FindWithTag("Player1") ?? GameObject.FindWithTag("Player2"))?.GetComponent<PlayerController>();
 		if (Pc != null)
 			Pc.OnMakeSound += HandleSound;
@@ -630,6 +661,8 @@ public class EnemyManager : MonoBehaviour
 		if (_remoteSoundCooldown > 0)
 			_remoteSoundCooldown -= Time.deltaTime;
 
+		if (Sm.isEnemyMoveStop) return;
+		
 		if (!_soundRegistered)
 		{
 			var p = GameObject.FindWithTag("Player1") ?? GameObject.FindWithTag("Player2");
@@ -645,7 +678,6 @@ public class EnemyManager : MonoBehaviour
 		}
 		// ゲスト側はAIを動かさない（WebSocketClientが位置を受信して動かす）
 		if (isRemoteControlled) return;
-		if (Sm.isEnemyMoveStop) return;
 		PlayerFound();
 		AlertFunction();
 		if (gameObject.tag == "StrongEnemy")
