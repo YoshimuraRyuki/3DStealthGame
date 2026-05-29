@@ -34,7 +34,6 @@ public class SwitchManager : MonoBehaviour
     /// </summary>    
     void DoActionEnemy()
     {
-        Debug.Log("殴る開始");
         // 敵の動きを止める処理
         isEnemyMoveStop = true;
 
@@ -145,7 +144,6 @@ public class SwitchManager : MonoBehaviour
         if (isEndAction) return;
         if (other.CompareTag("Player1") || other.CompareTag("Player2"))
         {
-            print("プレイヤーが入った");
             isPlayerInRange = true;
             if (actionText != null)
             {
