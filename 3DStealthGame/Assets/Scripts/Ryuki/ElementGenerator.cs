@@ -91,6 +91,9 @@ public class ElementGenerator : MonoBehaviour
 
 	// 生成したマップチップ
 	GameObject[,] objMapExist;                                      // フィールド用
+
+	[Header("壁のコライダーを有効化")]
+	[SerializeField] bool enableWallCollider = true;
 	#endregion
 
 	#region 初期化処理
@@ -211,7 +214,11 @@ public class ElementGenerator : MonoBehaviour
 		cube.transform.position = new Vector3(centerX, 2f, y);
 
 		var col = cube.GetComponent<Collider>();
-		if (col != null) col.enabled = false;
+
+		if (col != null)
+		{
+			col.enabled = enableWallCollider;
+		}
 	}
 
 	/// <summary>

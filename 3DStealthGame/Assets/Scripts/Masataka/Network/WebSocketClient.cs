@@ -42,6 +42,8 @@ public class PlayerMoveMessage
 	public string id;
 	public PositionData position;
 	public PositionData rotation;
+	public string anim_state;
+	public string anim_trigger;
 }
 
 [System.Serializable]
@@ -347,10 +349,10 @@ public class WebSocketClient : MonoBehaviour
 				if (em != null) em.isRemoteControlled = true;
 			}
 		}
-		if (init.player_number == 1)
-			myPlayer.GetComponentInChildren<Renderer>().material = localPlayerMaterial;  
+		if (myPlayerNumber == 1)
+			myPlayer.GetComponentInChildren<Renderer>().material = localPlayerMaterial; // 赤
 		else
-			myPlayer.GetComponentInChildren<Renderer>().material = remotePlayerMaterial;
+			myPlayer.GetComponentInChildren<Renderer>().material = remotePlayerMaterial; // 青
 
 		var elementGenerator = FindObjectOfType<ElementGenerator>();
 		if (elementGenerator != null) elementGenerator.SetRemotePlayerTransform(myPlayer.transform);
@@ -437,6 +439,8 @@ public class WebSocketClient : MonoBehaviour
 		};
 		SpawnRemotePlayer(player);
 		if (roomMemberPanel != null) roomMemberPanel.AddOrUpdateMember(msg.id, msg.name, false);
+
+
 	}
 
 	private void HandlePlayerMoveMessage(string json)
@@ -463,6 +467,20 @@ public class WebSocketClient : MonoBehaviour
 				if (em != null)
 					em.HandleSoundFromRemote(newPos, 1f);
 			}
+		}
+
+		Debug.Log($"anim_state受信: {msg.anim_state}");
+		// アニメーション反映
+		var anim = targetPlayer.GetComponentInChildren<Animator>();
+		if (anim != null && !string.IsNullOrEmpty(msg.anim_state))
+		{
+			anim.SetBool("Run", msg.anim_state == "run");
+			anim.SetBool("Sneak", msg.anim_state == "sneak");
+		}
+
+		if (!string.IsNullOrEmpty(msg.anim_trigger))
+		{
+			anim.SetTrigger(msg.anim_trigger);
 		}
 	}
 
@@ -511,11 +529,7 @@ public class WebSocketClient : MonoBehaviour
 	private void HandleAllGoalMessage(string json)
 	{
 		MissionManager.Instance?.StopTimer();
-
 		MissionManager.Instance?.ShowClearMessage();
-		Invoke("LoadResultScene", 2f);
-
-		var msg = JsonUtility.FromJson<GoalMessage>(json);
 
 		if (MissionManager.Instance != null)
 		{
@@ -523,14 +537,16 @@ public class WebSocketClient : MonoBehaviour
 			ResultData.missionCount = MissionManager.Instance.GetClearedMissionCount();
 		}
 		ResultData.playerName = playerName;
-
 		foreach (var obj in playerObjects.Values)
 		{
 			var nameTag = obj.GetComponentInChildren<NameTag>();
 			if (nameTag != null)
 				ResultData.remotePlayerName = nameTag.GetName();
 		}
-		//SceneManager.LoadScene("Result");
+
+		MissionManager.Instance?.StartCoroutine(
+			MissionManager.Instance.FadeToResult()
+		);
 	}
 
 	private void LoadResultScene()
@@ -620,14 +636,15 @@ public class WebSocketClient : MonoBehaviour
 
 	private void SpawnRemotePlayer(PlayerData player)
 	{
+		Debug.Log($"SpawnRemotePlayer: id={player.id}, player_number={player.player_number}");
 		if (playerObjects.ContainsKey(player.id)) return;
 
 		GameObject newPlayer = Instantiate(playerPrefab);
 		newPlayer.tag = "Player" + player.player_number;
 		if (player.player_number == 1)
-			newPlayer.GetComponentInChildren<Renderer>().material = localPlayerMaterial;  
+			newPlayer.GetComponentInChildren<Renderer>().material = localPlayerMaterial; // 赤
 		else
-			newPlayer.GetComponentInChildren<Renderer>().material = remotePlayerMaterial; 
+			newPlayer.GetComponentInChildren<Renderer>().material = remotePlayerMaterial; // 青
 
 		AudioListener remoteListener = newPlayer.GetComponent<AudioListener>();
 		if (remoteListener != null) Destroy(remoteListener);
@@ -746,12 +763,19 @@ public class WebSocketClient : MonoBehaviour
 	private async void SendPosition()
 	{
 		if (myPlayer == null) return;
+		var pc = myPlayer.GetComponent<PlayerController>();
+		string animState = pc != null ? pc.GetAnimState() : "idle";
+		string trigger = pc?.lastTrigger ?? "";
+		if (!string.IsNullOrEmpty(trigger) && pc != null) pc.lastTrigger = "";
+
 		string json = $"{{\"type\":\"player_move\",\"id\":\"{myId}\"," +
 					  $"\"position\":{{\"x\":{myPlayer.transform.position.x}," +
 					  $"\"y\":{myPlayer.transform.position.y}," +
 					  $"\"z\":{myPlayer.transform.position.z}}}," +
 					  $"\"rotation\":{{\"x\":{myPlayer.transform.rotation.eulerAngles.x}," +
-					  $"\"y\":{myPlayer.transform.rotation.eulerAngles.y}}}}}";
+					  $"\"y\":{myPlayer.transform.rotation.eulerAngles.y}}}," +
+					  $"\"anim_state\":\"{animState}\"," +
+					  $"\"anim_trigger\":\"{trigger}\"}}";
 		await websocket.SendText(json);
 	}
 

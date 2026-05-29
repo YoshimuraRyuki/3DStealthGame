@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class MissionManager : MonoBehaviour
 {
@@ -25,12 +27,16 @@ public class MissionManager : MonoBehaviour
 	private bool _timerRunning = false;
 	private float _elapsedSeconds = 0f;   // ゲーム開始からの経過秒数
 
+	public UnityEngine.UI.Image fadePanel;
+
+
 	void Awake()
 	{
 		if (Instance == null) Instance = this;
 		else { Destroy(gameObject); return; }
 
 		if (missionClearText != null) missionClearText.gameObject.SetActive(false);
+		if (fadePanel != null) fadePanel.gameObject.SetActive(false);
 	}
 
 	void Start()
@@ -189,10 +195,11 @@ public class MissionManager : MonoBehaviour
 
 	public void ShowClearMessage()
 	{
+		Debug.Log($"ShowClearMessage呼ばれた ClearText: {ClearText}");
 		if (ClearText != null)
 		{
 			ClearText.gameObject.SetActive(true);
-			ClearText.text = "クリア！";
+			ClearText.text = "CLEAR！";
 		}
 	}
 
@@ -212,5 +219,27 @@ public class MissionManager : MonoBehaviour
 	public void StopTimer()
 	{
 		_timerRunning = false;
+	}
+
+	public IEnumerator FadeToResult()
+	{
+		yield return new WaitForSeconds(2f);
+
+		if (fadePanel != null)
+		{
+			fadePanel.gameObject.SetActive(true);
+			float elapsed = 0f;
+			float duration = 0.5f;
+			while (elapsed < duration)
+			{
+				elapsed += Time.deltaTime;
+				var c = fadePanel.color;
+				c.a = Mathf.Lerp(0, 1, elapsed / duration);
+				fadePanel.color = c;
+				yield return null;
+			}
+		}
+
+		SceneManager.LoadScene("Result");
 	}
 }
