@@ -91,10 +91,13 @@ public class ElementGenerator : MonoBehaviour
 
 	// 生成したマップチップ
 	GameObject[,] objMapExist;                                      // フィールド用
-	#endregion
 
-	#region 初期化処理
-	void Awake()
+    [Header("壁のコライダーを有効化")]
+    [SerializeField] bool enableWallCollider = true;
+    #endregion
+
+    #region 初期化処理
+    void Awake()
 	{
 		// リソース読み込み
 		ReadResources();
@@ -210,9 +213,13 @@ public class ElementGenerator : MonoBehaviour
 		float centerX = startX + (length / 2f) - 0.5f;
 		cube.transform.position = new Vector3(centerX, 2f, y);
 
-		var col = cube.GetComponent<Collider>();
-		if (col != null) col.enabled = false;
-	}
+        var col = cube.GetComponent<Collider>();
+
+        if (col != null)
+        {
+            col.enabled = enableWallCollider;
+        }
+    }
 
 	/// <summary>
 	/// 二次元マップ生成

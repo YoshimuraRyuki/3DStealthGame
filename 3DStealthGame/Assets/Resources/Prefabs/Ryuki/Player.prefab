@@ -180,7 +180,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isLocalPlayer: 0
-  walkSpeed: 10
+  walkSpeed: 30
   crouchSpeed: 5
   sneakVolume: 0
   walkVolume: 1

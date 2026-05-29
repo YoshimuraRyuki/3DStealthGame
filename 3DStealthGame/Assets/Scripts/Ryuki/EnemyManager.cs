@@ -28,9 +28,10 @@ public class EnemyManager : MonoBehaviour
 	PlayerController Pc; // 仮プレイヤーでテスト
 	SwitchManager Sm;
 	TextMeshProUGUI reactionText;
+    private Transform cameraTransform;
 
-	// プレイヤーの巡回処理
-	GameObject startPoint;   // 最初のポイント
+    // プレイヤーの巡回処理
+    GameObject startPoint;   // 最初のポイント
 	GameObject nextPoint;    // 近くのポイント
 	GameObject targetPoint;  // 今向かっているポイント
 	[Header("巡回ポイント")]
@@ -78,8 +79,10 @@ public class EnemyManager : MonoBehaviour
 	bool isFoundPlayer = false;
 	public bool isStopMove = false; // 敵が止まっているときに動きを完全に止める
 	private bool _soundRegistered = false;
+	bool isReaction = false;
 
-	[Header("スイッチギミック用ID")]
+
+    [Header("スイッチギミック用ID")]
 	public int enemyID;
 	Animator anim;
 
@@ -464,13 +467,15 @@ public class EnemyManager : MonoBehaviour
 
 			isHearingSound = true;           // 音が聞こえている状態にする
 			lastSoundPosition = soundPosition; // 音の位置を記憶
-											   // 音の発生源に敵を向かわせる
-
+											  
 			if (reactionText != null)
+			{
+				reactionText.text = "!";
 				reactionText.gameObject.SetActive(true); // ビックリマーク表示
-
+				isReaction = true;
+			}
+			
 			currentState = EnemyState.FocusPlayer;
-			Debug.Log("音を検知しました。追跡処理に移行");
 		}
 	}
 
@@ -489,7 +494,6 @@ public class EnemyManager : MonoBehaviour
 	{
 		isAlerted = false;
 		isStopMove = false;
-		Debug.Log("最後に聞こえた地点に視点を向けます");
 
 		// 最後に聞こえた音の地点に視点を向ける
 		currentState = EnemyState.LookSoundPoint;
@@ -517,14 +521,14 @@ public class EnemyManager : MonoBehaviour
 		{
 			// 少し待ってから巡回へ戻す
 			currentTime += Time.deltaTime;
+			reactionText.text = "?";
 
-			if (currentTime >= 1.5f)
+            if (currentTime >= 1.5f)
 			{
 				ResetPatrolState();
 				currentTime = 0;
 				reactionText.gameObject.SetActive(false); // ビックリマーク非表示
 				currentState = EnemyState.Patrol;
-				Debug.Log("巡回に戻る");
 			}
 		}
 	}
@@ -601,18 +605,20 @@ public class EnemyManager : MonoBehaviour
 			Pc.OnMakeSound += HandleSound;
 
 		targetPlayer = (GameObject.FindWithTag("Player1") ?? GameObject.FindWithTag("Player2"))?.transform;
+        
+		if (Camera.main != null)
+        {
+            cameraTransform = Camera.main.transform;
+        }
 
-		// 一番近いポイント（スタート地点）
-		startPoint = StartPoint();
+        // 一番近いポイント（スタート地点）
+        startPoint = StartPoint();
 
 		// 最初の目的地をランダムに決定
 		targetPoint = GetNearPoint(startPoint);
 
 		// 最初の停止時間をランダム化
 		stopMoveCooldown = Random.Range(stopMoveCooldownMin, stopMoveCooldownMax);
-
-		// 見つけるプレイヤー取得
-		// targetPlayer = GameObject.FindWithTag("Player").transform; // 結合する際にこの処理を消して将貴のプレイヤープレファブを入れる
 	}
 
 	// Update is called once per frame
@@ -648,7 +654,15 @@ public class EnemyManager : MonoBehaviour
 			return;
 		}
 
-		switch (currentState)
+        // テキストが表示されている間、常にカメラの方を向かせる
+        if (isReaction && reactionText != null && cameraTransform != null)
+        {
+            Vector3 dir = reactionText.transform.position - cameraTransform.position;
+			dir.y = 0; // Y軸回転だけにする
+			reactionText.transform.rotation = Quaternion.LookRotation(dir);
+        }
+
+        switch (currentState)
 		{
 			case EnemyState.Patrol:
 				MoveEnemy();   // 敵が移動する処理

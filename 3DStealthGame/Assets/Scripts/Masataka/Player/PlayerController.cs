@@ -58,7 +58,6 @@ public class PlayerController : MonoBehaviour
 		{
 			Am.SetBool("Sneak", true);
 			Am.SetBool("Run", false);
-			Debug.Log("‰¹Á‚µ‚Ä‚Ü‚·B");
 		}
 		// Run
 		else if (isMoving)
@@ -67,7 +66,6 @@ public class PlayerController : MonoBehaviour
 
 			Am.SetBool("Run", true);
 			Am.SetBool("Sneak", false);
-			Debug.Log("‰¹o‚Ä‚Ü‚·");
 		}
 		// Idle
 		else

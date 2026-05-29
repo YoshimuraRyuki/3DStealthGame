@@ -441,6 +441,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isEnemyMoveStop: 0
   stanTime: 3
+  targetEnemyID: 0
 --- !u!1 &8716777438763250770
 GameObject:
   m_ObjectHideFlags: 0
@@ -727,6 +728,14 @@ PrefabInstance:
       propertyPath: m_Lightmapping
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: -4972527342658836131, guid: 641809c390f9cd641b542b09f92dc4e2, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3e079e35cc298dd408efada953055cce, type: 2}
+    - target: {fileID: -4396642182433536433, guid: 641809c390f9cd641b542b09f92dc4e2, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3e079e35cc298dd408efada953055cce, type: 2}
     - target: {fileID: -3911356962051656587, guid: 641809c390f9cd641b542b09f92dc4e2, type: 3}
       propertyPath: m_Lightmapping
       value: 2
@@ -735,6 +744,14 @@ PrefabInstance:
       propertyPath: m_Lightmapping
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: -1206874426333947015, guid: 641809c390f9cd641b542b09f92dc4e2, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3e079e35cc298dd408efada953055cce, type: 2}
+    - target: {fileID: 458572741331419370, guid: 641809c390f9cd641b542b09f92dc4e2, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3e079e35cc298dd408efada953055cce, type: 2}
     - target: {fileID: 919132149155446097, guid: 641809c390f9cd641b542b09f92dc4e2, type: 3}
       propertyPath: m_Name
       value: Enemy2
@@ -743,6 +760,18 @@ PrefabInstance:
       propertyPath: m_Lightmapping
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 4133135245408561340, guid: 641809c390f9cd641b542b09f92dc4e2, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3e079e35cc298dd408efada953055cce, type: 2}
+    - target: {fileID: 4421999517987746389, guid: 641809c390f9cd641b542b09f92dc4e2, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3e079e35cc298dd408efada953055cce, type: 2}
+    - target: {fileID: 5666384714437294717, guid: 641809c390f9cd641b542b09f92dc4e2, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3e079e35cc298dd408efada953055cce, type: 2}
     - target: {fileID: 5733911823876726600, guid: 641809c390f9cd641b542b09f92dc4e2, type: 3}
       propertyPath: m_Lightmapping
       value: 2
