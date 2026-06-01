@@ -534,6 +534,31 @@ public class EnemyManager : MonoBehaviour
 	}
 	#endregion
 
+	#region State(サーバー用)
+
+
+	public string GetReactionState()
+	{
+		if (reactionText == null || !reactionText.gameObject.activeSelf) return "";
+		return reactionText.text;
+	}
+
+	public void SetReactionState(string state)
+	{
+		if (reactionText == null) return;
+		if (string.IsNullOrEmpty(state))
+		{
+			reactionText.gameObject.SetActive(false);
+			isReaction = false;
+		}
+		else
+		{
+			reactionText.text = state;
+			reactionText.gameObject.SetActive(true);
+			isReaction = true;
+		}
+	}
+	#endregion
 	#region アニメーション
 
 	/// <summary>
