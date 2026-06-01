@@ -262,13 +262,13 @@ public class EnemyManager : MonoBehaviour
 		// 距離が範囲内かチェック
 		if (dstToTarget < viewRadius)
 		{
-			// 正面方向となす角度を計算（内積を利用）
+			// 正面方向となす角度を計算
 			float angleToTarget = Vector3.Angle(transform.forward, dirToTarget);
 
 			// 角度が扇型の範囲内かチェック
 			if (angleToTarget < viewAngle / 2f)
 			{
-				// (オプション)間に障害物がないかレイキャストで確認
+				// 間に障害物がないかレイキャストで確認
 				RaycastHit hit;
 				if (Physics.Raycast(transform.position, dirToTarget, out hit, dstToTarget))
 				{
