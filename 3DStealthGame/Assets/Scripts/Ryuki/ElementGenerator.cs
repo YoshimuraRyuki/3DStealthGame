@@ -15,6 +15,7 @@ public class ElementGenerator : MonoBehaviour
 	// リソース格納用
 	Material material;                                              // 壁のマテリアル
 	GameObject objGoal;                                             // ゴール
+	Sprite iconGoal;                                            // ゴールアイコン
 	GameObject[] objEnemyList = new GameObject[1];                  // 敵リスト
 	GameObject[] objSuperEnemyList = new GameObject[1];             // 強化敵リスト
 	public GameObject[] objItemList = new GameObject[1];            // アイテムリスト
@@ -133,6 +134,7 @@ public class ElementGenerator : MonoBehaviour
 
 		// ゴール
 		objGoal = (GameObject)Resources.Load("Prefabs/Ryuki/Goal");
+		iconGoal = (Sprite)Resources.Load("Images/IconGoal");
 
 		// 敵リスト
 		objEnemyList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Enemy");
@@ -645,11 +647,10 @@ public class ElementGenerator : MonoBehaviour
 
 			if (IsInsideMap(goalX, goalY, objMapExist))
 			{
-				Image img = objMapExist[goalX, goalY].GetComponent<Image>();
+                Image img = objMapExist[goalX, goalY].GetComponent<Image>();
 
-				// ゴールの色
-				img.color = new Color(1, 1, 0, 1f);
-			}
+                img.sprite = iconGoal;
+            }
 		}
 
 		// 全スイッチ更新

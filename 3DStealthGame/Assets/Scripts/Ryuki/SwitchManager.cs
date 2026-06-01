@@ -9,6 +9,7 @@ public class SwitchManager : MonoBehaviour
 
     Renderer rd;
     EnemyManager em;
+    EnemyManager enemy;
     PlayerController Pc;
 
     private TextMeshProUGUI actionText;
@@ -34,18 +35,24 @@ public class SwitchManager : MonoBehaviour
     /// </summary>    
     void DoActionEnemy()
     {
-        // 敵の動きを止める処理
-        isEnemyMoveStop = true;
-
         currentStanTime += Time.deltaTime;
         if (stanTime <= currentStanTime)
         {
             isEnemyMoveStop = false;
             currentStanTime = 0f;
             isActionEnemy = false;
+            isEndAction = false;
+            enemy.StunCancel();
         }
 
-        // スタンしてるアニメーション
+        if (!Pc.isAnimationStart) return;
+        enemy.PlayAnimationEnemy(); // スタンアニメーション開始
+        enemy.ResetPatrolState();   // 敵の動きを初期化
+        enemy.reactionText.text = "×";
+        Pc.isAnimationStart = false;
+        isPlayerInRange = false;
+        isEndAction = true;
+
     }
 
     public void SetTarget(EnemyManager enemy)
@@ -60,7 +67,7 @@ public class SwitchManager : MonoBehaviour
     {
         if (em != null)
         {
-            em.PlayAnimation();
+            em.PlayAnimationWall();
         }
         
         if (Pc.isAction) return;
@@ -68,26 +75,27 @@ public class SwitchManager : MonoBehaviour
         isPlayerInRange = false;
         rd.material.color = Color.red;
 
+        isActionSwitch = false;
+        var wsClient = FindObjectOfType<WebSocketClient>();
+        //if (wsClient != null) wsClient.SendSwitchActivated(targetEnemyID);
+    }
+    #endregion
 
-		isActionSwitch = false;
-		var wsClient = FindObjectOfType<WebSocketClient>();
-		if (wsClient != null) wsClient.SendSwitchActivated(targetEnemyID);
-	}
+    #region サーバ関連
+    /// <summary>
+    /// 受信用
+    /// </summary>
+    public void OnSwitchActivated()
+    {
+        isEndAction = true;
+        isPlayerInRange = false;
+        rd.material.color = Color.red;
+    }
+    #endregion
 
-	/// <summary>
-	/// 受信用
-	/// </summary>
-	public void OnSwitchActivated()
-	{
-		isEndAction = true;
-		isPlayerInRange = false;
-		rd.material.color = Color.red;
-	}
-	#endregion
-
-	#region Unityイベント
-	// Start is called before the first frame update
-	void Start()
+    #region Unityイベント
+    // Start is called before the first frame update
+    void Start()
     {
 		Invoke("DelayedStart", 0.5f);
 	}
@@ -98,16 +106,16 @@ public class SwitchManager : MonoBehaviour
 
 		Pc = p.GetComponent<PlayerController>();
 		rd = GetComponent<Renderer>();
+        enemy = GetComponent<EnemyManager>();
 
-
-		currentStanTime = 0f;
+        currentStanTime = 0f;
 		// メインカメラの向きを取得用
 		if (Camera.main != null)
 		{
 			cameraTransform = Camera.main.transform;
 		}
 
-		Transform child = transform.Find("ActionCanvas/ActionText");
+		Transform child = transform.Find("Model/ActionCanvas/ActionText");
 		if (child != null)
 		{
 			actionText = child.GetComponent<TextMeshProUGUI>();
@@ -127,11 +135,14 @@ public class SwitchManager : MonoBehaviour
             if (CompareTag("Enemy"))
             {
                 isActionEnemy = true;
+                Pc.isPlayerMoveStop = true;
+                Pc.PunchEnemy();
             }
             if (CompareTag("Switch"))
             {
                 // 壁を生成して隠れる場所を作る
                 Pc.isAction = true;
+                Pc.isPlayerMoveStop = true;
                 isActionSwitch = true;
                 Pc.PunchSwitch();
             }
@@ -154,21 +165,24 @@ public class SwitchManager : MonoBehaviour
         }
     }
 
-	private void OnTriggerEnter(Collider other)
-	{
-		if (isEndAction) return;
-		if (other.CompareTag("Player1") || other.CompareTag("Player2"))
-		{
-			var pc = other.GetComponent<PlayerController>();
-			if (pc != null && pc.isLocalPlayer)
-				Pc = pc;
-			isPlayerInRange = true;
-			if (actionText != null)
-				actionText.gameObject.SetActive(true);
-		}
-	}
+    private void OnTriggerEnter(Collider other)
+    {
+        if (isEndAction) return;
+        if (other.CompareTag("Player1") || other.CompareTag("Player2"))
+        {
+            isPlayerInRange = true;
+            var pc = other.GetComponent<PlayerController>();
+            if (pc != null && pc.isLocalPlayer)
+                Pc = pc;
+            isPlayerInRange = true;
+            if (actionText != null)
+            {
+                actionText.gameObject.SetActive(true);
+            }
+        }
+    }
 
-	private void OnTriggerExit(Collider other)
+    private void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("Player1") || other.CompareTag("Player2"))
         {
