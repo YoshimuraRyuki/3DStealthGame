@@ -615,6 +615,17 @@ public class ElementGenerator : MonoBehaviour
 
 			rt2.rotation = Quaternion.Euler(0, 0, -angle2 + offset2);
 
+			var em2 = enemyStrongObj.GetComponent<EnemyManager>();
+			if (em2 != null)
+			{
+				var img2 = rt2.GetComponent<Image>();
+				if (img2 != null)
+				{
+					var light2 = enemyStrongObj.GetComponentInChildren<Light>();
+					if (light2 != null)
+						img2.color = new Color(light2.color.r, light2.color.g, light2.color.b, 0.8f);
+				}
+			}
 
 
 		}
