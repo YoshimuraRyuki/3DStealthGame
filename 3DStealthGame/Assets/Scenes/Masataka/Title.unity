@@ -1113,7 +1113,7 @@ MonoBehaviour:
   roomMemberPanel: {fileID: 1019032279}
   myPlayerNumber: 0
   ngrokUrl: https://rice-washer-suitcase.ngrok-free.dev
-  serverMode: 0
+  serverMode: 1
 --- !u!1 &777864025
 GameObject:
   m_ObjectHideFlags: 0
