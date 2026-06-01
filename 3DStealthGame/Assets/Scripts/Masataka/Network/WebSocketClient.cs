@@ -147,7 +147,7 @@ public class WebSocketClient : MonoBehaviour
 
 	public enum ServerMode
 	{
-		Local,      // 仮想環境
+		VirtualBox,      // 仮想環境
 		LocalHost,  // srver.exe用
 		Ngrok,      // ngrok
 		Render,     // Render
@@ -155,7 +155,7 @@ public class WebSocketClient : MonoBehaviour
 	}
 
 	public string ngrokUrl = "https://rice-washer-suitcase.ngrok-free.dev";
-	public ServerMode serverMode = ServerMode.Local;
+	public ServerMode serverMode = ServerMode.VirtualBox;
 
 	void Awake()
 	{
@@ -170,7 +170,7 @@ public class WebSocketClient : MonoBehaviour
 	{
 		switch (serverMode)
 		{
-			case ServerMode.Local:
+			case ServerMode.VirtualBox:
 				return $"ws://192.168.56.102:8080/ws?room_id={roomId}&name={playerName}";
 			case ServerMode.LocalHost:
 				return $"ws://localhost:8080/ws?room_id={roomId}&name={playerName}";
@@ -469,8 +469,8 @@ public class WebSocketClient : MonoBehaviour
 		if (myPlayerNumber == 1 && msg.id != myId)
 		{
 			Vector3 newPos = new Vector3(msg.position.x, msg.position.y, msg.position.z);
-			if (msg.anim_state != "sneak")
-			{
+			if(msg.anim_state == "run" || msg.anim_trigger == "PunchSwitch")
+			{ 
 				var enemies = GameObject.FindGameObjectsWithTag("Enemy");
 				foreach (var e in enemies)
 				{
@@ -601,13 +601,16 @@ public class WebSocketClient : MonoBehaviour
 			var light = _enemyObjects[msg.enemy_index].GetComponentInChildren<Light>();
 			if (light != null)
 				light.color = new Color(msg.light_r, msg.light_g, msg.light_b);
+
+			var em = _enemyObjects[msg.enemy_index].GetComponent<EnemyManager>();
+			if (em != null) em.SetReactionState(msg.reaction);
 		}
 
-		if (!string.IsNullOrEmpty(msg.reaction))
+		/*if (!string.IsNullOrEmpty(msg.reaction))
 		{
 			var em = _enemyObjects[msg.enemy_index].GetComponent<EnemyManager>();
-			//if (em != null) em.SetReactionState(msg.reaction);
-		}
+			if (em != null) em.SetReactionState(msg.reaction);
+		}*/
 	}
 	// ─── ロビー用ハンドラ（変更なし）───
 
@@ -785,16 +788,14 @@ public class WebSocketClient : MonoBehaviour
 			if (light != null) lightColor = light.color;
 		}
 
-		// reactionTextの状態を取得
 		string reaction = "";
 		var em = _enemyObjects[index].GetComponent<EnemyManager>();
-		//if (em != null) reaction = em.GetReactionState();
+		if (em != null) reaction = em.GetReactionState();
 
-		string json = $"...\"reaction\":\"{reaction}\"}}";
-
-		/*string json = $"{{\"type\":\"enemy_move\",\"enemy_index\":{index}," +
+		string json = $"{{\"type\":\"enemy_move\",\"enemy_index\":{index}," +
 			$"\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z},\"angle\":{angle}," +
-			$"\"light_r\":{lightColor.r},\"light_g\":{lightColor.g},\"light_b\":{lightColor.b}}}";*/
+			$"\"light_r\":{lightColor.r},\"light_g\":{lightColor.g},\"light_b\":{lightColor.b}," +
+			$"\"reaction\":\"{reaction}\"}}";
 		await websocket.SendText(json);
 	}
 

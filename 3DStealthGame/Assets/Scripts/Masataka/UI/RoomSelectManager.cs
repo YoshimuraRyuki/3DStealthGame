@@ -40,7 +40,7 @@ public class RoomSelectManager : MonoBehaviour
 		wsClient = FindObjectOfType<WebSocketClient>();
 		switch (wsClient.serverMode)
 		{
-			case WebSocketClient.ServerMode.Local:
+			case WebSocketClient.ServerMode.VirtualBox:
 				serverBaseUrl = "http://192.168.56.102:8080"; break;
 			case WebSocketClient.ServerMode.LocalHost:
 				serverBaseUrl = "http://localhost:8080"; break;
