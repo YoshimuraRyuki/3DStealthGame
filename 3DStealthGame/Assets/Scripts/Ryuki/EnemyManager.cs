@@ -89,6 +89,7 @@ public class EnemyManager : MonoBehaviour
     // Player2音検知用クールダウン
     private float _remoteSoundCooldown = 0f;
 
+	public Vector3 GetLastSoundPosition() => lastSoundPosition;
 	#endregion
 
 	#region 敵移動遷移
@@ -557,6 +558,11 @@ public class EnemyManager : MonoBehaviour
 			reactionText.gameObject.SetActive(true);
 			isReaction = true;
 		}
+	}
+
+	public void SetLastSoundPosition(Vector3 pos)
+	{
+		lastSoundPosition = pos;
 	}
 	#endregion
 	#region アニメーション
