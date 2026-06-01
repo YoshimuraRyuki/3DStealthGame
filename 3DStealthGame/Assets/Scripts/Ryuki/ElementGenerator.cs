@@ -148,6 +148,7 @@ public class ElementGenerator : MonoBehaviour
 		// スイッチ
 		objSwitchList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Switch");
 
+
 		// 巡回ポイント
 		objPatrolPointList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/PatrolPoint");
 
