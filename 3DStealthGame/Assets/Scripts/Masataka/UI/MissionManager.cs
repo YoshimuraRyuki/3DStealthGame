@@ -152,14 +152,28 @@ public class MissionManager : MonoBehaviour
 		int elapsed = Mathf.FloorToInt(_elapsedSeconds);
 		if (_isGoalReached)
 		{
-			mission2Line = $"{(_mission2Done ? "✔" : "✘")} {timeLimitSeconds}秒以内にクリア（{elapsed}秒）";
+			// ゴールした時：クリアなら通常、失敗なら半透明
+			if (_mission2Done)
+			{
+				mission2Line = $"✔ {timeLimitSeconds}秒以内にクリア（{elapsed}秒）";
+			}
+			else
+			{
+				mission2Line = $"<color=#ffffff88>✘ {timeLimitSeconds}秒以内にクリア（{elapsed}秒）</color>";
+			}
 		}
 		else if (_timerRunning)
 		{
 			if (_isTimeUp)
-				mission2Line = $"✘ {timeLimitSeconds}秒以内にクリア（{timeLimitSeconds}/{elapsed}秒 超過）";
+			{
+				// テキスト全体を半透明にする
+				mission2Line = $"<color=#ffffff88>✘ {timeLimitSeconds}秒以内にクリア（{elapsed}秒）</color>";
+			}
 			else
-				mission2Line = $"　{timeLimitSeconds}秒以内にクリア（{timeLimitSeconds}/{elapsed}秒）";
+			{
+				// 通常カウントダウン中
+				mission2Line = $"　{timeLimitSeconds}秒以内にクリア（{elapsed}秒）";
+			}
 		}
 		else
 		{
@@ -176,10 +190,10 @@ public class MissionManager : MonoBehaviour
 			item3Line = "　敵に見つからずクリア";
 
 		missionText.text =
-			$"【ミッション】\n" +
-			$"{item1Line}\n" +
-			$"{mission2Line}\n" +
-			$"{item3Line}";
+			//$"【ミッション】\n" +
+			$"・{item1Line}\n" +
+			$"・{mission2Line}\n" +
+			$"・{item3Line}";
 	}
 
 	private void CheckAllClear()

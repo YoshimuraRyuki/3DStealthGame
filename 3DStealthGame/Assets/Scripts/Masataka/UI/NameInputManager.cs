@@ -12,9 +12,19 @@ public class NameInputManager : MonoBehaviour
 
 	private WebSocketClient _wsClient;
 
+	private Text _placeholder;
+	private string _defaultPlaceholderText;
+	private Color _defaultPlaceholderColor;
+
 	void Start()
 	{
-		Debug.Log("★NameInputManager: Start開始");
+		_placeholder = nameInputField.placeholder.GetComponent<Text>();
+		if (_placeholder != null)
+		{
+			_defaultPlaceholderText = _placeholder.text;
+			_defaultPlaceholderColor = _placeholder.color;
+		}
+		//Debug.Log("NameInputManager: Start開始");
 
 		// 1. WebSocketClientを探す（見つからなくても次に進むようにガード）
 		_wsClient = FindObjectOfType<WebSocketClient>();
@@ -28,7 +38,7 @@ public class NameInputManager : MonoBehaviour
 		{
 			confirmButton.onClick.RemoveAllListeners();
 			confirmButton.onClick.AddListener(OnConfirmName);
-			Debug.Log("★NameInputManager: ボタンの予約完了");
+			//Debug.Log("NameInputManager: ボタンの予約完了");
 		}
 		else
 		{
@@ -41,13 +51,20 @@ public class NameInputManager : MonoBehaviour
 	private void OnConfirmName()
 	{
 		string inputName = nameInputField.text.Trim();
-		Debug.Log("★ボタン押された！ 入力された名前: " + inputName);
 
 		if (string.IsNullOrEmpty(inputName))
 		{
-			if (warningText != null) warningText.gameObject.SetActive(true);
+			if (warningText != null)
+			{
+				warningText.gameObject.SetActive(true);
+				warningText.text = "※ユーザーネームを入力してください";
+				warningText.color = Color.red;
+			}
 			return;
 		}
+
+		// 入力されたら警告を消す
+		if (warningText != null) warningText.gameObject.SetActive(false);
 
 		// WebSocketClientがあるときだけ名前を渡す
 		if (_wsClient != null)

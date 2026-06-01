@@ -67,12 +67,27 @@ public class SwitchManager : MonoBehaviour
         isEndAction = true;
         isPlayerInRange = false;
         rd.material.color = Color.red;
-    }
-    #endregion
 
-    #region Unityイベント
-    // Start is called before the first frame update
-    void Start()
+
+		isActionSwitch = false;
+		var wsClient = FindObjectOfType<WebSocketClient>();
+		if (wsClient != null) wsClient.SendSwitchActivated(targetEnemyID);
+	}
+
+	/// <summary>
+	/// 受信用
+	/// </summary>
+	public void OnSwitchActivated()
+	{
+		isEndAction = true;
+		isPlayerInRange = false;
+		rd.material.color = Color.red;
+	}
+	#endregion
+
+	#region Unityイベント
+	// Start is called before the first frame update
+	void Start()
     {
 		Invoke("DelayedStart", 0.5f);
 	}
@@ -139,21 +154,21 @@ public class SwitchManager : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (isEndAction) return;
-        if (other.CompareTag("Player1") || other.CompareTag("Player2"))
-        {
-            isPlayerInRange = true;
-            if (actionText != null)
-            {
-                
-                actionText.gameObject.SetActive(true);
-            }
-        }
-    }
+	private void OnTriggerEnter(Collider other)
+	{
+		if (isEndAction) return;
+		if (other.CompareTag("Player1") || other.CompareTag("Player2"))
+		{
+			var pc = other.GetComponent<PlayerController>();
+			if (pc != null && pc.isLocalPlayer)
+				Pc = pc;
+			isPlayerInRange = true;
+			if (actionText != null)
+				actionText.gameObject.SetActive(true);
+		}
+	}
 
-    private void OnTriggerExit(Collider other)
+	private void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("Player1") || other.CompareTag("Player2"))
         {
