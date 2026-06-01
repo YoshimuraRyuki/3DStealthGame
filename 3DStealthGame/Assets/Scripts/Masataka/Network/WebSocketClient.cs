@@ -90,7 +90,15 @@ public class EnemyMoveMessage
 	public float angle;      // Y軸回転
 	public float light_r; 
 	public float light_g; 
-	public float light_b; 
+	public float light_b;
+	public string reaction; // "", "!", "?"
+}
+
+[System.Serializable]
+public class SwitchActivatedMessage
+{
+	public string type;
+	public int switch_id;
 }
 
 // --- WebSocketクライアント本体 ---
@@ -197,7 +205,7 @@ public class WebSocketClient : MonoBehaviour
 	async void Start()
 	{
 		Application.runInBackground = true;
-		playerName = "Player_" + Random.Range(1000, 9999);
+		playerName = "";//"Player_" + Random.Range(1000, 9999);
 		websocket = new WebSocket(GetServerUrl("test"));
 		websocket.OnOpen += () => Debug.Log("サーバーに接続");
 		websocket.OnMessage += OnMessageReceived;
@@ -293,6 +301,7 @@ public class WebSocketClient : MonoBehaviour
 		else if (json.Contains("\"type\":\"enemy_move\"")) HandleEnemyMoveMessage(json);
 		else if (json.Contains("\"type\":\"player_goal\"")) HandlePlayerGoalMessage(json);
 		else if (json.Contains("\"type\":\"all_goal\"")) HandleAllGoalMessage(json);
+		else if (json.Contains("\"type\":\"switch_activated\"")) HandleSwitchActivatedMessage(json);
 		else if (json.Contains("\"type\":\"start_game\""))
 		{
 			if (SceneManager.GetActiveScene().name == "MapTest")
@@ -460,12 +469,15 @@ public class WebSocketClient : MonoBehaviour
 		if (myPlayerNumber == 1 && msg.id != myId)
 		{
 			Vector3 newPos = new Vector3(msg.position.x, msg.position.y, msg.position.z);
-			var enemies = GameObject.FindGameObjectsWithTag("Enemy");
-			foreach (var e in enemies)
+			if (msg.anim_state != "sneak")
 			{
-				var em = e.GetComponent<EnemyManager>();
-				if (em != null)
-					em.HandleSoundFromRemote(newPos, 1f);
+				var enemies = GameObject.FindGameObjectsWithTag("Enemy");
+				foreach (var e in enemies)
+				{
+					var em = e.GetComponent<EnemyManager>();
+					if (em != null)
+						em.HandleSoundFromRemote(newPos, 1f);
+				}
 			}
 		}
 
@@ -590,6 +602,12 @@ public class WebSocketClient : MonoBehaviour
 			if (light != null)
 				light.color = new Color(msg.light_r, msg.light_g, msg.light_b);
 		}
+
+		if (!string.IsNullOrEmpty(msg.reaction))
+		{
+			var em = _enemyObjects[msg.enemy_index].GetComponent<EnemyManager>();
+			//if (em != null) em.SetReactionState(msg.reaction);
+		}
 	}
 	// ─── ロビー用ハンドラ（変更なし）───
 
@@ -630,6 +648,19 @@ public class WebSocketClient : MonoBehaviour
 	{
 		var msg = JsonUtility.FromJson<PlayerReadyMessage>(json);
 		if (roomMemberPanel != null) roomMemberPanel.SetReady(msg.id, true);
+	}
+	private void HandleSwitchActivatedMessage(string json)
+	{
+		var msg = JsonUtility.FromJson<SwitchActivatedMessage>(json);
+		var switches = FindObjectsOfType<SwitchManager>();
+		foreach (var sw in switches)
+		{
+			if (sw.targetEnemyID == msg.switch_id)
+			{
+				sw.OnSwitchActivated();
+				break;
+			}
+		}
 	}
 
 	// ─── プレイヤー生成 ───
@@ -754,9 +785,16 @@ public class WebSocketClient : MonoBehaviour
 			if (light != null) lightColor = light.color;
 		}
 
-		string json = $"{{\"type\":\"enemy_move\",\"enemy_index\":{index}," +
+		// reactionTextの状態を取得
+		string reaction = "";
+		var em = _enemyObjects[index].GetComponent<EnemyManager>();
+		//if (em != null) reaction = em.GetReactionState();
+
+		string json = $"...\"reaction\":\"{reaction}\"}}";
+
+		/*string json = $"{{\"type\":\"enemy_move\",\"enemy_index\":{index}," +
 			$"\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z},\"angle\":{angle}," +
-			$"\"light_r\":{lightColor.r},\"light_g\":{lightColor.g},\"light_b\":{lightColor.b}}}";
+			$"\"light_r\":{lightColor.r},\"light_g\":{lightColor.g},\"light_b\":{lightColor.b}}}";*/
 		await websocket.SendText(json);
 	}
 
@@ -785,6 +823,13 @@ public class WebSocketClient : MonoBehaviour
 		string json = $"{{\"type\":\"goal\"}}";
 		await websocket.SendText(json);
 	}
+
+	public async void SendSwitchActivated(int switchIndex)
+{
+    if (websocket == null || websocket.State != WebSocketState.Open) return;
+		string json = $"{{\"type\":\"switch_activated\",\"switch_id\":{switchIndex}}}";
+		await websocket.SendText(json);
+}
 
 	private void DelayedGameStart()
 	{

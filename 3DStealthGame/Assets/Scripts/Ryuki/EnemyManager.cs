@@ -532,7 +532,6 @@ public class EnemyManager : MonoBehaviour
 			}
 		}
 	}
-
 	#endregion
 
 	#region 強化敵の壁を出すアニメーション

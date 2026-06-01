@@ -83,6 +83,7 @@
     <Compile Include="Assets\Scripts\Masataka\UI\RoomSelectManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\ResultManager.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Managers\ReturnToTitle.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UIElements;
 
 public class GlobalCamera : MonoBehaviour
 {
@@ -24,7 +25,6 @@ public class GlobalCamera : MonoBehaviour
 	{
 		transform.rotation = Quaternion.Euler(75, 0, 0);
 
-		// ★ エディタでMapTestを直接起動したとき用のフォールバック
 		if (_target == null)
 		{
 			var player = GameObject.FindWithTag("Player1");
@@ -46,6 +46,14 @@ public class GlobalCamera : MonoBehaviour
 		_target = target;
 	}
 
+	/*void LateUpdate()
+	{
+		if (_target != null)
+		{
+			Vector3 targetPos = _target.position + offset;
+			transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * 25f);
+		}
+	}*/
 	void LateUpdate()
 	{
 		if (_target != null)

@@ -58,6 +58,11 @@ public class RoomSelectManager : MonoBehaviour
 	// 接続ボタン押下後にこのパネルを表示する想定
 	public void ShowRoomSelect()
 	{
+		if (string.IsNullOrEmpty(wsClient.GetPlayerName()))
+		{
+			Debug.LogWarning("名前が入力されていません");
+			return;
+		}
 		roomSelectPanel.SetActive(true);
 		FetchRoomList();
 	}
@@ -104,6 +109,12 @@ public class RoomSelectManager : MonoBehaviour
 
 	private void OnRoomButtonClicked(string roomId)
 	{
+		// 名前が入力されてるかチェック
+		if (string.IsNullOrEmpty(wsClient.GetPlayerName()))
+		{
+			Debug.LogWarning("名前が入力されていません");
+			return;
+		}
 		selectedRoomId = roomId;
 		Debug.Log("ルーム選択: " + roomId);
 
