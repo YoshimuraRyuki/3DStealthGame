@@ -4,7 +4,7 @@ using UnityEngine.UIElements;
 public class GlobalCamera : MonoBehaviour
 {
 	public static GlobalCamera Instance;
-	public Vector3 offset = new Vector3(0, 15, -8); // 真上から見下ろす
+	public Vector3 offset = new Vector3(0, 15, -5); // 真上から見下ろす
 
 	private Transform _target;
 

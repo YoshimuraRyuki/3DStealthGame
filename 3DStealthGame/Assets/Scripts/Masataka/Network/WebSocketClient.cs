@@ -91,6 +91,8 @@ public class EnemyMoveMessage
 	public float light_r; 
 	public float light_g; 
 	public float light_b;
+	public float last_sound_x;
+	public float last_sound_z;
 	public string reaction; // "", "!", "?"
 }
 
@@ -592,7 +594,6 @@ public class WebSocketClient : MonoBehaviour
 		enemyTargetPositions[msg.enemy_index] = new Vector3(msg.x, msg.y, msg.z);
 		enemyTargetAngles[msg.enemy_index] = msg.angle;
 
-		// ライトの色を反映
 		if (_enemyObjects == null || _enemyObjects.Length == 0)
 			_enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
 
@@ -603,14 +604,12 @@ public class WebSocketClient : MonoBehaviour
 				light.color = new Color(msg.light_r, msg.light_g, msg.light_b);
 
 			var em = _enemyObjects[msg.enemy_index].GetComponent<EnemyManager>();
-			if (em != null) em.SetReactionState(msg.reaction);
+			if (em != null)
+			{
+				em.SetReactionState(msg.reaction);
+				em.SetLastSoundPosition(new Vector3(msg.last_sound_x, 0, msg.last_sound_z));
+			}
 		}
-
-		/*if (!string.IsNullOrEmpty(msg.reaction))
-		{
-			var em = _enemyObjects[msg.enemy_index].GetComponent<EnemyManager>();
-			if (em != null) em.SetReactionState(msg.reaction);
-		}*/
 	}
 	// ─── ロビー用ハンドラ（変更なし）───
 
@@ -792,10 +791,17 @@ public class WebSocketClient : MonoBehaviour
 		var em = _enemyObjects[index].GetComponent<EnemyManager>();
 		if (em != null) reaction = em.GetReactionState();
 
+		Vector3 lastSound = Vector3.zero;
+		if (em != null) lastSound = em.GetLastSoundPosition();
+
 		string json = $"{{\"type\":\"enemy_move\",\"enemy_index\":{index}," +
 			$"\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z},\"angle\":{angle}," +
 			$"\"light_r\":{lightColor.r},\"light_g\":{lightColor.g},\"light_b\":{lightColor.b}," +
-			$"\"reaction\":\"{reaction}\"}}";
+			$"\"reaction\":\"{reaction}\"," +
+			$"\"last_sound_x\":{lastSound.x},\"last_sound_z\":{lastSound.z}}}";
+
+
+
 		await websocket.SendText(json);
 	}
 
