@@ -48,7 +48,14 @@ public class EnemyManager : MonoBehaviour
 	float stopMoveCooldown;
 	float currentTime = 0f;
 
-	Transform targetPlayer; // プレイヤー検知
+	[Header("強化敵用")]
+    [SerializeField] float waitTime = 3f;
+    [SerializeField] float rotateAngle = 90f; // 回転する角度
+    private float timer = 0f;
+    private bool isRotating = false;
+    private float currentRotateAmount = 0f;
+
+    Transform targetPlayer; // プレイヤー検知
 	[Header("検知する距離")]
 	public float viewRadius = 10f;
 	[Header("検知する角度")]
@@ -232,6 +239,37 @@ public class EnemyManager : MonoBehaviour
 		// 見回り動作
 		transform.Rotate(0, stoprotateSpeed * Time.deltaTime, 0); // 右回転
 	}
+
+	void StrongSearchPlayer()
+	{
+        // 停止中
+        if (!isRotating)
+        {
+            timer += Time.deltaTime;
+
+            if (timer >= waitTime)
+            {
+                timer = 0f;
+
+                isRotating = true;
+                currentRotateAmount = 0f;
+            }
+        }
+        // 回転中
+        else
+        {
+            float rotateThisFrame = rotateSpeed * Time.deltaTime;
+
+            transform.Rotate(0f, rotateThisFrame, 0f);
+
+            currentRotateAmount += rotateThisFrame;
+
+            if (currentRotateAmount >= rotateAngle)
+            {
+                isRotating = false;
+            }
+        }
+    }
 
 	/// <summary>
 	/// プレイヤーを発見するさせる時の処理
@@ -712,7 +750,8 @@ public class EnemyManager : MonoBehaviour
 		AlertFunction();
 		if (gameObject.tag == "StrongEnemy")
 		{
-			FocusPlayer();
+			StrongSearchPlayer(); // 一定時間に視点を回転させる
+            //FocusPlayer();
 			return;
 		}
 
