@@ -1,4 +1,7 @@
-// シーンをまたいでデータを受け渡すための静的クラス
+/// <summary>
+/// シーンをまたいでデータを受け渡すための静的クラス。
+/// リザルト画面で表示するプレイヤー名・クリアタイム・ミッション数を保持する。
+/// </summary>
 public static class ResultData
 {
 	public static string playerName = "";

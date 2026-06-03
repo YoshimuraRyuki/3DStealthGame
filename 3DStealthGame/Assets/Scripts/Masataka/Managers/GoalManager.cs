@@ -2,10 +2,21 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 
+/// <summary>
+/// ゴール判定を管理するクラス。
+/// プレイヤーがゴールに触れたらサーバーにgoalを送信する。
+/// 2人がゴールしたかどうかはサーバー側で管理する。
+/// </summary>
 public class GoalScript : MonoBehaviour
 {
+	#region フィールド
+
 	private HashSet<string> playersInGoal = new HashSet<string>();
 	private bool isGoalTriggered = false;
+
+	#endregion
+
+	#region Unityイベント
 
 	private void OnTriggerEnter(Collider other)
 	{
@@ -14,7 +25,7 @@ public class GoalScript : MonoBehaviour
 
 		playersInGoal.Add(other.tag);
 
-		// 自分がゴールに入ったとき
+		// 自分のプレイヤーがゴールに入ったとき
 		var wsClient = FindObjectOfType<WebSocketClient>();
 		if (wsClient != null && other.gameObject == wsClient.myPlayer)
 		{
@@ -39,7 +50,7 @@ public class GoalScript : MonoBehaviour
 			playersInGoal.Remove(other.tag);
 	}
 
-	/*private void GoToResult() リザルトに２人同時に行くためにサーバーで管理
+	/*private void GoToResult() リザルトに2人同時に行くためにサーバーで管理
 	{
 		// データを静的クラスに保存
 		if (MissionManager.Instance != null)
@@ -54,4 +65,6 @@ public class GoalScript : MonoBehaviour
 
 		SceneManager.LoadScene("Result");
 	}*/
+
+	#endregion
 }

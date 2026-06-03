@@ -2,17 +2,27 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
+/// <summary>
+/// プレイヤーのリスポーン処理を管理するクラス。
+/// 敵に捕まったときにフェードアウト→チェックポイントに移動→フェードインを行う。
+/// </summary>
 public class RespawnManager : MonoBehaviour
 {
+	#region インスペクター設定
+
 	public static RespawnManager Instance;
 
 	[Header("UI")]
-	public Text caughtText;        // 「みつかってしまった...」テキスト
-	public Image fadePanel;        // 暗転用の黒いパネル（ImageコンポーネントのColor Aを0に）
+	public Text caughtText;        // 「見つかってしまいました...」テキスト
+	public Image fadePanel;        // 暗転用のパネル（ImageコンポーネントのColor Aを0に）
 
 	[Header("設定")]
-	public float respawnDelay = 2f; // リスポーンまでの秒数
+	public float respawnDelay = 2f;   // リスポーンまでの秒数
 	public float fadeDuration = 0.5f; // フェードの秒数
+
+	#endregion
+
+	#region フィールド
 
 	private Vector3 _checkPointPosition;
 	private bool _hasCheckPoint = false;
@@ -21,11 +31,16 @@ public class RespawnManager : MonoBehaviour
 
 	public int CurrentCheckPointIndex => _currentCheckPointIndex;
 
+	#endregion
+
+	#region Unityイベント
+
 	void Awake()
 	{
 		if (Instance == null) Instance = this;
 		else { Destroy(gameObject); return; }
 
+		// UI初期化
 		if (caughtText != null) caughtText.gameObject.SetActive(false);
 		if (fadePanel != null)
 		{
@@ -36,6 +51,13 @@ public class RespawnManager : MonoBehaviour
 		}
 	}
 
+	#endregion
+
+	#region 公開メソッド
+
+	/// <summary>
+	/// チェックポイントを記録する。CheckPointScriptから呼ぶ。
+	/// </summary>
 	public void SetCheckPoint(int index, Vector3 position)
 	{
 		_currentCheckPointIndex = index;
@@ -43,21 +65,31 @@ public class RespawnManager : MonoBehaviour
 		_hasCheckPoint = true;
 	}
 
+	/// <summary>
+	/// 敵に捕まったときに呼ぶ。リスポーン処理を開始する。
+	/// </summary>
 	public void OnCaught()
 	{
 		if (_isRespawning) return;
 		StartCoroutine(RespawnCoroutine());
 	}
 
+	#endregion
+
+	#region リスポーン処理
+
+	/// <summary>
+	/// フェードアウト→移動→フェードインの一連のリスポーン処理
+	/// </summary>
 	private IEnumerator RespawnCoroutine()
 	{
 		_isRespawning = true;
 
-		// 「みつかってしまった...」表示
+		// 「見つかってしまいました...」表示
 		if (caughtText != null)
 		{
 			caughtText.gameObject.SetActive(true);
-			caughtText.text = "みつかってしまった...";
+			caughtText.text = "見つかってしまいました...";
 		}
 
 		// フェードアウト
@@ -85,13 +117,16 @@ public class RespawnManager : MonoBehaviour
 		// フェードイン
 		yield return StartCoroutine(Fade(1, 0));
 
-		// テキスト非表示
+		// テキストを非表示
 		if (caughtText != null) caughtText.gameObject.SetActive(false);
 		if (fadePanel != null) fadePanel.gameObject.SetActive(false);
 
 		_isRespawning = false;
 	}
 
+	/// <summary>
+	/// 画面のフェード処理（alpha from → to）
+	/// </summary>
 	private IEnumerator Fade(float from, float to)
 	{
 		if (fadePanel == null) yield break;
@@ -115,4 +150,6 @@ public class RespawnManager : MonoBehaviour
 
 		if (to == 0) fadePanel.gameObject.SetActive(false);
 	}
+
+	#endregion
 }

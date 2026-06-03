@@ -77,6 +77,7 @@ public class MissionManager : MonoBehaviour
 	/// <summary>item_picked 受信時に呼ぶ</summary>
 	public void OnItemPicked()
 	{
+		Debug.Log($"OnItemPicked呼ばれた _hasPickedItem: {_hasPickedItem}");
 		if (_hasPickedItem) return;
 		_hasPickedItem = true;
 		RefreshUI();
