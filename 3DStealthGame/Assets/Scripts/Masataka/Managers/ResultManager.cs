@@ -4,9 +4,15 @@ using UnityEngine.Networking;
 using System.Collections;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// リザルト画面の表示とランキング送受信を管理するクラス。
+/// ResultDataから取得したデータを画面に表示し、サーバーへランキングを送信する。
+/// </summary>
 public class ResultManager : MonoBehaviour
 {
-	[Header("プレイヤー情報")]
+	#region インスペクター設定
+
+	[Header("プレイヤー名")]
 	public Text playerNameText;
 
 	[Header("ステータス")]
@@ -21,8 +27,13 @@ public class ResultManager : MonoBehaviour
 
 	public string serverBaseUrl = "http://localhost:8080";
 
+	#endregion
+
+	#region Unityイベント
+
 	void Start()
 	{
+		// ResultDataの内容を画面に反映
 		playerNameText.text = $"{ResultData.playerName} & {ResultData.remotePlayerName}";
 		clearTimeText.text = $"{(int)ResultData.elapsedTime}秒";
 		missionCountText.text = $"{ResultData.missionCount} / 3";
@@ -33,6 +44,14 @@ public class ResultManager : MonoBehaviour
 		StartCoroutine(PostAndFetchRanking());
 	}
 
+	#endregion
+
+	#region ランキング処理
+
+	/// <summary>
+	/// ミッション数とクリアタイムからグレードを計算する。
+	/// S: 3ミッション&120秒以内 / A: 3ミッション / B: 2ミッション / C: それ以下
+	/// </summary>
 	string CalcGrade(int mission, float time)
 	{
 		if (mission >= 3 && time <= 120f) return "S";
@@ -41,6 +60,9 @@ public class ResultManager : MonoBehaviour
 		return "C";
 	}
 
+	/// <summary>
+	/// スコアをサーバーに送信し、ランキングを取得してUIに反映する
+	/// </summary>
 	IEnumerator PostAndFetchRanking()
 	{
 		// ランキングに送信
@@ -70,6 +92,9 @@ public class ResultManager : MonoBehaviour
 		}
 	}
 
+	/// <summary>
+	/// 取得したランキングデータをUIテキストに反映する
+	/// </summary>
 	void UpdateRankingUI(RankingItem[] rankings)
 	{
 		Text[] texts = { rank1Text, rank2Text, rank3Text };
@@ -88,6 +113,10 @@ public class ResultManager : MonoBehaviour
 		}
 	}
 
+	#endregion
+
+	#region ボタン処理
+
 	public void OnRetryButton()
 	{
 		SceneManager.LoadScene("MapTest");
@@ -97,8 +126,11 @@ public class ResultManager : MonoBehaviour
 	{
 		SceneManager.LoadScene("Title");
 	}
+
+	#endregion
 }
 
+// ランキングの1エントリ
 [System.Serializable]
 public class RankingItem
 {
@@ -107,6 +139,7 @@ public class RankingItem
 	public int mission_count;
 }
 
+// ランキングAPIのレスポンス
 [System.Serializable]
 public class RankingResponse
 {

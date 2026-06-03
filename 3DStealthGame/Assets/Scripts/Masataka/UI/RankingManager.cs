@@ -25,6 +25,27 @@ public class RankingManager : MonoBehaviour
 		if (returnButton != null) returnButton.onClick.AddListener(OnReturnClicked);
 	}
 
+	void Start()
+	{
+		var wsClient = FindObjectOfType<WebSocketClient>();
+		if (wsClient != null)
+		{
+			switch (wsClient.serverMode)
+			{
+				case WebSocketClient.ServerMode.VirtualBox:
+					serverUrl = "http://192.168.56.102:8080"; break;
+				case WebSocketClient.ServerMode.LocalHost:
+					serverUrl = "http://localhost:8080"; break;
+				case WebSocketClient.ServerMode.Ngrok:
+					serverUrl = wsClient.ngrokUrl; break;
+				case WebSocketClient.ServerMode.Render:
+					serverUrl = "https://stealth-game-server.onrender.com"; break;
+				case WebSocketClient.ServerMode.FlyIO:
+					serverUrl = "https://stealth-game-server.fly.dev"; break;
+			}
+		}
+	}
+
 	/// <summary>
 	/// ゴール時に WebSocketClient から呼ぶ。
 	/// スコアをサーバーへ送信してからランキングを取得して表示する。
