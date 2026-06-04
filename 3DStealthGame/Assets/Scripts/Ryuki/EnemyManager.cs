@@ -388,6 +388,11 @@ public class EnemyManager : MonoBehaviour
 	void AlertColor()
 	{
 		if (Sl == null) return;
+		if(currentAlertCount <= 0)
+		{
+            // プレイヤーをリスポーンさせる
+            Pc.Respawn();
+        }
 		if (currentAlertCount <= 1)
 		{
 			Sl.color = Color.red;

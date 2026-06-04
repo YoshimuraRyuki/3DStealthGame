@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using System.Collections;
 /// <summary>
 /// プレイヤーの移動・アニメーション・足音を管理するクラス。
 /// isLocalPlayerがtrueのときだけキー入力を受け付ける。
@@ -37,11 +37,12 @@ public class PlayerController : MonoBehaviour
 
 	public string lastTrigger = ""; // 最後に発火したアニメーショントリガー（同期用）
 
-	#endregion
+    private Transform currentRespawnPoint; // リスポーン地点
+    #endregion
 
-	#region Unityイベント
+    #region Unityイベント
 
-	void Awake()
+    void Awake()
 	{
 		_rb = GetComponent<Rigidbody>();
 		if (_rb != null)
@@ -235,5 +236,49 @@ public class PlayerController : MonoBehaviour
 
 	public bool IsSneaking => Input.GetKey(KeyCode.LeftShift);
 
-	#endregion
+    #endregion
+
+    #region リスポーン処理
+
+    // リスポーン地点を保存
+    public void SetRespawnPoint(Transform point)
+    {
+        currentRespawnPoint = point;
+        Debug.Log("リスポーン地点更新：" + point.position);
+    }
+
+    // リスポーン
+    public void Respawn()
+    {
+        if (currentRespawnPoint != null)
+        {
+            WebSocketClient ws = FindObjectOfType<WebSocketClient>();
+
+            if (ws != null)
+            {
+                ws.enabled = false; 
+				Debug.Log("WebSocket停止");
+            }
+            Debug.Log("isLocalPlayer = " + isLocalPlayer);
+            Debug.Log("リスポーン前：" + transform.position);
+
+            _rb.velocity = Vector3.zero;
+            _rb.angularVelocity = Vector3.zero;
+
+            transform.position = currentRespawnPoint.position;
+            transform.rotation = currentRespawnPoint.rotation;
+            Debug.Log("リスポーン後：" + transform.position);
+            StartCoroutine(CheckPosition());
+        }
+    }
+    private IEnumerator CheckPosition()
+    {
+        yield return new WaitForSeconds(0.1f);
+        Debug.Log("0.1秒後：" + transform.position);
+
+        yield return new WaitForSeconds(0.4f);
+        Debug.Log("0.5秒後：" + transform.position);
+    }
+    #endregion
+
 }

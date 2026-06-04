@@ -22,9 +22,10 @@ public class ElementGenerator : MonoBehaviour
 	public GameObject[] objSwitchList = new GameObject[1];          // スイッチリスト
 	public GameObject[] objPatrolPointList = new GameObject[1];     // 巡回ポイントリスト
 	GameObject[] objMapTipList = new GameObject[4];                 // マップチップリスト
+    GameObject[] objRespawnList = new GameObject[1];                  // リスポーン地点リスト
 
-	// マップ軽くするためのプレファブ
-	[SerializeField] GameObject wallPrefab;
+    // マップ軽くするためのプレファブ
+    [SerializeField] GameObject wallPrefab;
 
 	// ミニマップ生成スクリプト用
 	//MapGenerate mapGenerate;
@@ -157,7 +158,10 @@ public class ElementGenerator : MonoBehaviour
 		objMapTipList[1] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_1");
 		objMapTipList[2] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_2");
 		objMapTipList[3] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_3");
-	}
+
+        // リスポーン地点
+        objRespawnList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Respawn");
+    }
 
 	/// <summary>
 	/// 壁生成
@@ -733,7 +737,10 @@ public class ElementGenerator : MonoBehaviour
 						viewList.Add(view);
 						objEnemys = GameObject.FindGameObjectsWithTag("Enemy");
 						map[x, y] = "1"; // 床に戻す
-						break;
+                        // IDを設定する
+                        //EnemyManager normalEm = normalEnemyObj.GetComponent<EnemyManager>();
+                        //if (normalEm != null) normalEm.enemyID = id;
+                        break;
 
 					case 4: // 強化敵
 						GameObject enemyObj = Instantiate(objSuperEnemyList[0], pos, Quaternion.identity);
@@ -793,7 +800,11 @@ public class ElementGenerator : MonoBehaviour
 							wsClient2.SetSpawnPosition(2, pos);
 						map[x, y] = "1";
 						break;
-				}
+                    case 11: // リスポーン
+						Instantiate(objRespawnList[0], pos, Quaternion.identity);
+                        map[x, y] = "1";
+                        break;
+                }
 			}
 		}
 
