@@ -26,36 +26,48 @@ public class SwitchManager : MonoBehaviour
     float currentStanTime;
 
     public int targetEnemyID;
-    #endregion
+	#endregion
 
-    #region ボタン押下処理
+	#region ボタン押下処理
 
-    /// <summary>
-    /// 敵を殴った時の処理
-    /// </summary>    
-    void DoActionEnemy()
-    {
-        currentStanTime += Time.deltaTime;
-        if (stanTime <= currentStanTime)
-        {
-            isEnemyMoveStop = false;
-            currentStanTime = 0f;
-            isActionEnemy = false;
-            isEndAction = false;
-            enemy.StunCancel();
-        }
+	/// <summary>
+	/// 敵を殴った時の処理
+	/// </summary>    
+	private bool _stunSent = false; // 宣言に追加
 
-        if (!Pc.isAnimationStart) return;
-        enemy.PlayAnimationEnemy(); // スタンアニメーション開始
-        enemy.ResetPatrolState();   // 敵の動きを初期化
-        enemy.reactionText.text = "×";
-        Pc.isAnimationStart = false;
-        isPlayerInRange = false;
-        isEndAction = true;
+	void DoActionEnemy()
+	{
+		currentStanTime += Time.deltaTime;
+		if (stanTime <= currentStanTime)
+		{
+			isEnemyMoveStop = false;
+			currentStanTime = 0f;
+			isActionEnemy = false;
+			isEndAction = false;
+			_stunSent = false; // リセット
+			enemy.StunCancel();
 
-    }
+			var wsClient = FindObjectOfType<WebSocketClient>();
+			if (wsClient != null) wsClient.SendEnemyStunCancel(targetEnemyID);
+			return;
+		}
 
-    public void SetTarget(EnemyManager enemy)
+		if (!Pc.isAnimationStart) return;
+		if (_stunSent) return; // 二重送信防止
+
+		enemy.PlayAnimationEnemy();
+		enemy.ResetPatrolState();
+		enemy.reactionText.text = "×";
+		Pc.isAnimationStart = false;
+		isPlayerInRange = false;
+		isEndAction = true;
+		_stunSent = true; // フラグを立てる
+
+		var wsClient2 = FindObjectOfType<WebSocketClient>();
+		if (wsClient2 != null) wsClient2.SendEnemyStun(targetEnemyID);
+	}
+
+	public void SetTarget(EnemyManager enemy)
     {
         em = enemy;
     }
@@ -77,7 +89,7 @@ public class SwitchManager : MonoBehaviour
 
         isActionSwitch = false;
         var wsClient = FindObjectOfType<WebSocketClient>();
-        //if (wsClient != null) wsClient.SendSwitchActivated(targetEnemyID);
+        if (wsClient != null) wsClient.SendSwitchActivated(targetEnemyID);
     }
     #endregion
 
@@ -90,7 +102,9 @@ public class SwitchManager : MonoBehaviour
         isEndAction = true;
         isPlayerInRange = false;
         rd.material.color = Color.red;
-    }
+
+		if (em != null) em.PlayAnimationWall();
+	}
     #endregion
 
     #region Unityイベント

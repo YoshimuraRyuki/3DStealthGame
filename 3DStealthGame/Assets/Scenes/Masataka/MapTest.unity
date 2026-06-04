@@ -1868,7 +1868,7 @@ MonoBehaviour:
   player: {fileID: 0}
   map2DRect: {fileID: 1655844094}
   miniMapScale: 2
-  enableWallCollider: 0
+  enableWallCollider: 1
 --- !u!4 &1484845754
 Transform:
   m_ObjectHideFlags: 0

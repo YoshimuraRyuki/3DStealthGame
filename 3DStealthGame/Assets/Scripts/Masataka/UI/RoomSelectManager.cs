@@ -116,7 +116,6 @@ public class RoomSelectManager : MonoBehaviour
 			return;
 		}
 		selectedRoomId = roomId;
-		Debug.Log("ルーム選択: " + roomId);
 
 		// WebSocketClientに選択したルームIDを渡して接続
 		wsClient.ConnectToRoom(roomId);
