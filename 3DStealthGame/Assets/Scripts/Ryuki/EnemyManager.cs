@@ -97,6 +97,9 @@ public class EnemyManager : MonoBehaviour
     private float _remoteSoundCooldown = 0f;
 
 	public Vector3 GetLastSoundPosition() => lastSoundPosition;
+
+	private bool _isRespawning = false;
+	private Transform _alertTarget; // 警戒度を上げたプレイヤー
 	#endregion
 
 	#region 敵移動遷移
@@ -316,6 +319,7 @@ public class EnemyManager : MonoBehaviour
 					{
 						//Debug.Log("プレイヤー発見");
 						isFoundPlayer = true;
+						_alertTarget = targetPlayer;
 						if (gameObject.tag == "StrongEnemy")
 						{
 							return;
@@ -388,29 +392,38 @@ public class EnemyManager : MonoBehaviour
 	void AlertColor()
 	{
 		if (Sl == null) return;
-		if(currentAlertCount <= 0)
+		if (currentAlertCount <= 0 && !_isRespawning)
 		{
-            // プレイヤーをリスポーンさせる
-            Pc.Respawn();
-        }
-		if (currentAlertCount <= 1)
-		{
-			Sl.color = Color.red;
-		}
-		else if (currentAlertCount < 3)
-		{
-			Sl.color = new Color(1f, 0.5f, 0f);
-		}
-		else
-		{
-			Sl.color = new Color(0.827f, 0.851f, 0.439f);
-		}
+			_isRespawning = true;
+			Debug.Log($"捕まった: _alertTarget={_alertTarget?.name} isLocalPlayer={_alertTarget?.GetComponent<PlayerController>()?.isLocalPlayer}");
+			if (_alertTarget != null)
+			{
+				var pc = _alertTarget.GetComponent<PlayerController>();
+				if (pc != null && pc.isLocalPlayer)
+				{
+					pc.Respawn();
+				}
+				else
+				{
+					var wsClient = FindObjectOfType<WebSocketClient>();
+					if (wsClient != null) wsClient.SendRemoteRespawn();
+					currentAlertCount = alertCount; // 警戒度リセット
+					_isRespawning = false; // ここでリセット
+				}
 
-		/*if (currentAlertCount <= 0)
-		{
-			// プレイヤーをリスポーンさせる
-			Pc.Respawn();
-		}*/
+			}
+		}
+		if (currentAlertCount <= 1)
+			Sl.color = Color.red;
+		else if (currentAlertCount < 3)
+			Sl.color = new Color(1f, 0.5f, 0f);
+		else
+			Sl.color = new Color(0.827f, 0.851f, 0.439f);
+	}
+
+	public void ResetRespawnFlag()
+	{
+		_isRespawning = false;
 	}
 
 	// 範囲デバック用
@@ -517,7 +530,20 @@ public class EnemyManager : MonoBehaviour
 
 			isHearingSound = true;           // 音が聞こえている状態にする
 			lastSoundPosition = soundPosition; // 音の位置を記憶
-											  
+
+			// 音を出したプレイヤーを特定してalertTargetに設定
+			var p1 = GameObject.FindWithTag("Player1");
+			var p2 = GameObject.FindWithTag("Player2");
+			foreach (var p in new[] { p1, p2 })
+			{
+				if (p == null) continue;
+				if (Vector3.Distance(p.transform.position, soundPosition) < 1f)
+				{
+					_alertTarget = p.transform;
+					break;
+				}
+			}
+
 			if (reactionText != null)
 			{
 				reactionText.text = "!";

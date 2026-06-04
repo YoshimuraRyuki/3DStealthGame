@@ -247,31 +247,35 @@ public class PlayerController : MonoBehaviour
         Debug.Log("リスポーン地点更新：" + point.position);
     }
 
-    // リスポーン
-    public void Respawn()
-    {
-        if (currentRespawnPoint != null)
-        {
-            WebSocketClient ws = FindObjectOfType<WebSocketClient>();
+	// リスポーン
+	public void Respawn()
+	{
+		if (currentRespawnPoint != null)
+		{
+			_rb.velocity = Vector3.zero;
+			_rb.angularVelocity = Vector3.zero;
+			transform.position = currentRespawnPoint.position;
+			transform.rotation = currentRespawnPoint.rotation;
 
-            if (ws != null)
-            {
-                ws.enabled = false; 
-				Debug.Log("WebSocket停止");
-            }
-            Debug.Log("isLocalPlayer = " + isLocalPlayer);
-            Debug.Log("リスポーン前：" + transform.position);
+			var wsClient = FindObjectOfType<WebSocketClient>();
+			if (wsClient != null) wsClient.SendRespawn(transform.position);
 
-            _rb.velocity = Vector3.zero;
-            _rb.angularVelocity = Vector3.zero;
+			// 全敵のリスポーンフラグと警戒度をリセット
+			var enemies = GameObject.FindGameObjectsWithTag("Enemy");
+			foreach (var e in enemies)
+			{
+				var em = e.GetComponent<EnemyManager>();
+				if (em != null)
+				{
+					em.ResetRespawnFlag();
+					em.currentAlertCount = em.alertCount;
+				}
+			}
 
-            transform.position = currentRespawnPoint.position;
-            transform.rotation = currentRespawnPoint.rotation;
-            Debug.Log("リスポーン後：" + transform.position);
-            StartCoroutine(CheckPosition());
-        }
-    }
-    private IEnumerator CheckPosition()
+			StartCoroutine(CheckPosition());
+		}
+	}
+	private IEnumerator CheckPosition()
     {
         yield return new WaitForSeconds(0.1f);
         Debug.Log("0.1秒後：" + transform.position);
