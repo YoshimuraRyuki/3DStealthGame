@@ -99,6 +99,7 @@ public class EnemyMoveMessage
 	public float last_sound_x;
 	public float last_sound_z;
 	public string reaction; // "", "!", "?"
+	public string sender_id;
 }
 
 // スイッチ操作同期メッセージ
@@ -173,6 +174,8 @@ public class WebSocketClient : MonoBehaviour
 	private Vector3 _lastRemotePosition = Vector3.zero;
 
 	//public bool useLocalServer = true; // trueでローカル、falseでRender
+
+	private bool _stunSent = false; 
 
 	#endregion
 
@@ -262,6 +265,8 @@ public class WebSocketClient : MonoBehaviour
 	{
 		isGameSceneLoaded = scene.name == "MapTest";
 
+		Debug.Log($"OnSceneLoaded: {scene.name} isGameSceneLoaded={isGameSceneLoaded}");
+
 		if (scene.name != "MapTest")
 		{
 			ClearRemotePlayers();
@@ -272,7 +277,6 @@ public class WebSocketClient : MonoBehaviour
 			// MapTest ロード完了 → ミッションタイマースタート
 			Invoke("DelayedGameStart", 0.6f);
 		}
-		Debug.Log("シーン変更: " + scene.name);
 	}
 
 	/// <summary>
@@ -341,6 +345,8 @@ public class WebSocketClient : MonoBehaviour
 	private void OnMessageReceived(byte[] bytes)
 	{
 		string json = Encoding.UTF8.GetString(bytes);
+		if (json.Contains("enemy_stun"))
+			Debug.Log($"OnMessageReceived: isGameSceneLoaded={isGameSceneLoaded} json={json}");
 
 		if (!isGameSceneLoaded)
 		{
@@ -349,17 +355,14 @@ public class WebSocketClient : MonoBehaviour
 				SceneManager.LoadScene("MapTest");
 				return;
 			}
-
 			if (json.Contains("\"type\":\"init\"")) HandleInitForLobby(json);
 			else if (json.Contains("\"type\":\"player_joined\"")) HandlePlayerJoinedForLobby(json);
 			else if (json.Contains("\"type\":\"player_left\"")) HandlePlayerLeftForLobby(json);
 			else if (json.Contains("\"type\":\"player_ready\"")) HandlePlayerReadyForLobby(json);
 			else if (json.Contains("\"type\":\"existing_players\"")) HandleExistingPlayersForLobby(json);
-
 			pendingMessages.Add(json);
 			return;
 		}
-
 		ProcessMessage(json);
 	}
 
@@ -389,6 +392,8 @@ public class WebSocketClient : MonoBehaviour
 		else if (json.Contains("\"type\":\"player_goal\"")) HandlePlayerGoalMessage(json);
 		else if (json.Contains("\"type\":\"all_goal\"")) HandleAllGoalMessage(json);
 		else if (json.Contains("\"type\":\"switch_activated\"")) HandleSwitchActivatedMessage(json);
+		else if (json.Contains("\"type\":\"enemy_stun_cancel\"")) HandleEnemyStunCancelMessage(json);
+		else if (json.Contains("\"type\":\"enemy_stun\"")) HandleEnemyStunMessage(json);
 		else if (json.Contains("\"type\":\"start_game\""))
 		{
 			if (SceneManager.GetActiveScene().name == "MapTest")
@@ -474,7 +479,7 @@ public class WebSocketClient : MonoBehaviour
 		if (GlobalCamera.Instance != null)
 		{
 			GlobalCamera.Instance.SetTarget(myPlayer.transform);
-			Debug.Log("カメラターゲット設定完了");
+			//Debug.Log("カメラターゲット設定完了");
 		}
 		else
 		{
@@ -582,7 +587,6 @@ public class WebSocketClient : MonoBehaviour
 			}
 		}
 
-		Debug.Log($"anim_state受信: {msg.anim_state}");
 		// アニメーション反映
 		var anim = targetPlayer.GetComponentInChildren<Animator>();
 		if (anim != null && !string.IsNullOrEmpty(msg.anim_state))
@@ -793,6 +797,45 @@ public class WebSocketClient : MonoBehaviour
 		}
 	}
 
+
+	private void HandleEnemyStunMessage(string json)
+	{
+		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json);
+		if (msg.sender_id == myId) return;
+
+		if (_enemyObjects == null || _enemyObjects.Length == 0)
+			_enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
+
+		// インデックスではなくenemyIDで該当の敵を探す
+		foreach (var e in _enemyObjects)
+		{
+			var em = e.GetComponent<EnemyManager>();
+			if (em != null && em.enemyID == msg.enemy_index)
+			{
+				em.PlayAnimationEnemy();
+				break;
+			}
+		}
+	}
+
+	private void HandleEnemyStunCancelMessage(string json)
+	{
+		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json);
+		if (msg.sender_id == myId) return;
+
+		if (_enemyObjects == null || _enemyObjects.Length == 0)
+			_enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
+
+		foreach (var e in _enemyObjects)
+		{
+			var em = e.GetComponent<EnemyManager>();
+			if (em != null && em.enemyID == msg.enemy_index)
+			{
+				em.StunCancel();
+				break;
+			}
+		}
+	}
 	#endregion
 
 	#region プレイヤー生成・削除
@@ -897,6 +940,24 @@ public class WebSocketClient : MonoBehaviour
 		await websocket.SendText(json);
 	}
 
+	/// <summary>
+	/// 敵のスタン処理の同期用
+	/// </summary>
+	/// <param name="enemyIndex"></param>
+	public async void SendEnemyStun(int enemyIndex)
+	{
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
+		Debug.Log($"SendEnemyStun送信: enemyIndex={enemyIndex}"); // 追加
+		string json = $"{{\"type\":\"enemy_stun\",\"enemy_index\":{enemyIndex},\"sender_id\":\"{myId}\"}}";
+		await websocket.SendText(json);
+	}
+
+	public async void SendEnemyStunCancel(int enemyIndex)
+	{
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
+		string json = $"{{\"type\":\"enemy_stun_cancel\",\"enemy_index\":{enemyIndex},\"sender_id\":\"{myId}\"}}";
+		await websocket.SendText(json);
+	}
 	#endregion
 
 	#region 敵同期

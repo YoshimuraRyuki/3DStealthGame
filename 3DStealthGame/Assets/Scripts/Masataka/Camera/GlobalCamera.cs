@@ -44,11 +44,11 @@ public class GlobalCamera : MonoBehaviour
 			if (player != null)
 			{
 				SetTarget(player.transform);
-				Debug.Log("★GlobalCamera: Player1を自動検出してターゲット設定");
+				//Debug.Log("★GlobalCamera: Player1を自動検出してターゲット設定");
 			}
 			else
 			{
-				Debug.LogWarning("⚠️GlobalCamera: Player1が見つかりません");
+				//Debug.LogWarning("⚠️GlobalCamera: Player1が見つかりません");
 			}
 		}
 	}

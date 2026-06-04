@@ -400,6 +400,12 @@ public class EnemyManager : MonoBehaviour
 		{
 			Sl.color = new Color(0.827f, 0.851f, 0.439f);
 		}
+
+		/*if (currentAlertCount <= 0)
+		{
+			// プレイヤーをリスポーンさせる
+			Pc.Respawn();
+		}*/
 	}
 
 	// 範囲デバック用
@@ -631,21 +637,19 @@ public class EnemyManager : MonoBehaviour
 
 	public void StunCancel()
 	{
-        animEnemy.SetTrigger("StunCancel");
-        var col = GetComponent<Collider>();
-        if (col != null)
-        {
-            col.enabled = true;
-        }
-    }
-    #endregion
+		animEnemy.SetTrigger("StunCancel");
+		if (Sm != null) Sm.isEnemyMoveStop = false; // 追加
+		var col = GetComponent<Collider>();
+		if (col != null) col.enabled = true;
+	}
+	#endregion
 
-    #region 初期化処理
+	#region 初期化処理
 
-    /// <summary>
-    /// 巡回状態を初期化
-    /// </summary>
-    public void ResetPatrolState()
+	/// <summary>
+	/// 巡回状態を初期化
+	/// </summary>
+	public void ResetPatrolState()
 	{
 		currentTime = 0f;
 

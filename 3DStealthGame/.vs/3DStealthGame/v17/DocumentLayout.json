@@ -3,12 +3,52 @@
   "WorkspaceRootPath": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\ryuki\\switchmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ryuki\\switchmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|c:\\users\\ydauser01\\documents\\git\\3dstealthgame\\3dstealthgame\\assets\\scripts\\masataka\\network\\websocketclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\network\\websocketclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\masataka\\camera\\globalcamera.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\camera\\globalcamera.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\ryuki\\elementgenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ryuki\\elementgenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|c:\\users\\ydauser01\\documents\\git\\3dstealthgame\\3dstealthgame\\assets\\scripts\\masataka\\ui\\missionmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\masataka\\ui\\nameinputmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\ui\\nameinputmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\ryuki\\testplayer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ryuki\\testplayer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\ryuki\\fixedmap.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ryuki\\fixedmap.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\ryuki\\enemymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ryuki\\enemymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\masataka\\player\\playerdata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\player\\playerdata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\masataka\\managers\\returntotitle.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\managers\\returntotitle.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\masataka\\ui\\missionmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\ui\\missionmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\masataka\\ui\\roomselectmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\ui\\roomselectmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\masataka\\player\\nametag.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -17,14 +57,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\masataka\\player\\playercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\player\\playercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\masataka\\player\\playerdata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\player\\playerdata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\masataka\\network\\websocketclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\network\\websocketclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\masataka\\managers\\respawnmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -55,38 +87,6 @@
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:assets\\scripts\\masataka\\managers\\tutorialmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\masataka\\camera\\globalcamera.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\camera\\globalcamera.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\ryuki\\enemymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ryuki\\enemymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\masataka\\ui\\roomselectmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\ui\\roomselectmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\ryuki\\switchmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ryuki\\switchmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\masataka\\ui\\nameinputmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\ui\\nameinputmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\masataka\\managers\\returntotitle.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\managers\\returntotitle.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\ryuki\\testplayer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ryuki\\testplayer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\ryuki\\fixedmap.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ryuki\\fixedmap.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\assets\\scripts\\masataka\\checkpointscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\checkpointscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -105,11 +105,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 17,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 18,
               "Title": "GoalManager.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\Managers\\GoalManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\Managers\\GoalManager.cs",
@@ -122,20 +122,21 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 1,
               "Title": "WebSocketClient.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\Network\\WebSocketClient.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\Network\\WebSocketClient.cs",
               "ToolTip": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\Network\\WebSocketClient.cs",
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\Network\\WebSocketClient.cs",
-              "ViewState": "AQIAANkDAAAAAAAAAAAIwOwDAABRAAAA",
+              "ViewState": "AQIAAKEAAAAAAAAAAAAAAKoAAAAjAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-18T05:11:54.304Z",
-              "IsPinned": true
+              "IsPinned": true,
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 10,
               "Title": "MissionManager.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\UI\\MissionManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\UI\\MissionManager.cs",
@@ -144,34 +145,34 @@
               "ViewState": "AQIAAD8AAAAAAAAAAAAYwE8AAABCAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-18T06:02:11.214Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "IsPinned": true
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 7,
               "Title": "EnemyManager.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Ryuki\\EnemyManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Ryuki\\EnemyManager.cs",
               "ToolTip": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Ryuki\\EnemyManager.cs",
               "RelativeToolTip": "Assets\\Scripts\\Ryuki\\EnemyManager.cs",
-              "ViewState": "AQIAACQCAAAAAAAAAAAAADUCAAACAAAA",
+              "ViewState": "AQIAAA4CAAAAAAAAAAAIwJcBAAAFAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-24T01:49:10.414Z",
               "IsPinned": true
             },
             {
               "$type": "Document",
-              "DocumentIndex": 16,
+              "DocumentIndex": 0,
               "Title": "SwitchManager.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Ryuki\\SwitchManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Ryuki\\SwitchManager.cs",
               "ToolTip": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Ryuki\\SwitchManager.cs",
               "RelativeToolTip": "Assets\\Scripts\\Ryuki\\SwitchManager.cs",
-              "ViewState": "AQIAAIQAAAAAAAAAAAAmwKQAAAAaAAAA",
+              "ViewState": "AQIAACMAAAAAAAAAAAAIwC0AAAAXAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-28T00:20:53.258Z",
-              "IsPinned": true
+              "IsPinned": true,
+              "EditorCaption": ""
             },
             {
               "$type": "Bookmark",
@@ -187,7 +188,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
+              "DocumentIndex": 4,
               "Title": "NameInputManager.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\UI\\NameInputManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\UI\\NameInputManager.cs",
@@ -199,7 +200,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 16,
               "Title": "ResultData.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\Managers\\ResultData.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\Managers\\ResultData.cs",
@@ -211,19 +212,19 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 11,
               "Title": "RoomSelectManager.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\UI\\RoomSelectManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\UI\\RoomSelectManager.cs",
               "ToolTip": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\UI\\RoomSelectManager.cs",
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\UI\\RoomSelectManager.cs",
-              "ViewState": "AQIAADsAAAAAAAAAAAAkwBwAAAAwAAAA",
+              "ViewState": "AQIAAG4AAAAAAAAAAAAIwHUAAAAaAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-21T05:58:41.817Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 13,
               "Title": "PlayerController.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\Player\\PlayerController.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\Player\\PlayerController.cs",
@@ -235,7 +236,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 17,
               "Title": "ResultManager.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\Managers\\ResultManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\Managers\\ResultManager.cs",
@@ -247,19 +248,19 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 18,
+              "DocumentIndex": 9,
               "Title": "ReturnToTitle.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\Managers\\ReturnToTitle.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\Managers\\ReturnToTitle.cs",
               "ToolTip": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\Managers\\ReturnToTitle.cs",
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\Managers\\ReturnToTitle.cs",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAwAAAABAAAA",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAkAAAABAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-31T23:46:16.879Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 8,
               "Title": "PlayerData.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\Player\\PlayerData.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\Player\\PlayerData.cs",
@@ -271,7 +272,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 20,
+              "DocumentIndex": 6,
               "Title": "FixedMap.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Ryuki\\FixedMap.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Ryuki\\FixedMap.cs",
@@ -283,7 +284,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 19,
+              "DocumentIndex": 5,
               "Title": "TestPlayer.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Ryuki\\TestPlayer.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Ryuki\\TestPlayer.cs",
@@ -295,20 +296,19 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 3,
               "Title": "ElementGenerator.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
               "ToolTip": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
               "RelativeToolTip": "Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
-              "ViewState": "AQIAABcDAAAAAAAAAAAYwB4DAAAAAAAA",
+              "ViewState": "AQIAANoCAAAAAAAAAAAYwOECAAA9AAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-16T05:07:42.565Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-16T05:07:42.565Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 15,
               "Title": "ItemManager.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\Managers\\ItemManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\Managers\\ItemManager.cs",
@@ -320,7 +320,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 14,
               "Title": "RespawnManager.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\Managers\\RespawnManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\Managers\\RespawnManager.cs",
@@ -344,7 +344,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 12,
               "Title": "NameTag.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\Player\\NameTag.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\Player\\NameTag.cs",
@@ -356,19 +356,19 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 2,
               "Title": "GlobalCamera.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\Camera\\GlobalCamera.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\Camera\\GlobalCamera.cs",
               "ToolTip": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\Camera\\GlobalCamera.cs",
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\Camera\\GlobalCamera.cs",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAYAAAAuAAAA",
+              "ViewState": "AQIAACoAAAAAAAAAAAAIwDIAAAAGAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-21T02:31:47.222Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 19,
               "Title": "RankingManager.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\UI\\RankingManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\UI\\RankingManager.cs",
@@ -380,7 +380,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 20,
               "Title": "TutorialManager.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\Managers\\TutorialManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\Managers\\TutorialManager.cs",

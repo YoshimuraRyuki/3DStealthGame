@@ -22,6 +22,7 @@ public class ElementGenerator : MonoBehaviour
 	public GameObject[] objSwitchList = new GameObject[1];          // スイッチリスト
 	public GameObject[] objPatrolPointList = new GameObject[1];     // 巡回ポイントリスト
 	GameObject[] objMapTipList = new GameObject[4];                 // マップチップリスト
+	GameObject[] objRespawnList = new GameObject[1];                  // リスポーン地点リスト
 
 	// マップ軽くするためのプレファブ
 	[SerializeField] GameObject wallPrefab;
@@ -93,12 +94,12 @@ public class ElementGenerator : MonoBehaviour
 	// 生成したマップチップ
 	GameObject[,] objMapExist;                                      // フィールド用
 
-    [Header("壁のコライダーを有効化")]
-    [SerializeField] bool enableWallCollider = true;
-    #endregion
+	[Header("壁のコライダーを有効化")]
+	[SerializeField] bool enableWallCollider = true;
+	#endregion
 
-    #region 初期化処理
-    void Awake()
+	#region 初期化処理
+	void Awake()
 	{
 		// リソース読み込み
 		ReadResources();
@@ -157,6 +158,9 @@ public class ElementGenerator : MonoBehaviour
 		objMapTipList[1] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_1");
 		objMapTipList[2] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_2");
 		objMapTipList[3] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_3");
+
+		// リスポーン地点
+		objRespawnList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Respawn");
 	}
 
 	/// <summary>
@@ -216,13 +220,13 @@ public class ElementGenerator : MonoBehaviour
 		float centerX = startX + (length / 2f) - 0.5f;
 		cube.transform.position = new Vector3(centerX, 2f, y);
 
-        var col = cube.GetComponent<Collider>();
+		var col = cube.GetComponent<Collider>();
 
-        if (col != null)
-        {
-            col.enabled = enableWallCollider;
-        }
-    }
+		if (col != null)
+		{
+			col.enabled = enableWallCollider;
+		}
+	}
 
 	/// <summary>
 	/// 二次元マップ生成
@@ -659,10 +663,10 @@ public class ElementGenerator : MonoBehaviour
 
 			if (IsInsideMap(goalX, goalY, objMapExist))
 			{
-                Image img = objMapExist[goalX, goalY].GetComponent<Image>();
+				Image img = objMapExist[goalX, goalY].GetComponent<Image>();
 
-                img.sprite = iconGoal;
-            }
+				img.sprite = iconGoal;
+			}
 		}
 
 		// 全スイッチ更新
@@ -728,11 +732,15 @@ public class ElementGenerator : MonoBehaviour
 				switch (type)
 				{
 					case 3: // 敵
-						Instantiate(objEnemyList[0], pos, Quaternion.identity);
+						GameObject normalEnemyObj = Instantiate(objEnemyList[0], pos, Quaternion.identity);
 						GameObject view = Instantiate(enemyViewPrefab, map2DRect);
 						viewList.Add(view);
 						objEnemys = GameObject.FindGameObjectsWithTag("Enemy");
-						map[x, y] = "1"; // 床に戻す
+						EnemyManager normalEm = normalEnemyObj.GetComponent<EnemyManager>();
+						if (normalEm != null) normalEm.enemyID = id;
+						SwitchManager normalSw = normalEnemyObj.GetComponentInChildren<SwitchManager>();
+						if (normalSw != null) normalSw.targetEnemyID = id; // 追加
+						map[x, y] = "1";
 						break;
 
 					case 4: // 強化敵
@@ -791,6 +799,10 @@ public class ElementGenerator : MonoBehaviour
 						var wsClient2 = FindObjectOfType<WebSocketClient>();
 						if (wsClient2 != null)
 							wsClient2.SetSpawnPosition(2, pos);
+						map[x, y] = "1";
+						break;
+					case 11: // リスポーン
+						Instantiate(objRespawnList[0], pos, Quaternion.identity);
 						map[x, y] = "1";
 						break;
 				}
