@@ -71,7 +71,6 @@ public class PlayerController : MonoBehaviour
     private void OnEnable()
     {
         punchAction.performed += OnPunch;
-
         moveSneak.started += OnSneakStart;
         moveSneak.canceled += OnSneakEnd;
     }
@@ -79,7 +78,6 @@ public class PlayerController : MonoBehaviour
     private void OnDisable()
     {
         punchAction.performed -= OnPunch; 
-		
 		moveSneak.started -= OnSneakStart;
         moveSneak.canceled -= OnSneakEnd;
     }
