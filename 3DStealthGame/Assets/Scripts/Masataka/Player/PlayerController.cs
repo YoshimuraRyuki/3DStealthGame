@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 /// <summary>
 /// プレイヤーの移動・アニメーション・足音を管理するクラス。
 /// isLocalPlayerがtrueのときだけキー入力を受け付ける。
@@ -21,6 +22,11 @@ public class PlayerController : MonoBehaviour
 	public float walkVolume = 15f;
 	public delegate void SoundEventHandler(Vector3 position, float volume);
 	public event SoundEventHandler OnMakeSound;
+
+	[Header("リスポーン演出")]
+	public Image catchFadePanel;
+	public Text catchText; 
+
 
 	#endregion
 
