@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 /// <summary>
 /// プレイヤーの移動・アニメーション・足音を管理するクラス。
 /// isLocalPlayerがtrueのときだけキー入力を受け付ける。
@@ -33,15 +34,23 @@ public class PlayerController : MonoBehaviour
 	#region フィールド
 
 	private Rigidbody _rb;
-	private Vector2 _moveInput;
+    // インプットシステム
+    private Vector2 _moveInput;
+    private PlayerInput playerInput;
+    private InputAction moveAction;
+    private InputAction punchAction;
+    private InputAction moveSneak;
+    public System.Action OnPunchInput;
 
-	Animator Am;
+    Animator Am;
 	public bool isAnimationStart = false;
 
 	public bool isAction = false;
 	public bool isPlayerMoveStop = false; // 移動停止フラグ（スイッチ操作中など）
+	public bool isSneaking = false;
 
-	public string lastTrigger = ""; // 最後に発火したアニメーショントリガー（同期用）
+
+    public string lastTrigger = ""; // 最後に発火したアニメーショントリガー（同期用）
 
     private Transform currentRespawnPoint; // リスポーン地点
     #endregion
@@ -55,11 +64,33 @@ public class PlayerController : MonoBehaviour
 			_rb.constraints = RigidbodyConstraints.FreezeRotation;
 		Am = GetComponent<Animator>();
 
-		catchFadePanel = GameObject.Find("RespawnFadePanel")?.GetComponent<Image>();
+        // インプットシステム
+        playerInput = GetComponent<PlayerInput>();
+
+        moveAction = playerInput.actions["Move"];
+        punchAction = playerInput.actions["ActionPunch"];
+        moveSneak = playerInput.actions["Sneak"];
+
+
+        catchFadePanel = GameObject.Find("RespawnFadePanel")?.GetComponent<Image>();
 		catchText = GameObject.Find("リスポーン時テキスト")?.GetComponent<Text>();
 	}
 
-	void Update()
+    private void OnEnable()
+    {
+        punchAction.performed += OnPunch;
+        moveSneak.started += OnSneakStart;
+        moveSneak.canceled += OnSneakEnd;
+    }
+
+    private void OnDisable()
+    {
+        punchAction.performed -= OnPunch;
+        moveSneak.started -= OnSneakStart;
+        moveSneak.canceled -= OnSneakEnd;
+    }
+
+    void Update()
 	{
 		if (!isLocalPlayer) return;
 		CaptureInput();
@@ -71,69 +102,81 @@ public class PlayerController : MonoBehaviour
 		ApplyMovement();
 	}
 
-	#endregion
+    #endregion
 
-	#region 入力処理
+    #region インプットシステム
 
-	/// <summary>
-	/// キー入力を取得してアニメーション・足音を制御する
-	/// </summary>
-	private void CaptureInput()
+    public void OnPunch(InputAction.CallbackContext context)
+    {
+        if (!context.performed) return;
+
+        OnPunchInput?.Invoke();
+    }
+
+    public void OnSneakStart(InputAction.CallbackContext context)
+    {
+        isSneaking = true;
+    }
+
+    public void OnSneakEnd(InputAction.CallbackContext context)
+    {
+        isSneaking = false;
+    }
+
+    #endregion
+
+    #region 入力処理
+
+    /// <summary>
+    /// キー入力を取得してアニメーション・足音を制御する
+    /// </summary>
+    private void CaptureInput()
 	{
-		float x = 0;
-		float z = 0;
+        float x = 0;
+        float z = 0;
 
-		// 移動停止中
-		if (isPlayerMoveStop)
-		{
-			_moveInput = Vector2.zero;
+        // 移動停止中
+        if (isPlayerMoveStop)
+        {
+            _moveInput = Vector2.zero;
 
-			if (_rb != null)
-			{
-				_rb.velocity = Vector3.zero;
-			}
+            if (_rb != null)
+            {
+                _rb.velocity = Vector3.zero;
+            }
 
-			// アニメーション停止
-			Am.SetBool("Run", false);
-			Am.SetBool("Sneak", false);
+            // アニメーション停止
+            Am.SetBool("Run", false);
+            Am.SetBool("Sneak", false);
 
-			return;
-		}
+            return;
+        }
 
-		// 通常入力
-		if (Input.GetKey(KeyCode.D)) x += 1;
-		if (Input.GetKey(KeyCode.A)) x -= 1;
+        // 通常入力
+        _moveInput = moveAction.ReadValue<Vector2>();
+        bool isMoving = _moveInput.sqrMagnitude > 0.01f;
 
-		if (Input.GetKey(KeyCode.W)) z += 1;
-		if (Input.GetKey(KeyCode.S)) z -= 1;
+        // スニーク
+        if (isMoving && isSneaking)
+        {
+            Am.SetBool("Sneak", true);
+            Am.SetBool("Run", false);
+        }
+        // 走り
+        else if (isMoving)
+        {
+            MakeSound(transform.position, walkVolume);
 
-		_moveInput = new Vector2(x, z).normalized;
-
-		bool isMoving = (x != 0 || z != 0);
-
-		// スニーク
-		if (isMoving && Input.GetKey(KeyCode.LeftShift))
-		{
-			Am.SetBool("Sneak", true);
-			Am.SetBool("Run", false);
-			Debug.Log("音消してます。");
-		}
-		// 走り
-		else if (isMoving)
-		{
-			MakeSound(transform.position, walkVolume);
-
-			Am.SetBool("Run", true);
-			Am.SetBool("Sneak", false);
-			//Debug.Log("音出てます");
-		}
-		// 待機
-		else
-		{
-			Am.SetBool("Run", false);
-			Am.SetBool("Sneak", false);
-		}
-	}
+            Am.SetBool("Run", true);
+            Am.SetBool("Sneak", false);
+        }
+        // 待機
+        else
+        {
+            Am.SetBool("Run", false);
+            Am.SetBool("Sneak", false);
+        }
+    }
 
 	#endregion
 
@@ -145,7 +188,6 @@ public class PlayerController : MonoBehaviour
 	private void ApplyMovement()
 	{
 		Vector3 moveDir = new Vector3(_moveInput.x, 0, _moveInput.y);
-		bool isSneaking = Input.GetKey(KeyCode.LeftShift);
 		float speed = isSneaking ? crouchSpeed : walkSpeed;
 
 		if (_rb != null)

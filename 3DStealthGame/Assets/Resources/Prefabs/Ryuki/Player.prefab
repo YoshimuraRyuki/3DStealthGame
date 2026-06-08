@@ -169,9 +169,12 @@ MonoBehaviour:
   crouchSpeed: 5
   sneakVolume: 0
   walkVolume: 1
+  catchFadePanel: {fileID: 0}
+  catchText: {fileID: 0}
   isAnimationStart: 0
   isAction: 0
   isPlayerMoveStop: 0
+  isSneaking: 0
   lastTrigger: 
 --- !u!114 &-88040041406786580
 MonoBehaviour:
