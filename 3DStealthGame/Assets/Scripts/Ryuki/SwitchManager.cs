@@ -93,6 +93,30 @@ public class SwitchManager : MonoBehaviour
     }
     #endregion
 
+    #region アクション処理
+
+    void TryAction()
+    {
+        if (!isPlayerInRange) return;
+
+        if (CompareTag("Enemy"))
+        {
+            isActionEnemy = true;
+            Pc.isPlayerMoveStop = true;
+            Pc.PunchEnemy();
+        }
+
+        if (CompareTag("Switch"))
+        {
+            Pc.isAction = true;
+            Pc.isPlayerMoveStop = true;
+            isActionSwitch = true;
+            Pc.PunchSwitch();
+        }
+    }
+
+    #endregion
+
     #region サーバ関連
     /// <summary>
     /// 受信用
@@ -121,6 +145,7 @@ public class SwitchManager : MonoBehaviour
 		Pc = p.GetComponent<PlayerController>();
 		rd = GetComponent<Renderer>();
         enemy = GetComponent<EnemyManager>();
+        Pc.OnPunchInput += TryAction;
 
         currentStanTime = 0f;
 		// メインカメラの向きを取得用
@@ -144,23 +169,23 @@ public class SwitchManager : MonoBehaviour
 	void Update()
     {
         // プレイヤーが範囲内でEキーを押した時
-        if (isPlayerInRange && Input.GetKeyDown(KeyCode.E))
-        {
-            if (CompareTag("Enemy"))
-            {
-                isActionEnemy = true;
-                Pc.isPlayerMoveStop = true;
-                Pc.PunchEnemy();
-            }
-            if (CompareTag("Switch"))
-            {
-                // 壁を生成して隠れる場所を作る
-                Pc.isAction = true;
-                Pc.isPlayerMoveStop = true;
-                isActionSwitch = true;
-                Pc.PunchSwitch();
-            }
-        }
+        //if (isPlayerInRange && Input.GetKeyDown(KeyCode.E))
+        //{
+        //    if (CompareTag("Enemy"))
+        //    {
+        //        isActionEnemy = true;
+        //        Pc.isPlayerMoveStop = true;
+        //        Pc.PunchEnemy();
+        //    }
+        //    if (CompareTag("Switch"))
+        //    {
+        //        // 壁を生成して隠れる場所を作る
+        //        Pc.isAction = true;
+        //        Pc.isPlayerMoveStop = true;
+        //        isActionSwitch = true;
+        //        Pc.PunchSwitch();
+        //    }
+        //}
 
         if(isActionEnemy)
         {
