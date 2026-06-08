@@ -757,12 +757,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentState: 0
+  reactionText: {fileID: 0}
   movePoints: []
   speed: 3
   rotateSpeed: 30
   stoprotateSpeed: 50
   stopMoveCooldownMin: 5
   stopMoveCooldownMax: 10
+  waitTime: 3
+  rotateAngle: 90
   viewRadius: 10
   viewAngle: 45
   alertCount: 3
@@ -774,6 +777,8 @@ MonoBehaviour:
   isRemoteControlled: 0
   isStopMove: 0
   enemyID: 0
+  showViewDebug: 1
+  showSoundDebug: 0
 --- !u!114 &3470185511107027951
 MonoBehaviour:
   m_ObjectHideFlags: 0

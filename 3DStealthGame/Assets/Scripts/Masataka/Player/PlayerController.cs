@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.InputSystem;
+using Unity.VisualScripting;
 /// <summary>
 /// プレイヤーの移動・アニメーション・足音を管理するクラス。
 /// isLocalPlayerがtrueのときだけキー入力を受け付ける。
@@ -27,14 +29,22 @@ public class PlayerController : MonoBehaviour
 	#region フィールド
 
 	private Rigidbody _rb;
-	private Vector2 _moveInput;
+	// インプットシステム
+    private Vector2 _moveInput;
+    private PlayerInput playerInput;
+    private InputAction moveAction;
+    private InputAction punchAction;
+	private InputAction moveSneak; 
+	public System.Action OnPunchInput;
 
-	Animator Am;
+
+    Animator Am;
 	public bool isAnimationStart = false;
 
 	public bool isAction = false;
 	public bool isPlayerMoveStop = false; // 移動停止フラグ（スイッチ操作中など）
-
+    public bool isSneaking = false;
+    
 	public string lastTrigger = ""; // 最後に発火したアニメーショントリガー（同期用）
 
     private Transform currentRespawnPoint; // リスポーン地点
@@ -48,9 +58,33 @@ public class PlayerController : MonoBehaviour
 		if (_rb != null)
 			_rb.constraints = RigidbodyConstraints.FreezeRotation;
 		Am = GetComponent<Animator>();
-	}
 
-	void Update()
+
+        // インプットシステム
+        playerInput = GetComponent<PlayerInput>();
+
+        moveAction = playerInput.actions["Move"];
+        punchAction = playerInput.actions["ActionPunch"];
+        moveSneak = playerInput.actions["Sneak"];
+    }
+
+    private void OnEnable()
+    {
+        punchAction.performed += OnPunch;
+
+        moveSneak.started += OnSneakStart;
+        moveSneak.canceled += OnSneakEnd;
+    }
+
+    private void OnDisable()
+    {
+        punchAction.performed -= OnPunch; 
+		
+		moveSneak.started -= OnSneakStart;
+        moveSneak.canceled -= OnSneakEnd;
+    }
+
+    void Update()
 	{
 		if (!isLocalPlayer) return;
 		CaptureInput();
@@ -62,14 +96,36 @@ public class PlayerController : MonoBehaviour
 		ApplyMovement();
 	}
 
-	#endregion
+    #endregion
 
-	#region 入力処理
+    #region インプットシステム
 
-	/// <summary>
-	/// キー入力を取得してアニメーション・足音を制御する
-	/// </summary>
-	private void CaptureInput()
+    public void OnPunch(InputAction.CallbackContext context)
+	{
+        if (!context.performed) return;
+
+        OnPunchInput?.Invoke();
+    }
+
+    public void OnSneakStart(InputAction.CallbackContext context)
+    {
+        isSneaking = true;
+    }
+
+    public void OnSneakEnd(InputAction.CallbackContext context)
+    {
+        isSneaking = false;
+    }
+
+    #endregion
+
+
+    #region 入力処理
+
+    /// <summary>
+    /// キー入力を取得してアニメーション・足音を制御する
+    /// </summary>
+    private void CaptureInput()
 	{
 		float x = 0;
 		float z = 0;
@@ -92,18 +148,11 @@ public class PlayerController : MonoBehaviour
 		}
 
 		// 通常入力
-		if (Input.GetKey(KeyCode.D)) x += 1;
-		if (Input.GetKey(KeyCode.A)) x -= 1;
+        _moveInput = moveAction.ReadValue<Vector2>();
+        bool isMoving = _moveInput.sqrMagnitude > 0.01f;
 
-		if (Input.GetKey(KeyCode.W)) z += 1;
-		if (Input.GetKey(KeyCode.S)) z -= 1;
-
-		_moveInput = new Vector2(x, z).normalized;
-
-		bool isMoving = (x != 0 || z != 0);
-
-		// スニーク
-		if (isMoving && Input.GetKey(KeyCode.LeftShift))
+        // スニーク
+        if (isMoving && isSneaking)
 		{
 			Am.SetBool("Sneak", true);
 			Am.SetBool("Run", false);
@@ -136,10 +185,9 @@ public class PlayerController : MonoBehaviour
 	private void ApplyMovement()
 	{
 		Vector3 moveDir = new Vector3(_moveInput.x, 0, _moveInput.y);
-		bool isSneaking = Input.GetKey(KeyCode.LeftShift);
-		float speed = isSneaking ? crouchSpeed : walkSpeed;
+        float speed = isSneaking ? crouchSpeed : walkSpeed;
 
-		if (_rb != null)
+        if (_rb != null)
 		{
 			if (moveDir.sqrMagnitude < 0.01f)
 			{
@@ -234,7 +282,7 @@ public class PlayerController : MonoBehaviour
 		OnMakeSound?.Invoke(position, volume);
 	}
 
-	public bool IsSneaking => Input.GetKey(KeyCode.LeftShift);
+	public bool IsSneaking => isSneaking;
 
     #endregion
 
@@ -256,7 +304,7 @@ public class PlayerController : MonoBehaviour
 
             if (ws != null)
             {
-                ws.enabled = false; 
+                //ws.enabled = false; 
 				Debug.Log("WebSocket停止");
             }
             Debug.Log("isLocalPlayer = " + isLocalPlayer);

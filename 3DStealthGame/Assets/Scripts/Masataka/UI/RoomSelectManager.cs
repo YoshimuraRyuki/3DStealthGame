@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.Networking;
+using UnityEngine.EventSystems;
 
 public class RoomSelectManager : MonoBehaviour
 {
@@ -35,7 +36,10 @@ public class RoomSelectManager : MonoBehaviour
 
 	public RoomMemberPanel roomMemberPanel;
 
-	void Start()
+    [SerializeField] private GameObject roomButton;
+    [SerializeField] private GameObject readyPanelButton;
+
+    void Start()
 	{
 		wsClient = FindObjectOfType<WebSocketClient>();
 		switch (wsClient.serverMode)
@@ -58,16 +62,33 @@ public class RoomSelectManager : MonoBehaviour
 	// 接続ボタン押下後にこのパネルを表示する想定
 	public void ShowRoomSelect()
 	{
-		if (string.IsNullOrEmpty(wsClient.GetPlayerName()))
+        if (string.IsNullOrEmpty(wsClient.GetPlayerName()))
 		{
 			Debug.LogWarning("名前が入力されていません");
 			return;
 		}
-		roomSelectPanel.SetActive(true);
+        
+        StartCoroutine(SelectRoomButton());
+        roomSelectPanel.SetActive(true);
 		FetchRoomList();
-	}
 
-	private void FetchRoomList()
+    }
+
+    private IEnumerator SelectRoomButton()
+    {
+        yield return new WaitForEndOfFrame();
+
+        EventSystem.current.SetSelectedGameObject(roomButton);
+    }
+	
+	private IEnumerator ReadyPanel()
+    {
+        yield return new WaitForEndOfFrame();
+		Debug.Log("移行");
+        EventSystem.current.SetSelectedGameObject(readyPanelButton);
+    }
+
+    private void FetchRoomList()
 	{
 		if (!gameObject.activeInHierarchy) return;
 		StartCoroutine(FetchRoomListCoroutine());
@@ -99,7 +120,7 @@ public class RoomSelectManager : MonoBehaviour
 					roomButtons[i].onClick.RemoveAllListeners();
 					roomButtons[i].onClick.AddListener(() => OnRoomButtonClicked(roomId));
 				}
-			}
+            }
 			else
 			{
 				Debug.LogWarning("ルーム一覧取得失敗: " + req.error);
@@ -134,7 +155,8 @@ public class RoomSelectManager : MonoBehaviour
 		// パネル切り替え
 		roomSelectPanel.SetActive(false);
 		readyPanel.SetActive(true);
-	}
+        StartCoroutine(ReadyPanel());
+    }
 
 	public void OnQuitButtonClicked()
 	{
@@ -144,9 +166,9 @@ public class RoomSelectManager : MonoBehaviour
 		// パネルを戻す
 		readyPanel.SetActive(false);
 		roomSelectPanel.SetActive(true);
-
-		// 人数を最新に更新
-		FetchRoomList();
+        StartCoroutine(SelectRoomButton());
+        // 人数を最新に更新
+        FetchRoomList();
 	}
 
 	void OnDestroy()
