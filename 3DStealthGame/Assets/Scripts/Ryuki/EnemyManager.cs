@@ -98,22 +98,17 @@ public class EnemyManager : MonoBehaviour
 
 	public Vector3 GetLastSoundPosition() => lastSoundPosition;
 
-	// デバック用
-    private Vector3 debugSoundPos;
-    private float debugSoundRange;
-    private float debugTimer;
-    [Header("Gizmos Debug")]
-    [SerializeField] bool showViewDebug = true;   // 視界・レイキャスト
-    [SerializeField] bool showSoundDebug = true;  // 音検知
-    #endregion
+	private bool _isRespawning = false;
+	private Transform _alertTarget; // 警戒度を上げたプレイヤー
+	#endregion
 
-    #region 敵移動遷移
+	#region 敵移動遷移
 
-    /// <summary>
-    /// 一番近いポイントを取得
-    /// </summary>
-    /// <returns></returns>
-    GameObject StartPoint()
+	/// <summary>
+	/// 一番近いポイントを取得
+	/// </summary>
+	/// <returns></returns>
+	GameObject StartPoint()
 	{
 		GameObject[] objs = GameObject.FindGameObjectsWithTag("Point");
 
@@ -324,6 +319,7 @@ public class EnemyManager : MonoBehaviour
 					{
 						//Debug.Log("プレイヤー発見");
 						isFoundPlayer = true;
+						_alertTarget = targetPlayer;
 						if (gameObject.tag == "StrongEnemy")
 						{
 							return;
@@ -396,97 +392,83 @@ public class EnemyManager : MonoBehaviour
 	void AlertColor()
 	{
 		if (Sl == null) return;
-		if(currentAlertCount <= 0)
+		if (currentAlertCount <= 0 && !_isRespawning)
 		{
-            // プレイヤーをリスポーンさせる
-            Pc.Respawn();
-        }
-		if (currentAlertCount <= 1)
-		{
-			Sl.color = Color.red;
-		}
-		else if (currentAlertCount < 3)
-		{
-			Sl.color = new Color(1f, 0.5f, 0f);
-		}
-		else
-		{
-			Sl.color = new Color(0.827f, 0.851f, 0.439f);
-		}
+			_isRespawning = true;
+			Debug.Log($"捕まった: _alertTarget={_alertTarget?.name} isLocalPlayer={_alertTarget?.GetComponent<PlayerController>()?.isLocalPlayer}");
+			if (_alertTarget != null)
+			{
+				var pc = _alertTarget.GetComponent<PlayerController>();
+				if (pc != null && pc.isLocalPlayer)
+				{
+					pc.Respawn();
+				}
+				else
+				{
+					var wsClient = FindObjectOfType<WebSocketClient>();
+					if (wsClient != null) wsClient.SendRemoteRespawn();
+					currentAlertCount = alertCount; // 警戒度リセット
+					_isRespawning = false; // ここでリセット
+				}
 
-		/*if (currentAlertCount <= 0)
-		{
-			// プレイヤーをリスポーンさせる
-			Pc.Respawn();
-		}*/
+			}
+		}
+		if (currentAlertCount <= 1)
+			Sl.color = Color.red;
+		else if (currentAlertCount < 3)
+			Sl.color = new Color(1f, 0.5f, 0f);
+		else
+			Sl.color = new Color(0.827f, 0.851f, 0.439f);
 	}
 
-    // 範囲デバック用
-    private void OnDrawGizmos()
-    {
-        // ===== 視界・レイキャスト =====
-        if (showViewDebug)
-        {
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, viewRadius);
+	public void ResetRespawnFlag()
+	{
+		_isRespawning = false;
+	}
 
-            Vector3 leftBoundary =
-                Quaternion.Euler(0, -viewAngle / 2, 0) * transform.forward;
+	// 範囲デバック用
+	private void OnDrawGizmos()
+	{
+		// 視界範囲の色
+		Gizmos.color = Color.yellow;
 
-            Vector3 rightBoundary =
-                Quaternion.Euler(0, viewAngle / 2, 0) * transform.forward;
+		// 視界距離（円）
+		Gizmos.DrawWireSphere(transform.position, viewRadius);
 
-            Gizmos.color = Color.blue;
-            Gizmos.DrawLine(transform.position,
-                transform.position + leftBoundary * viewRadius);
+		// 左右の視界線
+		Vector3 leftBoundary = Quaternion.Euler(0, -viewAngle / 2, 0) * transform.forward;
 
-            Gizmos.DrawLine(transform.position,
-                transform.position + rightBoundary * viewRadius);
+		Vector3 rightBoundary = Quaternion.Euler(0, viewAngle / 2, 0) * transform.forward;
 
-            Gizmos.color = Color.green;
-            Gizmos.DrawLine(transform.position,
-                transform.position + transform.forward * viewRadius);
+		// 線を描画
+		Gizmos.color = Color.blue;
 
-        }
+		Gizmos.DrawLine(transform.position, transform.position + leftBoundary * viewRadius);
 
-        // ===== 音検知 =====
-        if (showSoundDebug)
-        {
-            // 音検知範囲
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawWireSphere(transform.position, hearingRange);
+		Gizmos.DrawLine(transform.position, transform.position + rightBoundary * viewRadius);
 
-            // 最後に聞いた音
-            if (lastSoundPosition != Vector3.zero)
-            {
-                Gizmos.color = Color.magenta;
-                Gizmos.DrawWireSphere(lastSoundPosition, 0.5f);
+		// 正面方向
+		Gizmos.color = Color.green;
 
-                Gizmos.DrawLine(transform.position, lastSoundPosition);
-            }
+		Gizmos.DrawLine(transform.position, transform.position + transform.forward * viewRadius);
 
-            // 検知した音の有効範囲
-            if (debugTimer > 0)
-            {
-                Gizmos.color = Color.red;
-                
+		// ターゲットへの線
+		if (targetPlayer != null)
+		{
+			Gizmos.color = Color.red;
 
-                Gizmos.color = Color.magenta;
-                Gizmos.DrawSphere(debugSoundPos, 0.3f);
+			Gizmos.DrawLine(transform.position, targetPlayer.position);
+		}
+	}
 
-                Gizmos.DrawLine(transform.position, debugSoundPos);
-            }
-        }
-    }
+	#endregion
 
-    #endregion
+	#region 音でプレイヤーの方向に向ける
 
-    #region 音でプレイヤーの方向に向ける
-
-    /// <summary>
-    /// プレイヤーの方向に向かせる処理
-    /// </summary>
-    void FocusPlayer()
+	/// <summary>
+	/// プレイヤーの方向に向かせる処理
+	/// </summary>
+	void FocusPlayer()
 	{
 		if (targetPlayer == null) return;
 		Vector3 direction = targetPlayer.position - transform.position;
@@ -539,7 +521,6 @@ public class EnemyManager : MonoBehaviour
 		// 音が聞こえる範囲内かどうかを計算
 		float distanceToSound = Vector3.Distance(transform.position, soundPosition);
 
-
 		// 音量と距離から最終的な検知距離を計算
 		if (distanceToSound <= hearingRange * volume)
 		{
@@ -550,13 +531,20 @@ public class EnemyManager : MonoBehaviour
 			isHearingSound = true;           // 音が聞こえている状態にする
 			lastSoundPosition = soundPosition; // 音の位置を記憶
 
-			// デバック用
-            debugSoundPos = soundPosition;
-            debugSoundRange = hearingRange * volume;
-            debugTimer = 2f; // 2秒表示
-            Debug.Log($"音検知！ 距離:{distanceToSound:F1} / 検知範囲:{hearingRange * volume:F1}");
+			// 音を出したプレイヤーを特定してalertTargetに設定
+			var p1 = GameObject.FindWithTag("Player1");
+			var p2 = GameObject.FindWithTag("Player2");
+			foreach (var p in new[] { p1, p2 })
+			{
+				if (p == null) continue;
+				if (Vector3.Distance(p.transform.position, soundPosition) < 1f)
+				{
+					_alertTarget = p.transform;
+					break;
+				}
+			}
 
-            if (reactionText != null)
+			if (reactionText != null)
 			{
 				reactionText.text = "!";
 				reactionText.gameObject.SetActive(true); // ビックリマーク表示
@@ -770,13 +758,7 @@ public class EnemyManager : MonoBehaviour
 	// Update is called once per frame
 	void Update()
 	{
-		// デバック用
-        if (debugTimer > 0)
-        {
-            debugTimer -= Time.deltaTime;
-        }
-
-        if (isRemoteControlled) return;
+		if (isRemoteControlled) return;
 		if (Sm == null || Sm.isEnemyMoveStop) return; // ←Sm nullチェック追加
 													  // Player2音検知クールダウン減算
 		if (_remoteSoundCooldown > 0)

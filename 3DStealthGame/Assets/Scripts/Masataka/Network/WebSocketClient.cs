@@ -109,6 +109,13 @@ public class SwitchActivatedMessage
 	public string type;
 	public int switch_id;
 }
+[System.Serializable]
+public class RespawnMessage
+{
+	public string type;
+	public string id;
+	public PositionData position;
+}
 
 /// <summary>
 /// WebSocketによるサーバーとの通信を一元管理するクラス。
@@ -205,6 +212,7 @@ public class WebSocketClient : MonoBehaviour
 		// リモートプレイヤーの位置を補間移動
 		foreach (var id in targetPositions.Keys)
 		{
+			if (id == myId) continue; // 自分は補間しない
 			if (!playerObjects.ContainsKey(id)) continue;
 			var obj = playerObjects[id];
 			if (obj == null) continue;
@@ -389,11 +397,14 @@ public class WebSocketClient : MonoBehaviour
 		//else if (json.Contains("\"type\":\"goal\"")) HandleGoalMessage(json);
 		else if (json.Contains("\"type\":\"timer_update\"")) HandleTimerUpdate(json);
 		else if (json.Contains("\"type\":\"enemy_move\"")) HandleEnemyMoveMessage(json);
+		else if (json.Contains("\"type\":\"remote_respawn\"")) HandleRemoteRespawnMessage(json);
 		else if (json.Contains("\"type\":\"player_goal\"")) HandlePlayerGoalMessage(json);
 		else if (json.Contains("\"type\":\"all_goal\"")) HandleAllGoalMessage(json);
 		else if (json.Contains("\"type\":\"switch_activated\"")) HandleSwitchActivatedMessage(json);
 		else if (json.Contains("\"type\":\"enemy_stun_cancel\"")) HandleEnemyStunCancelMessage(json);
 		else if (json.Contains("\"type\":\"enemy_stun\"")) HandleEnemyStunMessage(json);
+		else if (json.Contains("\"type\":\"respawn\"")) HandleRespawnMessage(json);
+
 		else if (json.Contains("\"type\":\"start_game\""))
 		{
 			if (SceneManager.GetActiveScene().name == "MapTest")
@@ -884,6 +895,60 @@ public class WebSocketClient : MonoBehaviour
 		playerObjects.Clear();
 	}
 
+	private void HandleRespawnMessage(string json)
+	{
+		var msg = JsonUtility.FromJson<RespawnMessage>(json);
+		if (msg.id == myId)
+		{
+			targetPositions.Remove(myId);
+			return;
+		}
+		if (!playerObjects.ContainsKey(msg.id)) return;
+		var obj = playerObjects[msg.id];
+		if (obj == null) return;
+		obj.transform.position = new Vector3(msg.position.x, msg.position.y, msg.position.z);
+		targetPositions[msg.id] = obj.transform.position;
+	}
+
+
+	private void HandleRemoteRespawnMessage(string json)
+	{
+		if (myPlayerNumber != 2) return; // Player2（リモート）だけ処理する
+
+		if (myPlayer == null) return;
+		var pc = myPlayer.GetComponent<PlayerController>();
+		if (pc == null) return;
+
+		pc.RespawnWithEffectPublic();
+
+		/*var spawnPos = GetSpawnPosition();
+		myPlayer.transform.position = spawnPos != Vector3.zero ? spawnPos : myPlayer.transform.position;
+
+		var rb = myPlayer.GetComponent<Rigidbody>();
+		if (rb != null)
+		{
+			rb.velocity = Vector3.zero;
+			rb.angularVelocity = Vector3.zero;
+		}
+
+		var enemies = GameObject.FindGameObjectsWithTag("Enemy");
+		foreach (var e in enemies)
+		{
+			var em = e.GetComponent<EnemyManager>();
+			if (em != null)
+			{
+				em.ResetRespawnFlag();
+				em.currentAlertCount = em.alertCount;
+			}
+		}*/
+	}
+
+	public async void SendRemoteRespawn()
+	{
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
+		string json = $"{{\"type\":\"remote_respawn\",\"id\":\"{myId}\"}}";
+		await websocket.SendText(json);
+	}
 	#endregion
 
 	#region 送信処理
@@ -891,7 +956,7 @@ public class WebSocketClient : MonoBehaviour
 	/// <summary>
 	/// 自分の位置・回転・アニメーション状態をサーバーに送信する
 	/// </summary>
-	private async void SendPosition()
+	public async void SendPosition()
 	{
 		if (myPlayer == null) return;
 		var pc = myPlayer.GetComponent<PlayerController>();
@@ -907,6 +972,13 @@ public class WebSocketClient : MonoBehaviour
 					  $"\"y\":{myPlayer.transform.rotation.eulerAngles.y}}}," +
 					  $"\"anim_state\":\"{animState}\"," +
 					  $"\"anim_trigger\":\"{trigger}\"}}";
+		await websocket.SendText(json);
+	}
+
+	public async void SendRespawn(Vector3 pos)
+	{
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
+		string json = $"{{\"type\":\"respawn\",\"id\":\"{myId}\",\"position\":{{\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z}}}}}";
 		await websocket.SendText(json);
 	}
 

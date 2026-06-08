@@ -13,7 +13,7 @@ using UnityEngine.UI;
 ///         └── OKButton (Button)       ← 「次へ」「スタート！」ボタン
 /// 3. Inspector で各フィールドをドラッグ&ドロップ
 /// 4. WebSocketClient.cs の start_game 受信箇所で ShowTutorial() を呼ぶ
-///    ※ WebSocketClient の修正版に「★ここで呼ぶ」コメントあり
+///    ※ WebSocketClient の修正版に「ここで呼ぶ」コメントあり
 /// </summary>
 public class TutorialManager : MonoBehaviour
 {
