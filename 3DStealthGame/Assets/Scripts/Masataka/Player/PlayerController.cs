@@ -197,11 +197,11 @@ public class PlayerController : MonoBehaviour
 				_rb.velocity = new Vector3(0, _rb.velocity.y, 0);
 				return;
 			}
-			_rb.velocity = new Vector3(moveDir.x * speed, _rb.velocity.y, moveDir.z * speed);
-		}
-		else
-		{
-			transform.position += moveDir * speed * Time.fixedDeltaTime;
+
+
+
+			Vector3 targetVelocity = new Vector3(moveDir.x * speed, _rb.velocity.y, moveDir.z * speed);
+			_rb.velocity = Vector3.Lerp(_rb.velocity, targetVelocity, Time.fixedDeltaTime * 20f);
 		}
 
 		if (moveDir != Vector3.zero)
