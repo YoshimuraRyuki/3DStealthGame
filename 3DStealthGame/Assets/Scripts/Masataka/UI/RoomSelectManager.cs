@@ -63,6 +63,7 @@ public class RoomSelectManager : MonoBehaviour
 			Debug.LogWarning("–¼‘O‚ª“ü—Í‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ");
 			return;
 		}
+		Debug.Log("ŒÄ‚Î‚ê‚½");
 		roomSelectPanel.SetActive(true);
 		FetchRoomList();
 	}

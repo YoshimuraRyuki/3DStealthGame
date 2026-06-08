@@ -919,7 +919,9 @@ public class WebSocketClient : MonoBehaviour
 		var pc = myPlayer.GetComponent<PlayerController>();
 		if (pc == null) return;
 
-		var spawnPos = GetSpawnPosition();
+		pc.RespawnWithEffectPublic();
+
+		/*var spawnPos = GetSpawnPosition();
 		myPlayer.transform.position = spawnPos != Vector3.zero ? spawnPos : myPlayer.transform.position;
 
 		var rb = myPlayer.GetComponent<Rigidbody>();
@@ -938,7 +940,7 @@ public class WebSocketClient : MonoBehaviour
 				em.ResetRespawnFlag();
 				em.currentAlertCount = em.alertCount;
 			}
-		}
+		}*/
 	}
 
 	public async void SendRemoteRespawn()

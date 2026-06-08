@@ -54,6 +54,9 @@ public class PlayerController : MonoBehaviour
 		if (_rb != null)
 			_rb.constraints = RigidbodyConstraints.FreezeRotation;
 		Am = GetComponent<Animator>();
+
+		catchFadePanel = GameObject.Find("RespawnFadePanel")?.GetComponent<Image>();
+		catchText = GameObject.Find("リスポーン時テキスト")?.GetComponent<Text>();
 	}
 
 	void Update()
@@ -257,30 +260,104 @@ public class PlayerController : MonoBehaviour
 	public void Respawn()
 	{
 		if (currentRespawnPoint != null)
+			StartCoroutine(RespawnWithEffect());
+	}
+
+	private IEnumerator RespawnWithEffect()
+	{
+		// 「見つかった！」表示
+		if (catchText != null)
 		{
-			_rb.velocity = Vector3.zero;
-			_rb.angularVelocity = Vector3.zero;
-			transform.position = currentRespawnPoint.position;
-			transform.rotation = currentRespawnPoint.rotation;
+			var c = catchText.color;
+			c.a = 1f;
+			catchText.color = c;
+		}
 
-			var wsClient = FindObjectOfType<WebSocketClient>();
-			if (wsClient != null) wsClient.SendRespawn(transform.position);
-
-			// 全敵のリスポーンフラグと警戒度をリセット
-			var enemies = GameObject.FindGameObjectsWithTag("Enemy");
-			foreach (var e in enemies)
+		// フェードアウト
+		if (catchFadePanel != null)
+		{
+			float elapsed = 0f;
+			while (elapsed < 0.5f)
 			{
-				var em = e.GetComponent<EnemyManager>();
-				if (em != null)
-				{
-					em.ResetRespawnFlag();
-					em.currentAlertCount = em.alertCount;
-				}
+				elapsed += Time.deltaTime;
+				var c = catchFadePanel.color;
+				c.a = Mathf.Lerp(0, 1, elapsed / 0.5f);
+				catchFadePanel.color = c;
+				yield return null;
 			}
+		}
 
-			StartCoroutine(CheckPosition());
+		yield return new WaitForSeconds(0.5f);
+
+		// リスポーン
+		_rb.velocity = Vector3.zero;
+		_rb.angularVelocity = Vector3.zero;
+		transform.position = currentRespawnPoint.position;
+		transform.rotation = currentRespawnPoint.rotation;
+
+		var wsClient = FindObjectOfType<WebSocketClient>();
+		if (wsClient != null) wsClient.SendRespawn(transform.position);
+
+		var enemies = GameObject.FindGameObjectsWithTag("Enemy");
+		foreach (var e in enemies)
+		{
+			var em = e.GetComponent<EnemyManager>();
+			if (em != null)
+			{
+				em.ResetRespawnFlag();
+				em.currentAlertCount = em.alertCount;
+			}
+		}
+
+		yield return new WaitForSeconds(0.3f);
+
+		// フェードイン
+		if (catchFadePanel != null)
+		{
+			float elapsed = 0f;
+			while (elapsed < 0.5f)
+			{
+				elapsed += Time.deltaTime;
+				float alpha = Mathf.Lerp(1, 0, elapsed / 0.5f);
+
+				var c = catchFadePanel.color;
+				c.a = alpha;
+				catchFadePanel.color = c;
+
+	
+				if (catchText != null)
+				{
+					var tc = catchText.color;
+					tc.a = alpha;
+					catchText.color = tc;
+				}
+
+				yield return null;
+			}
+		}
+
+		if (catchFadePanel != null)
+		{
+			var c = catchFadePanel.color;
+			c.a = 0f;
+			catchFadePanel.color = c;
+		}
+		if (catchText != null)
+		{
+			var c = catchText.color;
+			c.a = 0f;
+			catchText.color = c;
 		}
 	}
+
+	/// <summary>
+	/// リモート用のリスポーン演出
+	/// </summary>
+	public void RespawnWithEffectPublic()
+	{
+		StartCoroutine(RespawnWithEffect());
+	}
+
 	private IEnumerator CheckPosition()
     {
         yield return new WaitForSeconds(0.1f);

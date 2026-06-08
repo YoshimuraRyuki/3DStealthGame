@@ -74,6 +74,7 @@ public class NameInputManager : MonoBehaviour
 
 		// パネル切り替え
 		if (titlePanel != null) titlePanel.SetActive(false);
-		if (roomSelectPanel != null) roomSelectPanel.SetActive(true);
+		var roomSelectManager = FindObjectOfType<RoomSelectManager>();
+		if (roomSelectManager != null) roomSelectManager.ShowRoomSelect();
 	}
 }
