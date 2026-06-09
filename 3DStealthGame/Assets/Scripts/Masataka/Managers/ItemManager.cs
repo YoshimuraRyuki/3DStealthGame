@@ -5,14 +5,14 @@ using UnityEngine.Networking;
 
 /// <summary>
 /// アイテム取得判定を管理するクラス。
-/// 自分のプレイヤーがアイテムに触れたらWebSocket経由でサーバーに通知する。
-/// MissionManagerへの通知はサーバーからのブロードキャストで行う。
+/// 自分のプレイヤーがアイテムに触れたらサーバーに通知する。
+/// ミッション管理への通知はサーバーからの一斉配信で行う。
 /// </summary>
 public class ItemManager : MonoBehaviour
 {
 	#region フィールド
 
-	private bool isPicked = false; // 取得済みフラグ（二重取得防止）
+	private bool isPicked = false; // 取得済みフラグ
 
 	#endregion
 
@@ -28,16 +28,16 @@ public class ItemManager : MonoBehaviour
 			{
 				isPicked = true;
 				gameObject.SetActive(false);
-				wsClient.SendItemPicked(); // WebSocketで送信、MissionManagerはサーバーから呼ぶ
+				wsClient.SendItemPicked(); // サーバーに送信、ミッション管理はサーバーから呼ぶ
 			}
 		}
 	}
 
 	#endregion
 
-	#region 旧HTTP送信（未使用）
+	#region 旧HTTP送信（現在未使用）
 
-	// WebSocket実装前に使用していたHTTP送信処理（現在は未使用）
+	// 現在の通信方式に変更する前に使用していたHTTP送信処理（現在は未使用）
 	private void SendItemPickedToServer(WebSocketClient wsClient)
 	{
 		StartCoroutine(SendRequest(wsClient));

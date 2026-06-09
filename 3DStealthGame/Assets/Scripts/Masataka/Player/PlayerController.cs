@@ -2,10 +2,11 @@ using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
+
 /// <summary>
-/// プレイヤーの移動・アニメーション・足音を管理するクラス。
-/// isLocalPlayerがtrueのときだけキー入力を受け付ける。
-/// リモートプレイヤーはWebSocketClientから位置を受け取って動く。
+/// プレイヤーの移動・動作・足音を管理するクラス。
+/// 自分のプレイヤーのときだけ入力を受け付ける。
+/// 相手のプレイヤーはサーバーから受け取った位置情報で動く。
 /// </summary>
 public class PlayerController : MonoBehaviour
 {
@@ -26,71 +27,69 @@ public class PlayerController : MonoBehaviour
 
 	[Header("リスポーン演出")]
 	public Image catchFadePanel;
-	public Text catchText; 
-
+	public Text catchText;
 
 	#endregion
 
 	#region フィールド
 
 	private Rigidbody _rb;
-    // インプットシステム
-    private Vector2 _moveInput;
-    private PlayerInput playerInput;
-    private InputAction moveAction;
-    private InputAction punchAction;
-    private InputAction moveSneak;
-    public System.Action OnPunchInput;
 
-    Animator Am;
+	// 入力管理
+	private Vector2 _moveInput;
+	private PlayerInput playerInput;
+	private InputAction moveAction;
+	private InputAction punchAction;
+	private InputAction moveSneak;
+	public System.Action OnPunchInput;
+
+	Animator Am;
 	public bool isAnimationStart = false;
 
 	public bool isAction = false;
 	public bool isPlayerMoveStop = false; // 移動停止フラグ（スイッチ操作中など）
 	public bool isSneaking = false;
 
+	public string lastTrigger = ""; // 最後に発火した動作トリガー（同期用）
 
-    public string lastTrigger = ""; // 最後に発火したアニメーショントリガー（同期用）
+	private Transform currentRespawnPoint; // リスポーン地点
 
-    private Transform currentRespawnPoint; // リスポーン地点
-    #endregion
+	#endregion
 
-    #region Unityイベント
+	#region Unityイベント
 
-    void Awake()
+	void Awake()
 	{
 		_rb = GetComponent<Rigidbody>();
 		if (_rb != null)
 			_rb.constraints = RigidbodyConstraints.FreezeRotation;
 		Am = GetComponent<Animator>();
 
-        // インプットシステム
-        playerInput = GetComponent<PlayerInput>();
+		// 入力管理の初期化
+		playerInput = GetComponent<PlayerInput>();
+		moveAction = playerInput.actions["Move"];
+		punchAction = playerInput.actions["ActionPunch"];
+		moveSneak = playerInput.actions["Sneak"];
 
-        moveAction = playerInput.actions["Move"];
-        punchAction = playerInput.actions["ActionPunch"];
-        moveSneak = playerInput.actions["Sneak"];
-
-
-        catchFadePanel = GameObject.Find("RespawnFadePanel")?.GetComponent<Image>();
+		catchFadePanel = GameObject.Find("RespawnFadePanel")?.GetComponent<Image>();
 		catchText = GameObject.Find("リスポーン時テキスト")?.GetComponent<Text>();
 	}
 
-    private void OnEnable()
-    {
-        punchAction.performed += OnPunch;
-        moveSneak.started += OnSneakStart;
-        moveSneak.canceled += OnSneakEnd;
-    }
+	private void OnEnable()
+	{
+		punchAction.performed += OnPunch;
+		moveSneak.started += OnSneakStart;
+		moveSneak.canceled += OnSneakEnd;
+	}
 
-    private void OnDisable()
-    {
-        punchAction.performed -= OnPunch;
-        moveSneak.started -= OnSneakStart;
-        moveSneak.canceled -= OnSneakEnd;
-    }
+	private void OnDisable()
+	{
+		punchAction.performed -= OnPunch;
+		moveSneak.started -= OnSneakStart;
+		moveSneak.canceled -= OnSneakEnd;
+	}
 
-    void Update()
+	void Update()
 	{
 		if (!isLocalPlayer) return;
 		CaptureInput();
@@ -102,88 +101,78 @@ public class PlayerController : MonoBehaviour
 		ApplyMovement();
 	}
 
-    #endregion
+	#endregion
 
-    #region インプットシステム
+	#region 入力管理
 
-    public void OnPunch(InputAction.CallbackContext context)
-    {
-        if (!context.performed) return;
-
-        OnPunchInput?.Invoke();
-    }
-
-    public void OnSneakStart(InputAction.CallbackContext context)
-    {
-        isSneaking = true;
-    }
-
-    public void OnSneakEnd(InputAction.CallbackContext context)
-    {
-        isSneaking = false;
-    }
-
-    #endregion
-
-    #region 入力処理
-
-    /// <summary>
-    /// キー入力を取得してアニメーション・足音を制御する
-    /// </summary>
-    private void CaptureInput()
+	/// <summary>攻撃ボタンが押されたとき</summary>
+	public void OnPunch(InputAction.CallbackContext context)
 	{
-        float x = 0;
-        float z = 0;
+		if (!context.performed) return;
+		OnPunchInput?.Invoke();
+	}
 
-        // 移動停止中
-        if (isPlayerMoveStop)
-        {
-            _moveInput = Vector2.zero;
+	/// <summary>忍び歩きボタンが押されたとき</summary>
+	public void OnSneakStart(InputAction.CallbackContext context)
+	{
+		isSneaking = true;
+	}
 
-            if (_rb != null)
-            {
-                _rb.velocity = Vector3.zero;
-            }
+	/// <summary>忍び歩きボタンが離されたとき</summary>
+	public void OnSneakEnd(InputAction.CallbackContext context)
+	{
+		isSneaking = false;
+	}
 
-            // アニメーション停止
-            Am.SetBool("Run", false);
-            Am.SetBool("Sneak", false);
+	#endregion
 
-            return;
-        }
+	#region 入力処理
 
-        // 通常入力
-        _moveInput = moveAction.ReadValue<Vector2>();
-        bool isMoving = _moveInput.sqrMagnitude > 0.01f;
+	/// <summary>
+	/// 入力を取得してアニメーションと足音を制御する
+	/// </summary>
+	private void CaptureInput()
+	{
+		// 移動停止中
+		if (isPlayerMoveStop)
+		{
+			_moveInput = Vector2.zero;
+			if (_rb != null) _rb.velocity = Vector3.zero;
+			Am.SetBool("Run", false);
+			Am.SetBool("Sneak", false);
+			return;
+		}
 
-        // スニーク
-        if (isMoving && isSneaking)
-        {
-            Am.SetBool("Sneak", true);
-            Am.SetBool("Run", false);
-        }
-        // 走り
-        else if (isMoving)
-        {
-            MakeSound(transform.position, walkVolume);
+		_moveInput = moveAction.ReadValue<Vector2>();
+		bool isMoving = _moveInput.sqrMagnitude > 0.01f;
 
-            Am.SetBool("Run", true);
-            Am.SetBool("Sneak", false);
-        }
-        // 待機
-        else
-        {
-            Am.SetBool("Run", false);
-            Am.SetBool("Sneak", false);
-        }
-    }
+		// 忍び歩き
+		if (isMoving && isSneaking)
+		{
+			Am.SetBool("Sneak", true);
+			Am.SetBool("Run", false);
+		}
+		// 走り
+		else if (isMoving)
+		{
+			MakeSound(transform.position, walkVolume);
+			Am.SetBool("Run", true);
+			Am.SetBool("Sneak", false);
+		}
+		// 待機
+		else
+		{
+			Am.SetBool("Run", false);
+			Am.SetBool("Sneak", false);
+		}
+	}
 
 	#endregion
 
 	#region 移動処理
 
 	/// <summary>
-	/// Rigidbodyを使って実際の移動・回転・足音発生を行う
+	/// 実際の移動・向き変更・足音発生を行う
 	/// </summary>
 	private void ApplyMovement()
 	{
@@ -197,17 +186,15 @@ public class PlayerController : MonoBehaviour
 				_rb.velocity = new Vector3(0, _rb.velocity.y, 0);
 				return;
 			}
-			_rb.velocity = new Vector3(moveDir.x * speed, _rb.velocity.y, moveDir.z * speed);
-		}
-		else
-		{
-			transform.position += moveDir * speed * Time.fixedDeltaTime;
+
+			// 方向転換をなめらかにする
+			Vector3 targetVelocity = new Vector3(moveDir.x * speed, _rb.velocity.y, moveDir.z * speed);
+			_rb.velocity = Vector3.Lerp(_rb.velocity, targetVelocity, Time.fixedDeltaTime * 20f);
 		}
 
 		if (moveDir != Vector3.zero)
 			transform.rotation = Quaternion.LookRotation(moveDir);
 
-		// 足音
 		if (isSneaking)
 			MakeSound(transform.position, sneakVolume);
 		else
@@ -219,7 +206,7 @@ public class PlayerController : MonoBehaviour
 	#region アクション処理
 
 	/// <summary>
-	/// 敵を殴るアニメーションを再生する
+	/// 敵を攻撃するアニメーションを再生する
 	/// </summary>
 	public void PunchEnemy()
 	{
@@ -229,6 +216,9 @@ public class PlayerController : MonoBehaviour
 		lastTrigger = "PunchEnemy";
 	}
 
+	/// <summary>
+	/// 敵への攻撃アニメーションの開始フラグを立てる
+	/// </summary>
 	public void StartAnimationEnemy()
 	{
 		isAnimationStart = true;
@@ -241,17 +231,14 @@ public class PlayerController : MonoBehaviour
 	{
 		//if (isAction) return;
 		print("スイッチアニメーション起動");
-
-		// 移動系を止める
 		Am.SetBool("Run", false);
 		Am.SetBool("Sneak", false);
-
 		Am.SetTrigger("PunchSwitch");
 		lastTrigger = "PunchSwitch";
 	}
 
 	/// <summary>
-	/// 現在のアニメーション状態を文字列で返す（同期用）
+	/// 現在の動作状態を文字列で返す（同期用）
 	/// </summary>
 	public string GetAnimState()
 	{
@@ -287,27 +274,34 @@ public class PlayerController : MonoBehaviour
 
 	public bool IsSneaking => Input.GetKey(KeyCode.LeftShift);
 
-    #endregion
+	#endregion
 
-    #region リスポーン処理
+	#region リスポーン処理
 
-    // リスポーン地点を保存
-    public void SetRespawnPoint(Transform point)
-    {
-        currentRespawnPoint = point;
-        Debug.Log("リスポーン地点更新：" + point.position);
-    }
+	/// <summary>
+	/// リスポーン地点を保存する
+	/// </summary>
+	public void SetRespawnPoint(Transform point)
+	{
+		currentRespawnPoint = point;
+		Debug.Log("リスポーン地点更新：" + point.position);
+	}
 
-	// リスポーン
+	/// <summary>
+	/// リスポーン演出を開始する
+	/// </summary>
 	public void Respawn()
 	{
 		if (currentRespawnPoint != null)
 			StartCoroutine(RespawnWithEffect());
 	}
 
+	/// <summary>
+	/// 画面を暗転させてリスポーン位置に移動し、フェードで復帰する演出
+	/// </summary>
 	private IEnumerator RespawnWithEffect()
 	{
-		// 「見つかった！」表示
+		// 発見時のテキストを表示
 		if (catchText != null)
 		{
 			var c = catchText.color;
@@ -315,7 +309,7 @@ public class PlayerController : MonoBehaviour
 			catchText.color = c;
 		}
 
-		// フェードアウト
+		// 画面を暗転させる
 		if (catchFadePanel != null)
 		{
 			float elapsed = 0f;
@@ -331,7 +325,7 @@ public class PlayerController : MonoBehaviour
 
 		yield return new WaitForSeconds(0.5f);
 
-		// リスポーン
+		// リスポーン位置に移動
 		_rb.velocity = Vector3.zero;
 		_rb.angularVelocity = Vector3.zero;
 		transform.position = currentRespawnPoint.position;
@@ -340,6 +334,7 @@ public class PlayerController : MonoBehaviour
 		var wsClient = FindObjectOfType<WebSocketClient>();
 		if (wsClient != null) wsClient.SendRespawn(transform.position);
 
+		// 敵の警戒度をリセット
 		var enemies = GameObject.FindGameObjectsWithTag("Enemy");
 		foreach (var e in enemies)
 		{
@@ -353,7 +348,6 @@ public class PlayerController : MonoBehaviour
 
 		yield return new WaitForSeconds(0.3f);
 
-		// フェードイン
 		if (catchFadePanel != null)
 		{
 			float elapsed = 0f;
@@ -366,7 +360,6 @@ public class PlayerController : MonoBehaviour
 				c.a = alpha;
 				catchFadePanel.color = c;
 
-	
 				if (catchText != null)
 				{
 					var tc = catchText.color;
@@ -393,7 +386,7 @@ public class PlayerController : MonoBehaviour
 	}
 
 	/// <summary>
-	/// リモート用のリスポーン演出
+	/// 相手プレイヤーがつかまったときにサーバーから呼ばれるリスポーン演出
 	/// </summary>
 	public void RespawnWithEffectPublic()
 	{
@@ -401,13 +394,13 @@ public class PlayerController : MonoBehaviour
 	}
 
 	private IEnumerator CheckPosition()
-    {
-        yield return new WaitForSeconds(0.1f);
-        Debug.Log("0.1秒後：" + transform.position);
+	{
+		yield return new WaitForSeconds(0.1f);
+		Debug.Log("0.1秒後：" + transform.position);
 
-        yield return new WaitForSeconds(0.4f);
-        Debug.Log("0.5秒後：" + transform.position);
-    }
-    #endregion
+		yield return new WaitForSeconds(0.4f);
+		Debug.Log("0.5秒後：" + transform.position);
+	}
 
+	#endregion
 }

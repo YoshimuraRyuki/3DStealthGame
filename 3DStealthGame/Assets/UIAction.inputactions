@@ -68,7 +68,7 @@
                     "id": "acabc43b-2526-4790-a2d6-b2c4e30e93ec",
                     "path": "<Gamepad>/leftStick",
                     "interactions": "",
-                    "processors": "",
+                    "processors": "StickDeadzone(min=0.3)",
                     "groups": "",
                     "action": "Navigate",
                     "isComposite": false,

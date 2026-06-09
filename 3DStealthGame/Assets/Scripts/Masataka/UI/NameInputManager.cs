@@ -1,8 +1,14 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// タイトル画面での名前入力を管理するクラス。
+/// 入力内容を確認してからルーム選択画面へ切り替える。
+/// </summary>
 public class NameInputManager : MonoBehaviour
 {
+	#region インスペクター設定
+
 	[Header("UI")]
 	public InputField nameInputField;
 	public Button confirmButton;
@@ -10,11 +16,18 @@ public class NameInputManager : MonoBehaviour
 	public GameObject roomSelectPanel;
 	public Text warningText;
 
-	private WebSocketClient _wsClient;
+	#endregion
 
+	#region 内部状態
+
+	private WebSocketClient _wsClient;
 	private Text _placeholder;
 	private string _defaultPlaceholderText;
 	private Color _defaultPlaceholderColor;
+
+	#endregion
+
+	#region Unityイベント
 
 	void Start()
 	{
@@ -24,30 +37,36 @@ public class NameInputManager : MonoBehaviour
 			_defaultPlaceholderText = _placeholder.text;
 			_defaultPlaceholderColor = _placeholder.color;
 		}
-		//Debug.Log("NameInputManager: Start開始");
 
-		// 1. WebSocketClientを探す（見つからなくても次に進むようにガード）
+		// サーバー通信クラスを取得
 		_wsClient = FindObjectOfType<WebSocketClient>();
 		if (_wsClient == null)
 		{
-			Debug.LogError("⚠️WebSocketClientがヒエラルキーにありません！");
+			Debug.LogError("WebSocketClientがない");
 		}
 
-		// 2. ボタンの紐付け（ここが止まるとボタンが反応しなくなる）
+		// ボタンの紐付け
 		if (confirmButton != null)
 		{
 			confirmButton.onClick.RemoveAllListeners();
 			confirmButton.onClick.AddListener(OnConfirmName);
-			//Debug.Log("NameInputManager: ボタンの予約完了");
 		}
 		else
 		{
-			Debug.LogError("⚠️ConfirmButtonの枠が空っぽです！");
+			Debug.LogError("ConfirmButtonない");
 		}
 
 		if (warningText != null) warningText.gameObject.SetActive(false);
 	}
 
+	#endregion
+
+	#region 内部処理
+
+	/// <summary>
+	/// 名前確定ボタンが押されたときの処理。
+	/// 空欄なら警告を表示し、入力があればルーム選択画面へ切り替える。
+	/// </summary>
 	private void OnConfirmName()
 	{
 		string inputName = nameInputField.text.Trim();
@@ -63,18 +82,17 @@ public class NameInputManager : MonoBehaviour
 			return;
 		}
 
-		// 入力されたら警告を消す
 		if (warningText != null) warningText.gameObject.SetActive(false);
 
-		// WebSocketClientがあるときだけ名前を渡す
 		if (_wsClient != null)
 		{
 			_wsClient.SetPlayerName(inputName);
 		}
 
-        // パネル切り替え
-        if (titlePanel != null) titlePanel.SetActive(false);
-        var roomSelectManager = FindObjectOfType<RoomSelectManager>();
-        if (roomSelectManager != null) roomSelectManager.ShowRoomSelect();
-    }
+		if (titlePanel != null) titlePanel.SetActive(false);
+		var roomSelectManager = FindObjectOfType<RoomSelectManager>();
+		if (roomSelectManager != null) roomSelectManager.ShowRoomSelect();
+	}
+
+	#endregion
 }
