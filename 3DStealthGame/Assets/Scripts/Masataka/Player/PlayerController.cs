@@ -132,9 +132,6 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void CaptureInput()
 	{
-        float x = 0;
-        float z = 0;
-
         // ˆÚ“®’âŽ~’†
         if (isPlayerMoveStop)
         {
