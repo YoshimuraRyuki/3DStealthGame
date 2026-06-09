@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class SwitchManager : MonoBehaviour
 {
-    #region 宣言
+    #region コンポーネント参照
 
     Renderer rd;
     EnemyManager em;
@@ -14,27 +14,45 @@ public class SwitchManager : MonoBehaviour
 
     private TextMeshProUGUI actionText;
     private Transform cameraTransform;
+
+    #endregion
+
+    #region プレイヤー接触管理
+
     private bool isPlayerInRange = false;
 
-    public bool isEnemyMoveStop = false;
+    #endregion
+
+    #region アクション状態管理フラグ
+
     bool isActionEnemy= false;
     bool isActionSwitch = false;
     bool isEndAction = false;
+
+    public bool isEnemyMoveStop = false;
+	private bool _stunSent = false;
+
+    #endregion
+
+    #region スタン設定
 
     [Header("スタン時間"), SerializeField]
     float stanTime = 3f;
     float currentStanTime;
 
-    public int targetEnemyID;
-	#endregion
+    #endregion
 
-	#region ボタン押下処理
+    #region ギミック連携
+
+    public int targetEnemyID;
+
+    #endregion
+    
+    #region 敵アクション処理
 
 	/// <summary>
 	/// 敵を殴った時の処理
 	/// </summary>    
-	private bool _stunSent = false; // 宣言に追加
-
 	void DoActionEnemy()
 	{
 		currentStanTime += Time.deltaTime;
@@ -67,10 +85,9 @@ public class SwitchManager : MonoBehaviour
 		if (wsClient2 != null) wsClient2.SendEnemyStun(targetEnemyID);
 	}
 
-	public void SetTarget(EnemyManager enemy)
-    {
-        em = enemy;
-    }
+    #endregion
+
+    #region スイッチアクション処理
 
     /// <summary>
     /// スイッチを押したら対応した強化敵の遮る壁を出す
@@ -91,9 +108,10 @@ public class SwitchManager : MonoBehaviour
         var wsClient = FindObjectOfType<WebSocketClient>();
         if (wsClient != null) wsClient.SendSwitchActivated(targetEnemyID);
     }
+
     #endregion
 
-    #region アクション処理
+    #region プレイヤー入力された時の処理
 
     void TryAction()
     {
@@ -117,7 +135,17 @@ public class SwitchManager : MonoBehaviour
 
     #endregion
 
-    #region サーバ関連
+    #region ギミック連携用関数
+
+    public void SetTarget(EnemyManager enemy)
+    {
+        em = enemy;
+    }
+
+    #endregion
+
+    #region 澤田作：サーバ関連
+
     /// <summary>
     /// 受信用
     /// </summary>
@@ -125,14 +153,18 @@ public class SwitchManager : MonoBehaviour
     {
         isEndAction = true;
         isPlayerInRange = false;
+		if (em != null) em.PlayAnimationWall();
+        
+        if(gameObject.tag == ("Enemy") || gameObject.tag == ("StrongEnemy")) return;
+            
         rd.material.color = Color.red;
 
-		if (em != null) em.PlayAnimationWall();
 	}
+
     #endregion
 
     #region Unityイベント
-    // Start is called before the first frame update
+
     void Start()
     {
 		Invoke("DelayedStart", 0.5f);
@@ -165,28 +197,9 @@ public class SwitchManager : MonoBehaviour
 			actionText.gameObject.SetActive(false); // 最初は非表示
 		}
 	}
-	// Update is called once per frame
+
 	void Update()
     {
-        // プレイヤーが範囲内でEキーを押した時
-        //if (isPlayerInRange && Input.GetKeyDown(KeyCode.E))
-        //{
-        //    if (CompareTag("Enemy"))
-        //    {
-        //        isActionEnemy = true;
-        //        Pc.isPlayerMoveStop = true;
-        //        Pc.PunchEnemy();
-        //    }
-        //    if (CompareTag("Switch"))
-        //    {
-        //        // 壁を生成して隠れる場所を作る
-        //        Pc.isAction = true;
-        //        Pc.isPlayerMoveStop = true;
-        //        isActionSwitch = true;
-        //        Pc.PunchSwitch();
-        //    }
-        //}
-
         if(isActionEnemy)
         {
             DoActionEnemy();  // 敵を殴った時
@@ -203,6 +216,10 @@ public class SwitchManager : MonoBehaviour
             actionText.transform.rotation = Quaternion.LookRotation(actionText.transform.position - cameraTransform.position);
         }
     }
+
+    #endregion
+
+    #region 当たり判定処理
 
     private void OnTriggerEnter(Collider other)
     {
@@ -232,5 +249,6 @@ public class SwitchManager : MonoBehaviour
             }
         }
     }
+
     #endregion
 }

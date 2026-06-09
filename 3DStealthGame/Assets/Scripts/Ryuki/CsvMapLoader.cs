@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FixedMap : MonoBehaviour
+public class CsvMapLoader : MonoBehaviour
 {
     [Header("CSVファイル")]
     public string fileName = "map"; // Resources/map.csv
@@ -38,12 +38,9 @@ public class FixedMap : MonoBehaviour
         // CSVを1マスずつ読む
         for (int y = 0; y < height; y++)
         {
-            // 改行や空白を削除
-            string line = lines[y].Trim();
-            // 空白をスキップ
-            if (string.IsNullOrEmpty(line)) continue;
-            // カンマで分割
-            string[] values = line.Split(',');
+            string line = lines[y].Trim();             // 改行や空白を削除
+            if (string.IsNullOrEmpty(line)) continue;  // 空白をスキップ
+            string[] values = line.Split(',');         // カンマで分割
 
             // 数値に変換
             for (int x = 0; x < width; x++)
@@ -58,7 +55,6 @@ public class FixedMap : MonoBehaviour
                 map[x, height - 1 - y] = value;
             }
         }
-
         return map;
     }
 }

@@ -777,7 +777,7 @@ MonoBehaviour:
   isRemoteControlled: 0
   isStopMove: 0
   enemyID: 0
-  showViewDebug: 1
+  showViewDebug: 0
   showSoundDebug: 0
 --- !u!114 &3470185511107027951
 MonoBehaviour:
