@@ -2,8 +2,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// リザルトシーンからタイトルに戻るクラス。
-/// XBOXコントローラーのAボタン、またはキーボードのAキーで遷移する。
+/// リザルト画面からタイトルへ戻るクラス。
+/// コントローラーのAボタン、またはキーボードのAキーで遷移する。
 /// </summary>
 public class ReturnToTitle : MonoBehaviour
 {
@@ -11,7 +11,7 @@ public class ReturnToTitle : MonoBehaviour
 
 	void Update()
 	{
-		// AボタンまたはAキーでタイトルシーンに遷移
+		// AボタンまたはAキーでタイトルへ遷移
 		if (Input.GetKeyDown(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.A))
 		{
 			SceneManager.LoadScene("Title");

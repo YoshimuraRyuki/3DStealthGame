@@ -2,7 +2,7 @@ using System;
 
 /// <summary>
 /// プレイヤーの基本情報を保持するデータクラス群。
-/// WebSocketのメッセージのデシリアライズに使用する。
+/// サーバーとのメッセージ送受信時に使用する。
 /// </summary>
 
 // プレイヤーの識別情報と座標データ
@@ -16,7 +16,7 @@ public class PlayerData
 	public PositionData rotation;
 }
 
-// 座標・回転の3次元データ
+// 座標・向き
 [System.Serializable]
 public class PositionData
 {

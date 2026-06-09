@@ -8,7 +8,7 @@ public class NameTag : MonoBehaviour
 {
 	#region フィールド
 
-	public Vector3 offset = new Vector3(0, 2.2f, 0); // プレイヤーからの表示位置オフセット
+	public Vector3 offset = new Vector3(0, 2.2f, 0); // プレイヤーからの表示位置
 
 	private TextMesh _textMesh;
 	private Transform _cameraTransform;

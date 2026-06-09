@@ -15,7 +15,7 @@ public class ResultManager : MonoBehaviour
 	[Header("プレイヤー名")]
 	public Text playerNameText;
 
-	[Header("ステータス")]
+	[Header("クリア結果")]
 	public Text clearTimeText;
 	public Text missionCountText;
 	public Text gradeText;
@@ -49,8 +49,8 @@ public class ResultManager : MonoBehaviour
 	#region ランキング処理
 
 	/// <summary>
-	/// ミッション数とクリアタイムからグレードを計算する。
-	/// S: 3ミッション&120秒以内 / A: 3ミッション / B: 2ミッション / C: それ以下
+	/// ミッション数とクリアタイムから評価を計算する。
+	/// S: 3ミッション達成かつ120秒以内 / A: 3ミッション達成 / B: 2ミッション達成 / C: それ以下
 	/// </summary>
 	string CalcGrade(int mission, float time)
 	{
@@ -93,7 +93,7 @@ public class ResultManager : MonoBehaviour
 	}
 
 	/// <summary>
-	/// 取得したランキングデータをUIテキストに反映する
+	/// 取得したランキングデータをUIに反映する
 	/// </summary>
 	void UpdateRankingUI(RankingItem[] rankings)
 	{
@@ -117,11 +117,17 @@ public class ResultManager : MonoBehaviour
 
 	#region ボタン処理
 
+	/// <summary>
+	/// もう一度プレイボタン押下時にゲームシーンへ遷移する
+	/// </summary>
 	public void OnRetryButton()
 	{
 		SceneManager.LoadScene("MapTest");
 	}
 
+	/// <summary>
+	/// タイトルボタン押下時にタイトルシーンへ遷移する
+	/// </summary>
 	public void OnTitleButton()
 	{
 		SceneManager.LoadScene("Title");
@@ -130,7 +136,7 @@ public class ResultManager : MonoBehaviour
 	#endregion
 }
 
-// ランキングの1エントリ
+// ランキングの1件分のデータ
 [System.Serializable]
 public class RankingItem
 {
@@ -139,7 +145,7 @@ public class RankingItem
 	public int mission_count;
 }
 
-// ランキングAPIのレスポンス
+// ランキング取得時のデータ形式
 [System.Serializable]
 public class RankingResponse
 {

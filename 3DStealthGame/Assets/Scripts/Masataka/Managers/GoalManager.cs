@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 /// <summary>
 /// ゴール判定を管理するクラス。
-/// プレイヤーがゴールに触れたらサーバーにgoalを送信する。
+/// 自分のプレイヤーがゴールに触れたらサーバーにゴール通知を送信する。
 /// 2人がゴールしたかどうかはサーバー側で管理する。
 /// </summary>
 public class GoalScript : MonoBehaviour
@@ -29,19 +29,19 @@ public class GoalScript : MonoBehaviour
 		var wsClient = FindObjectOfType<WebSocketClient>();
 		if (wsClient != null && other.gameObject == wsClient.myPlayer)
 		{
-			// MissionManagerにゴールを通知
+			// ミッション管理にゴールを通知
 			MissionManager.Instance?.OnGoal();
 
-			// サーバーにgoalを送信
+			// サーバーにゴール通知を送信
 			wsClient.SendGoal();
 		}
 
 		/*// 2人揃ったらリザルトへ
-		if (playersInGoal.Count >= 2)
-		{
-			isGoalTriggered = true;
-			//GoToResult();
-		}*/
+        if (playersInGoal.Count >= 2)
+        {
+            isGoalTriggered = true;
+            //GoToResult();
+        }*/
 	}
 
 	private void OnTriggerExit(Collider other)
@@ -51,20 +51,20 @@ public class GoalScript : MonoBehaviour
 	}
 
 	/*private void GoToResult() リザルトに2人同時に行くためにサーバーで管理
-	{
-		// データを静的クラスに保存
-		if (MissionManager.Instance != null)
-		{
-			ResultData.elapsedTime = MissionManager.Instance.GetElapsedSeconds();
-			ResultData.missionCount = MissionManager.Instance.GetClearedMissionCount();
-		}
+    {
+        // データを静的クラスに保存
+        if (MissionManager.Instance != null)
+        {
+            ResultData.elapsedTime = MissionManager.Instance.GetElapsedSeconds();
+            ResultData.missionCount = MissionManager.Instance.GetClearedMissionCount();
+        }
 
-		var wsClient = FindObjectOfType<WebSocketClient>();
-		if (wsClient != null)
-			ResultData.playerName = wsClient.GetPlayerName();
+        var wsClient = FindObjectOfType<WebSocketClient>();
+        if (wsClient != null)
+            ResultData.playerName = wsClient.GetPlayerName();
 
-		SceneManager.LoadScene("Result");
-	}*/
+        SceneManager.LoadScene("Result");
+    }*/
 
 	#endregion
 }
