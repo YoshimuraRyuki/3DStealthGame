@@ -68,9 +68,12 @@ public class QuickChatManager : MonoBehaviour
 
 	void Update()
 	{
-		// Yボタンで開閉
-		if (Gamepad.current != null && Gamepad.current.buttonNorth.wasPressedThisFrame)
+		bool gamepadY = Gamepad.current != null && Gamepad.current.buttonNorth.wasPressedThisFrame;
+		bool keyboardY = Keyboard.current != null && Keyboard.current.yKey.wasPressedThisFrame;
+
+		if (gamepadY || keyboardY)
 		{
+			Debug.Log("チャット欄呼ばれた");
 			ToggleChat();
 		}
 	}

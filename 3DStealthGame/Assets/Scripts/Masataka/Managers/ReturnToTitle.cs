@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// リザルト画面からタイトルへ戻るクラス。
@@ -11,8 +12,10 @@ public class ReturnToTitle : MonoBehaviour
 
 	void Update()
 	{
-		// AボタンまたはAキーでタイトルへ遷移
-		if (Input.GetKeyDown(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.A))
+		bool pad = Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame;
+		bool key = Keyboard.current != null && Keyboard.current.aKey.wasPressedThisFrame;
+
+		if (pad || key)
 		{
 			SceneManager.LoadScene("Title");
 		}

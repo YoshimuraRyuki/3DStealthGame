@@ -464,7 +464,7 @@ public class EnemyManager : MonoBehaviour
 		if (currentAlertCount <= 0 && !_isRespawning)
 		{
 			_isRespawning = true;
-			Debug.Log($"•ß‚Ü‚Á‚½: _alertTarget={_alertTarget?.name} isLocalPlayer={_alertTarget?.GetComponent<PlayerController>()?.isLocalPlayer}");
+			//Debug.Log($"•ß‚Ü‚Á‚½: _alertTarget={_alertTarget?.name} isLocalPlayer={_alertTarget?.GetComponent<PlayerController>()?.isLocalPlayer}");
 			if (_alertTarget != null)
 			{
 				var pc = _alertTarget.GetComponent<PlayerController>();
