@@ -159,7 +159,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u653B\u6483"
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: d559572691a252b4caf142838500b9fb, type: 2}
   m_sharedMaterial: {fileID: -996570199654432458, guid: d559572691a252b4caf142838500b9fb, type: 2}
@@ -781,7 +781,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c06b06bcfb70f648868cf4d0717040c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentState: 0
+  enemyState: 0
+  strongEnemyState: 0
   reactionText: {fileID: 4083648575574789913}
   movePoints: []
   speed: 3
@@ -799,8 +800,8 @@ MonoBehaviour:
   player: {fileID: 2072795091767466297, guid: da99b9dbceb22af41884bfc73e3a87a0, type: 3}
   hearingRange: 10
   alertDuration: 2
-  isRemoteControlled: 0
   isStopMove: 0
+  isRemoteControlled: 0
   enemyID: 0
   showViewDebug: 1
   showSoundDebug: 1
