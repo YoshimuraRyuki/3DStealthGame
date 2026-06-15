@@ -85,9 +85,9 @@ public class QuickChatManager : MonoBehaviour
 	/// <summary>
 	/// チャットメッセージを受信したときに呼ぶ（WebSocketClientから）
 	/// </summary>
-	public void OnChatReceived(string message)
+	public void OnChatReceived(string message, string senderName)
 	{
-		LogManager.Instance?.AddLog($"味方：{message}", "#c0a0ff");
+		LogManager.Instance?.AddLog($"{senderName}：{message}", "#c0a0ff");
 	}
 
 	#endregion
@@ -107,7 +107,7 @@ public class QuickChatManager : MonoBehaviour
 	{
 		if (_wsClient == null) return;
 		_wsClient.SendChatMessage(messages[index]);
-		LogManager.Instance?.AddLog($"自分：{messages[index]}", "#ffffff");
+		LogManager.Instance?.AddLog($"{_wsClient.GetPlayerName()}：{messages[index]}", "#ffffff");
 		ToggleChat();
 	}
 

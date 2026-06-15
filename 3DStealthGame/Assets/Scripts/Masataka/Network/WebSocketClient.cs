@@ -126,6 +126,7 @@ public class ChatMessage
 	public string type;
 	public string message;
 	public string sender_id;
+	public string sender_name;
 }
 
 #endregion
@@ -420,7 +421,7 @@ public class WebSocketClient : MonoBehaviour
 	private void OnMessageReceived(byte[] bytes)
 	{
 		string json = Encoding.UTF8.GetString(bytes);
-		if (json.Contains("enemy_stun"))
+		//if (json.Contains("enemy_stun"))
 			//Debug.Log($"OnMessageReceived: isGameSceneLoaded={isGameSceneLoaded} json={json}");
 
 		if (!isGameSceneLoaded)
@@ -550,7 +551,7 @@ public class WebSocketClient : MonoBehaviour
 
 		if (GlobalCamera.Instance != null)
 			GlobalCamera.Instance.SetTarget(myPlayer.transform);
-		else
+		//else
 			//Debug.LogWarning("GlobalCamera.Instanceがnull");
 
 		if (elementGenerator != null) elementGenerator.SetRemotePlayerTransform(myPlayer.transform);
@@ -795,8 +796,8 @@ public class WebSocketClient : MonoBehaviour
 	private void HandleChatMessage(string json)
 	{
 		var msg = JsonUtility.FromJson<ChatMessage>(json);
-		if (msg.sender_id == myId) return; // 自分のは無視
-		QuickChatManager.Instance?.OnChatReceived(msg.message);
+		if (msg.sender_id == myId) return;
+		QuickChatManager.Instance?.OnChatReceived(msg.message, msg.sender_name);
 	}
 
 	#endregion
