@@ -756,7 +756,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c06b06bcfb70f648868cf4d0717040c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentState: 0
+  enemyState: 0
+  strongEnemyState: 0
   reactionText: {fileID: 0}
   movePoints: []
   speed: 3
@@ -774,11 +775,13 @@ MonoBehaviour:
   player: {fileID: 2072795091767466297, guid: da99b9dbceb22af41884bfc73e3a87a0, type: 3}
   hearingRange: 10
   alertDuration: 2
-  isRemoteControlled: 0
   isStopMove: 0
+  isRemoteControlled: 0
   enemyID: 0
+  gimmickCount: 0
+  switchCount: 0
   showViewDebug: 0
-  showSoundDebug: 0
+  showSoundDebug: 1
 --- !u!114 &3470185511107027951
 MonoBehaviour:
   m_ObjectHideFlags: 0

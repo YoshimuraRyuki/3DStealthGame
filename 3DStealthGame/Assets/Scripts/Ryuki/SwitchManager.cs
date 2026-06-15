@@ -11,7 +11,7 @@ public class SwitchManager : MonoBehaviour
     EnemyManager em;
     EnemyManager enemy;
     PlayerController Pc;
-
+    
     private TextMeshProUGUI actionText;
     private Transform cameraTransform;
 
@@ -31,7 +31,7 @@ public class SwitchManager : MonoBehaviour
 
     public bool isEnemyMoveStop = false;
 	private bool _stunSent = false;
-
+    
     #endregion
 
     #region スタン設定
@@ -79,9 +79,11 @@ public class SwitchManager : MonoBehaviour
 		Pc.isAnimationStart = false;
 		isPlayerInRange = false;
 		isEndAction = true;
-		_stunSent = true; // フラグを立てる
+        if (actionText != null) actionText.gameObject.SetActive(false);
+        _stunSent = true; // フラグを立てる
+        currentStanTime = 0f;
 
-		var wsClient2 = FindObjectOfType<WebSocketClient>();
+        var wsClient2 = FindObjectOfType<WebSocketClient>();
 		if (wsClient2 != null) wsClient2.SendEnemyStun(targetEnemyID);
 	}
 
@@ -94,17 +96,13 @@ public class SwitchManager : MonoBehaviour
     /// </summary>
     void DoActionSwitch()
     {
-        if (em != null)
-        {
-            em.PlayAnimationWall();
-        }
-        
         if (Pc.isAction) return;
         isEndAction = true;
         isPlayerInRange = false;
         rd.material.color = Color.red;
 
         isActionSwitch = false;
+
         var wsClient = FindObjectOfType<WebSocketClient>();
         if (wsClient != null) wsClient.SendSwitchActivated(targetEnemyID);
     }
@@ -128,6 +126,12 @@ public class SwitchManager : MonoBehaviour
         {
             Pc.isAction = true;
             Pc.isPlayerMoveStop = true;
+            // ここで1回だけ実行
+            if (em != null)
+            {
+                em.SwitchCountValue(1);
+                em.PlayAnimationWall();
+            }
             isActionSwitch = true;
             Pc.PunchSwitch();
         }
@@ -153,7 +157,7 @@ public class SwitchManager : MonoBehaviour
     {
         isEndAction = true;
         isPlayerInRange = false;
-		if (em != null) em.PlayAnimationWall();
+		//if (em != null) em.PlayAnimationWall();
         
         if(gameObject.tag == ("Enemy") || gameObject.tag == ("StrongEnemy")) return;
             

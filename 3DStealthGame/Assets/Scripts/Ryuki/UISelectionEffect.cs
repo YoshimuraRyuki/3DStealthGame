@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-// UIの選択・解除イベントを検知するコンポーネント
 public class UISelectionEffect : MonoBehaviour, ISelectHandler, IDeselectHandler
 {
     // 選択された時に表示したいオブジェクト（矢印や枠線など）

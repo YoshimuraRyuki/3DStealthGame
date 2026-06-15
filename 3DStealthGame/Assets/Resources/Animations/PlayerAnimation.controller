@@ -60,7 +60,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Orc Idle
+  m_Name: Idle
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -88,7 +88,10 @@ AnimatorStateTransition:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: 
-  m_Conditions: []
+  m_Conditions:
+  - m_ConditionMode: 1
+    m_ConditionEvent: Idle
+    m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -2905178015511875023}
   m_Solo: 0
@@ -98,7 +101,7 @@ AnimatorStateTransition:
   m_TransitionDuration: 0
   m_TransitionOffset: 0
   m_ExitTime: 1
-  m_HasExitTime: 1
+  m_HasExitTime: 0
   m_HasFixedDuration: 0
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
@@ -259,7 +262,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Zombie Punching
+  m_Name: PunchSwitch
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -290,19 +293,19 @@ AnimatorStateMachine:
   m_ChildStates:
   - serializedVersion: 1
     m_State: {fileID: -2905178015511875023}
-    m_Position: {x: 340, y: 110, z: 0}
+    m_Position: {x: 320, y: 100, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -7990023281832406429}
-    m_Position: {x: 110, y: 220, z: 0}
+    m_Position: {x: 140, y: 220, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 7117678816157044236}
-    m_Position: {x: 570, y: 240, z: 0}
+    m_Position: {x: 510, y: 220, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 4930059999225269175}
-    m_Position: {x: 350, y: -80, z: 0}
+    m_Position: {x: 190, y: 20, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 1663240649878402020}
-    m_Position: {x: 510, y: 10, z: 0}
+    m_Position: {x: 480, y: 20, z: 0}
   m_ChildStateMachines: []
   m_AnyStateTransitions:
   - {fileID: 7264178447757942001}
@@ -310,8 +313,8 @@ AnimatorStateMachine:
   m_EntryTransitions: []
   m_StateMachineTransitions: {}
   m_StateMachineBehaviours: []
-  m_AnyStatePosition: {x: 80, y: -20, z: 0}
-  m_EntryPosition: {x: 40, y: 120, z: 0}
+  m_AnyStatePosition: {x: 340, y: -60, z: 0}
+  m_EntryPosition: {x: 130, y: 100, z: 0}
   m_ExitPosition: {x: 1020, y: 50, z: 0}
   m_ParentStateMachinePosition: {x: 800, y: 20, z: 0}
   m_DefaultState: {fileID: -2905178015511875023}
@@ -347,7 +350,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Cross Punch
+  m_Name: PunchEnemy
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -399,7 +402,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Walking
+  m_Name: Sneaking
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
