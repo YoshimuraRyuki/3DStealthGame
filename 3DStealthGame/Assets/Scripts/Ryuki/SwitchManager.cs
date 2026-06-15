@@ -79,7 +79,9 @@ public class SwitchManager : MonoBehaviour
 		Pc.isAnimationStart = false;
 		isPlayerInRange = false;
 		isEndAction = true;
+		if (actionText != null) actionText.gameObject.SetActive(false);
 		_stunSent = true; // ƒtƒ‰ƒO‚ð—§‚Ä‚é
+		currentStanTime = 0f;
 
 		var wsClient2 = FindObjectOfType<WebSocketClient>();
 		if (wsClient2 != null) wsClient2.SendEnemyStun(targetEnemyID);
@@ -96,7 +98,7 @@ public class SwitchManager : MonoBehaviour
     {
         if (em != null)
         {
-            em.PlayAnimationWall();
+           em.PlayAnimationWall();
         }
         
         if (Pc.isAction) return;

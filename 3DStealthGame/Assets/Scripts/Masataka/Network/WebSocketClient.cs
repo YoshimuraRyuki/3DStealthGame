@@ -119,7 +119,63 @@ public class RespawnMessage
 	public PositionData position;
 }
 
+// 意思疎通用チャットメッセージ
+[System.Serializable]
+public class ChatMessage
+{
+	public string type;
+	public string message;
+	public string sender_id;
+	public string sender_name;
+}
+
 #endregion
+
+/// <summary>
+/// 送信メッセージを組み立てるクラス。
+/// JSON直書きによる対応漏れを防ぐ。
+/// </summary>
+public static class SendMessageBuilder
+{
+	public static string Goal()
+		=> "{\"type\":\"goal\"}";
+
+	public static string PlayerMove(string id, Vector3 pos, Vector3 rot, string animState, string trigger)
+		=> $"{{\"type\":\"player_move\",\"id\":\"{id}\"," +
+		   $"\"position\":{{\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z}}}," +
+		   $"\"rotation\":{{\"x\":{rot.x},\"y\":{rot.y}}}," +
+		   $"\"anim_state\":\"{animState}\"," +
+		   $"\"anim_trigger\":\"{trigger}\"}}";
+
+	public static string Respawn(string id, Vector3 pos)
+		=> $"{{\"type\":\"respawn\",\"id\":\"{id}\"," +
+		   $"\"position\":{{\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z}}}}}";
+
+	public static string SwitchActivated(int switchId)
+		=> $"{{\"type\":\"switch_activated\",\"switch_id\":{switchId}}}";
+
+	public static string ItemPicked()
+		=> "{\"type\":\"item_picked\"}";
+
+	public static string EnemyStun(int enemyIndex, string senderId)
+		=> $"{{\"type\":\"enemy_stun\",\"enemy_index\":{enemyIndex},\"sender_id\":\"{senderId}\"}}";
+
+	public static string EnemyStunCancel(int enemyIndex, string senderId)
+		=> $"{{\"type\":\"enemy_stun_cancel\",\"enemy_index\":{enemyIndex},\"sender_id\":\"{senderId}\"}}";
+
+	public static string RemoteRespawn(string id)
+		=> $"{{\"type\":\"remote_respawn\",\"id\":\"{id}\"}}";
+
+	public static string Chat(string message, string senderId)
+	=> $"{{\"type\":\"chat\",\"message\":\"{message}\",\"sender_id\":\"{senderId}\"}}";
+
+	public static string EnemyMove(int index, Vector3 pos, float angle, Color light, string reaction, Vector3 lastSound)
+		=> $"{{\"type\":\"enemy_move\",\"enemy_index\":{index}," +
+		   $"\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z},\"angle\":{angle}," +
+		   $"\"light_r\":{light.r},\"light_g\":{light.g},\"light_b\":{light.b}," +
+		   $"\"reaction\":\"{reaction}\"," +
+		   $"\"last_sound_x\":{lastSound.x},\"last_sound_z\":{lastSound.z}}}";
+}
 
 /// <summary>
 /// サーバーとの通信を一元管理するクラス。
@@ -183,8 +239,17 @@ public class WebSocketClient : MonoBehaviour
 	private float enemySendInterval = 0.05f;
 
 	private Vector3 _lastRemotePosition = Vector3.zero;
-
 	private bool _stunSent = false;
+
+	#endregion
+
+	#region プレイヤー番号判定
+
+	/// <summary>自分がホスト（Player1）かどうか</summary>
+	public bool IsHostPlayer() => myPlayerNumber == 1;
+
+	/// <summary>自分がゲスト（Player2）かどうか</summary>
+	public bool IsGuestPlayer() => myPlayerNumber == 2;
 
 	#endregion
 
@@ -274,8 +339,7 @@ public class WebSocketClient : MonoBehaviour
 	void OnSceneLoaded(Scene scene, LoadSceneMode mode)
 	{
 		isGameSceneLoaded = scene.name == "MapTest";
-
-		Debug.Log($"OnSceneLoaded: {scene.name} isGameSceneLoaded={isGameSceneLoaded}");
+		//Debug.Log($"OnSceneLoaded: {scene.name} isGameSceneLoaded={isGameSceneLoaded}");
 
 		if (scene.name != "MapTest")
 		{
@@ -331,7 +395,7 @@ public class WebSocketClient : MonoBehaviour
 		myId = null;
 		spawnPositions.Clear();
 		pendingMessages.Clear();
-		Debug.Log("接続を切断しました");
+		//Debug.Log("接続を切断しました");
 	}
 
 	private void OnWebSocketOpened() { Debug.Log("接続成功"); }
@@ -357,8 +421,8 @@ public class WebSocketClient : MonoBehaviour
 	private void OnMessageReceived(byte[] bytes)
 	{
 		string json = Encoding.UTF8.GetString(bytes);
-		if (json.Contains("enemy_stun"))
-			Debug.Log($"OnMessageReceived: isGameSceneLoaded={isGameSceneLoaded} json={json}");
+		//if (json.Contains("enemy_stun"))
+			//Debug.Log($"OnMessageReceived: isGameSceneLoaded={isGameSceneLoaded} json={json}");
 
 		if (!isGameSceneLoaded)
 		{
@@ -407,6 +471,7 @@ public class WebSocketClient : MonoBehaviour
 		else if (json.Contains("\"type\":\"enemy_stun_cancel\"")) HandleEnemyStunCancelMessage(json);
 		else if (json.Contains("\"type\":\"enemy_stun\"")) HandleEnemyStunMessage(json);
 		else if (json.Contains("\"type\":\"respawn\"")) HandleRespawnMessage(json);
+		else if (json.Contains("\"type\":\"chat\"")) HandleChatMessage(json);
 		else if (json.Contains("\"type\":\"start_game\""))
 		{
 			if (SceneManager.GetActiveScene().name == "MapTest")
@@ -455,7 +520,7 @@ public class WebSocketClient : MonoBehaviour
 		var eg = FindObjectOfType<ElementGenerator>();
 
 		// ゲスト（Player2）は敵のAIを止め、サーバーからの位置情報で動かす
-		if (myPlayerNumber == 2)
+		if (IsGuestPlayer())
 		{
 			var enemies = GameObject.FindGameObjectsWithTag("Enemy");
 			foreach (var e in enemies)
@@ -465,7 +530,7 @@ public class WebSocketClient : MonoBehaviour
 			}
 		}
 
-		if (myPlayerNumber == 1)
+		if (IsHostPlayer())
 			myPlayer.GetComponentInChildren<Renderer>().material = localPlayerMaterial;
 		else
 			myPlayer.GetComponentInChildren<Renderer>().material = remotePlayerMaterial;
@@ -486,8 +551,8 @@ public class WebSocketClient : MonoBehaviour
 
 		if (GlobalCamera.Instance != null)
 			GlobalCamera.Instance.SetTarget(myPlayer.transform);
-		else
-			Debug.LogWarning("GlobalCamera.Instanceがnull");
+		//else
+			//Debug.LogWarning("GlobalCamera.Instanceがnull");
 
 		if (elementGenerator != null) elementGenerator.SetRemotePlayerTransform(myPlayer.transform);
 
@@ -500,8 +565,8 @@ public class WebSocketClient : MonoBehaviour
 			});
 		}
 
-		// 敵に自分のプレイヤーを渡す（Player1のみ）
-		if (myPlayerNumber == 1)
+		// 敵に自分のプレイヤーを渡す（ホストのみ）
+		if (IsHostPlayer())
 		{
 			var enemyList = GameObject.FindGameObjectsWithTag("Enemy");
 			foreach (var e in enemyList)
@@ -571,7 +636,7 @@ public class WebSocketClient : MonoBehaviour
 			targetRotations[msg.id] = Quaternion.Euler(msg.rotation.x, msg.rotation.y, 0);
 
 		// ホスト側のみ：相手の足音を敵に通知する
-		if (myPlayerNumber == 1 && msg.id != myId)
+		if (IsHostPlayer() && msg.id != myId)
 		{
 			Vector3 newPos = new Vector3(msg.position.x, msg.position.y, msg.position.z);
 			if (msg.anim_state == "run" || msg.anim_trigger == "PunchSwitch")
@@ -595,9 +660,7 @@ public class WebSocketClient : MonoBehaviour
 		}
 
 		if (!string.IsNullOrEmpty(msg.anim_trigger))
-		{
 			anim.SetTrigger(msg.anim_trigger);
-		}
 	}
 
 	/// <summary>
@@ -615,17 +678,18 @@ public class WebSocketClient : MonoBehaviour
 	}
 
 	/// <summary>
-	/// アイテム取得：ミッション管理に取得を通知する
+	/// アイテム取得：ミッション管理に取得を通知してログに表示する
 	/// </summary>
 	private void HandleItemPickedMessage(string json)
 	{
 		/*var msg = JsonUtility.FromJson<GoalMessage>(json);
         if (msg.id == myId)*/
 		MissionManager.Instance?.OnItemPicked();
+		LogManager.Instance?.AddLog("アイテムを取得した", "#aadd44");
 	}
 
 	/// <summary>
-	/// 片方がゴール：自分かどうかで待機メッセージを切り替える
+	/// 片方がゴール：自分かどうかでログメッセージを切り替える
 	/// </summary>
 	private void HandlePlayerGoalMessage(string json)
 	{
@@ -634,13 +698,11 @@ public class WebSocketClient : MonoBehaviour
 		if (msg.id == myId)
 		{
 			MissionManager.Instance?.OnGoal();
-			if (MissionManager.Instance != null)
-				MissionManager.Instance.ShowWaitingMessage("相手を待っています...");
+			LogManager.Instance?.AddWaitingLog("ゴールした！相手を待っています", "#aadd44");
 		}
 		else
 		{
-			if (MissionManager.Instance != null)
-				MissionManager.Instance.ShowWaitingMessage("仲間がゴールで待っています！");
+			LogManager.Instance?.AddLog("味方がゴールした！早くゴールへ向かおう！", "#aadd44");
 		}
 	}
 
@@ -651,6 +713,7 @@ public class WebSocketClient : MonoBehaviour
 	{
 		MissionManager.Instance?.StopTimer();
 		MissionManager.Instance?.ShowClearMessage();
+		LogManager.Instance?.StopWaitingLog();
 
 		if (MissionManager.Instance != null)
 		{
@@ -704,7 +767,7 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void HandleEnemyMoveMessage(string json)
 	{
-		if (myPlayerNumber == 1) return;
+		if (IsHostPlayer()) return;
 		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json);
 		enemyTargetPositions[msg.enemy_index] = new Vector3(msg.x, msg.y, msg.z);
 		enemyTargetAngles[msg.enemy_index] = msg.angle;
@@ -725,6 +788,16 @@ public class WebSocketClient : MonoBehaviour
 				em.SetLastSoundPosition(new Vector3(msg.last_sound_x, 0, msg.last_sound_z));
 			}
 		}
+	}
+
+	/// <summary>
+	/// チャットメッセージの受信：ログに表示する
+	/// </summary>
+	private void HandleChatMessage(string json)
+	{
+		var msg = JsonUtility.FromJson<ChatMessage>(json);
+		if (msg.sender_id == myId) return;
+		QuickChatManager.Instance?.OnChatReceived(msg.message, msg.sender_name);
 	}
 
 	#endregion
@@ -758,7 +831,7 @@ public class WebSocketClient : MonoBehaviour
 		if (msg == null || msg.players == null) return;
 		foreach (var player in msg.players)
 			if (player.id != myId && roomMemberPanel != null)
-				roomMemberPanel.AddOrUpdateMember(player.id, player.name, false);
+				roomMemberPanel.AddOrUpdateMember(player.id, player.name, player.is_ready);
 	}
 
 	/// <summary>プレイヤー退室（ロビー用）：メンバー表示から削除する</summary>
@@ -776,23 +849,24 @@ public class WebSocketClient : MonoBehaviour
 	}
 
 	/// <summary>
-	/// スイッチ操作の受信：対応するスイッチの処理を呼ぶ
+	/// スイッチ操作の受信：対応するスイッチの処理を呼んでログに表示する
 	/// </summary>
 	private void HandleSwitchActivatedMessage(string json)
 	{
-		Debug.Log($"switch_activated受信: {json}");
+		//Debug.Log($"switch_activated受信: {json}");
 		var msg = JsonUtility.FromJson<SwitchActivatedMessage>(json);
-		Debug.Log($"switch_id: {msg.switch_id}");
+		//Debug.Log($"switch_id: {msg.switch_id}");
 		var switches = FindObjectsOfType<SwitchManager>();
 		foreach (var sw in switches)
 		{
-			Debug.Log($"スイッチID確認: {sw.targetEnemyID}");
+			//Debug.Log($"スイッチID確認: {sw.targetEnemyID}");
 			if (sw.targetEnemyID == msg.switch_id)
 			{
 				sw.OnSwitchActivated();
 				break;
 			}
 		}
+		LogManager.Instance?.AddLog("どこかのギミックが作動した", "#ffcc44");
 	}
 
 	/// <summary>
@@ -848,7 +922,7 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void SpawnRemotePlayer(PlayerData player)
 	{
-		Debug.Log($"SpawnRemotePlayer: id={player.id}, player_number={player.player_number}");
+		//Debug.Log($"SpawnRemotePlayer: id={player.id}, player_number={player.player_number}");
 		if (playerObjects.ContainsKey(player.id)) return;
 
 		GameObject newPlayer = Instantiate(playerPrefab);
@@ -888,7 +962,7 @@ public class WebSocketClient : MonoBehaviour
 	}
 
 	/// <summary>
-	/// リスポーン位置の受信：相手プレイヤーの位置を更新する
+	/// リスポーン位置の受信：自分のリスポーンは補間キャッシュをクリア、相手のリスポーンは位置を更新する
 	/// </summary>
 	private void HandleRespawnMessage(string json)
 	{
@@ -896,6 +970,7 @@ public class WebSocketClient : MonoBehaviour
 		if (msg.id == myId)
 		{
 			targetPositions.Remove(myId);
+			LogManager.Instance?.AddLog("リスポーンした", "#ff6666");
 			return;
 		}
 		if (!playerObjects.ContainsKey(msg.id)) return;
@@ -906,17 +981,18 @@ public class WebSocketClient : MonoBehaviour
 	}
 
 	/// <summary>
-	/// 相手がつかまったときの受信処理：Player2のみリスポーン演出を実行する
+	/// 相手がつかまったときの受信処理：ゲスト（Player2）のみリスポーン演出を実行する
 	/// </summary>
 	private void HandleRemoteRespawnMessage(string json)
 	{
-		if (myPlayerNumber != 2) return;
+		if (!IsGuestPlayer()) return;
 
 		if (myPlayer == null) return;
 		var pc = myPlayer.GetComponent<PlayerController>();
 		if (pc == null) return;
 
 		pc.RespawnWithEffectPublic();
+		LogManager.Instance?.AddLog("味方がリスポーンした", "#ff6666");
 
 		/*var spawnPos = GetSpawnPosition();
         myPlayer.transform.position = spawnPos != Vector3.zero ? spawnPos : myPlayer.transform.position;
@@ -946,8 +1022,7 @@ public class WebSocketClient : MonoBehaviour
 	public async void SendRemoteRespawn()
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
-		string json = $"{{\"type\":\"remote_respawn\",\"id\":\"{myId}\"}}";
-		await websocket.SendText(json);
+		await websocket.SendText(SendMessageBuilder.RemoteRespawn(myId));
 	}
 
 	#endregion
@@ -965,15 +1040,13 @@ public class WebSocketClient : MonoBehaviour
 		string trigger = pc?.lastTrigger ?? "";
 		if (!string.IsNullOrEmpty(trigger) && pc != null) pc.lastTrigger = "";
 
-		string json = $"{{\"type\":\"player_move\",\"id\":\"{myId}\"," +
-					  $"\"position\":{{\"x\":{myPlayer.transform.position.x}," +
-					  $"\"y\":{myPlayer.transform.position.y}," +
-					  $"\"z\":{myPlayer.transform.position.z}}}," +
-					  $"\"rotation\":{{\"x\":{myPlayer.transform.rotation.eulerAngles.x}," +
-					  $"\"y\":{myPlayer.transform.rotation.eulerAngles.y}}}," +
-					  $"\"anim_state\":\"{animState}\"," +
-					  $"\"anim_trigger\":\"{trigger}\"}}";
-		await websocket.SendText(json);
+		await websocket.SendText(SendMessageBuilder.PlayerMove(
+			myId,
+			myPlayer.transform.position,
+			myPlayer.transform.rotation.eulerAngles,
+			animState,
+			trigger
+		));
 	}
 
 	/// <summary>
@@ -982,8 +1055,7 @@ public class WebSocketClient : MonoBehaviour
 	public async void SendRespawn(Vector3 pos)
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
-		string json = $"{{\"type\":\"respawn\",\"id\":\"{myId}\",\"position\":{{\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z}}}}}";
-		await websocket.SendText(json);
+		await websocket.SendText(SendMessageBuilder.Respawn(myId, pos));
 	}
 
 	/// <summary>
@@ -992,8 +1064,7 @@ public class WebSocketClient : MonoBehaviour
 	public async void SendGoal()
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
-		string json = $"{{\"type\":\"goal\"}}";
-		await websocket.SendText(json);
+		await websocket.SendText(SendMessageBuilder.Goal());
 	}
 
 	/// <summary>
@@ -1002,8 +1073,7 @@ public class WebSocketClient : MonoBehaviour
 	public async void SendSwitchActivated(int switchIndex)
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
-		string json = $"{{\"type\":\"switch_activated\",\"switch_id\":{switchIndex}}}";
-		await websocket.SendText(json);
+		await websocket.SendText(SendMessageBuilder.SwitchActivated(switchIndex));
 	}
 
 	/// <summary>
@@ -1012,8 +1082,7 @@ public class WebSocketClient : MonoBehaviour
 	public async void SendItemPicked()
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
-		string json = $"{{\"type\":\"item_picked\"}}";
-		await websocket.SendText(json);
+		await websocket.SendText(SendMessageBuilder.ItemPicked());
 	}
 
 	/// <summary>
@@ -1022,9 +1091,8 @@ public class WebSocketClient : MonoBehaviour
 	public async void SendEnemyStun(int enemyIndex)
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
-		Debug.Log($"SendEnemyStun送信: enemyIndex={enemyIndex}");
-		string json = $"{{\"type\":\"enemy_stun\",\"enemy_index\":{enemyIndex},\"sender_id\":\"{myId}\"}}";
-		await websocket.SendText(json);
+		//Debug.Log($"SendEnemyStun送信: enemyIndex={enemyIndex}");
+		await websocket.SendText(SendMessageBuilder.EnemyStun(enemyIndex, myId));
 	}
 
 	/// <summary>
@@ -1033,8 +1101,16 @@ public class WebSocketClient : MonoBehaviour
 	public async void SendEnemyStunCancel(int enemyIndex)
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
-		string json = $"{{\"type\":\"enemy_stun_cancel\",\"enemy_index\":{enemyIndex},\"sender_id\":\"{myId}\"}}";
-		await websocket.SendText(json);
+		await websocket.SendText(SendMessageBuilder.EnemyStunCancel(enemyIndex, myId));
+	}
+
+	/// <summary>
+	/// 定型文チャットをサーバーに送信する
+	/// </summary>
+	public async void SendChatMessage(string message)
+	{
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
+		await websocket.SendText(SendMessageBuilder.Chat(message, myId));
 	}
 
 	#endregion
@@ -1046,7 +1122,7 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void UpdateEnemySync()
 	{
-		if (myPlayerNumber == 1)
+		if (IsHostPlayer())
 		{
 			if (_enemyObjects == null || _enemyObjects.Length == 0)
 				_enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
@@ -1064,7 +1140,7 @@ public class WebSocketClient : MonoBehaviour
 				}
 			}
 		}
-		else if (myPlayerNumber == 2)
+		else if (IsGuestPlayer())
 		{
 			if (_enemyObjects == null || _enemyObjects.Length == 0)
 				_enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
@@ -1105,13 +1181,7 @@ public class WebSocketClient : MonoBehaviour
 		Vector3 lastSound = Vector3.zero;
 		if (em != null) lastSound = em.GetLastSoundPosition();
 
-		string json = $"{{\"type\":\"enemy_move\",\"enemy_index\":{index}," +
-			$"\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z},\"angle\":{angle}," +
-			$"\"light_r\":{lightColor.r},\"light_g\":{lightColor.g},\"light_b\":{lightColor.b}," +
-			$"\"reaction\":\"{reaction}\"," +
-			$"\"last_sound_x\":{lastSound.x},\"last_sound_z\":{lastSound.z}}}";
-
-		await websocket.SendText(json);
+		await websocket.SendText(SendMessageBuilder.EnemyMove(index, pos, angle, lightColor, reaction, lastSound));
 	}
 
 	#endregion
@@ -1124,7 +1194,7 @@ public class WebSocketClient : MonoBehaviour
 	private void DelayedGameStart()
 	{
 		MissionManager.Instance?.OnGameStart();
-		Debug.Log("DelayedGameStart: MissionManager.OnGameStart()呼び出し");
+		//Debug.Log("DelayedGameStart: MissionManager.OnGameStart()呼び出し");
 	}
 
 	/// <summary>
@@ -1139,7 +1209,7 @@ public class WebSocketClient : MonoBehaviour
 		tag.SetVisible(visible);
 	}
 
-	// プレイヤーのリスポーンと連携用。
+	// プレイヤーのリスポーンと連携用。削除しないこと。
 	public void SetSpawnPosition(int playerNum, Vector3 pos) { spawnPositions[playerNum] = pos; }
 
 	/// <summary>
