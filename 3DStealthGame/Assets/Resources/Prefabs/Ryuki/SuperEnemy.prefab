@@ -786,11 +786,11 @@ MonoBehaviour:
   reactionText: {fileID: 4083648575574789913}
   movePoints: []
   speed: 3
-  rotateSpeed: 30
+  rotateSpeed: 100
   stoprotateSpeed: 50
   stopMoveCooldownMin: 5
   stopMoveCooldownMax: 10
-  waitTime: 3
+  waitTime: 0.5
   rotateAngle: 90
   viewRadius: 10
   viewAngle: 90
@@ -803,8 +803,10 @@ MonoBehaviour:
   isStopMove: 0
   isRemoteControlled: 0
   enemyID: 0
-  showViewDebug: 1
-  showSoundDebug: 1
+  gimmickCount: 0
+  switchCount: 2
+  showViewDebug: 0
+  showSoundDebug: 0
 --- !u!114 &6275340195325619431
 MonoBehaviour:
   m_ObjectHideFlags: 0

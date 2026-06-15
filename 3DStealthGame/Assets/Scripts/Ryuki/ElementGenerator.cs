@@ -47,7 +47,6 @@ public class ElementGenerator : MonoBehaviour
 	// CSVデータ数値パラメータ
     public enum MapObjectType
     {
-        Floor = 1,
         Enemy = 3,
         StrongEnemy = 4,
         Item = 5,

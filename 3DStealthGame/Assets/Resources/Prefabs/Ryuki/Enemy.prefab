@@ -778,8 +778,10 @@ MonoBehaviour:
   isStopMove: 0
   isRemoteControlled: 0
   enemyID: 0
+  gimmickCount: 0
+  switchCount: 0
   showViewDebug: 0
-  showSoundDebug: 0
+  showSoundDebug: 1
 --- !u!114 &3470185511107027951
 MonoBehaviour:
   m_ObjectHideFlags: 0

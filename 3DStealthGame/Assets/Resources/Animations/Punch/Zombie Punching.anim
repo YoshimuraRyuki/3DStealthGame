@@ -21274,7 +21274,7 @@ AnimationClip:
         inWeight: 0.33333334
         outWeight: 0.33333334
       - serializedVersion: 3
-        time: 2.3666668
+        time: 2.3666666
         value: -0.013379122
         inSlope: 0.23120046
         outSlope: 0.23120046
@@ -80662,7 +80662,7 @@ AnimationClip:
         inWeight: 0.33333334
         outWeight: 0.33333334
       - serializedVersion: 3
-        time: 2.3666668
+        time: 2.3666666
         value: -0.013379122
         inSlope: 0.23120046
         outSlope: 0.23120046
@@ -117604,7 +117604,7 @@ AnimationClip:
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
-  - time: 3.8333333
+  - time: 2.2666667
     functionName: EndMove
     data: 
     objectReferenceParameter: {fileID: 0}
