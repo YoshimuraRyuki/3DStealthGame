@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 public class SwitchManager : MonoBehaviour
 {
@@ -11,7 +12,8 @@ public class SwitchManager : MonoBehaviour
     EnemyManager em;
     EnemyManager enemy;
     PlayerController Pc;
-    
+    ElementGenerator Eg;
+
     private TextMeshProUGUI actionText;
     private Transform cameraTransform;
 
@@ -131,6 +133,7 @@ public class SwitchManager : MonoBehaviour
             {
                 em.SwitchCountValue(1);
                 em.PlayAnimationWall();
+                OpenGimmickWall(targetEnemyID);
             }
             isActionSwitch = true;
             Pc.PunchSwitch();
@@ -144,6 +147,23 @@ public class SwitchManager : MonoBehaviour
     public void SetTarget(EnemyManager enemy)
     {
         em = enemy;
+    }
+
+    /// <summary>
+    /// スイッチ起動時に呼ばれる処理。対応するIDの透明壁を消去する
+    /// </summary>
+    public void OpenGimmickWall(int targetID)
+    {
+        // 指定されたIDの壁が存在するかチェック
+        if (Eg.gimmickWallDic.ContainsKey(targetID))
+        {
+            foreach (GameObject wall in Eg.gimmickWallDic[targetID])
+            {
+                // オブジェクトごと破壊する場合
+                Destroy(wall);
+            }
+            Eg.gimmickWallDic.Remove(targetID);
+        }
     }
 
     #endregion
@@ -181,6 +201,7 @@ public class SwitchManager : MonoBehaviour
 		Pc = p.GetComponent<PlayerController>();
 		rd = GetComponent<Renderer>();
         enemy = GetComponent<EnemyManager>();
+        Eg = GameObject.Find("StageMake").GetComponent<ElementGenerator>();
         Pc.OnPunchInput += TryAction;
 
         currentStanTime = 0f;
