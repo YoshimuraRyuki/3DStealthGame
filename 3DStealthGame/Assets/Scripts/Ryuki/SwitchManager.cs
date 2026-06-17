@@ -105,7 +105,8 @@ public class SwitchManager : MonoBehaviour
 
         var wsClient = FindObjectOfType<WebSocketClient>();
         if (wsClient != null) wsClient.SendSwitchActivated(targetEnemyID);
-    }
+		LogManager.Instance?.AddLog("ÉMÉ~ÉbÉNÇçÏìÆÇ≥ÇπÇΩ", "#ffcc44");
+	}
 
     #endregion
 
@@ -157,7 +158,8 @@ public class SwitchManager : MonoBehaviour
     {
         isEndAction = true;
         isPlayerInRange = false;
-		//if (em != null) em.PlayAnimationWall();
+		Debug.Log($"OnSwitchActivatedåƒÇŒÇÍÇΩ em={em} targetEnemyID={targetEnemyID}");
+		if (em != null) em.PlayAnimationWall();
         
         if(gameObject.tag == ("Enemy") || gameObject.tag == ("StrongEnemy")) return;
             
