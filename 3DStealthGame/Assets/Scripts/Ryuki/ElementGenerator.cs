@@ -57,7 +57,8 @@ public class ElementGenerator : MonoBehaviour
         Player2 = 10,
         Respawn = 11
     }
-
+    // メンバ変数として追加
+    public Dictionary<int, List<GameObject>> gimmickWallDic = new Dictionary<int, List<GameObject>>();
     #endregion
 
     #region プレイヤー位置管理
@@ -228,29 +229,71 @@ public class ElementGenerator : MonoBehaviour
         int width = map.GetLength(0);
         int height = map.GetLength(1);
 
+        // 古いデータが残らないように初期化
+        gimmickWallDic.Clear();
+
         // CSVデータを横一列で見る
         for (int y = 0; y < height; y++)
         {
             int startX = -1; // 開始位置
+            string currentWallType = "";
+            int currentWallID = -1;
 
             for (int x = 0; x < width; x++)
             {
-                if (map[x, y] == "0") // 最初に見つけた壁を代入
+                string cell = map[x, y];
+
+                // 空白セルの場合はスキップ
+                if (string.IsNullOrEmpty(cell))
                 {
-                    if (startX == -1) startX = x;
+                    // 壁が途切れたら生成
+                    if (startX != -1)
+                    {
+                        CreateWallBlock(startX, x - 1, y, objWall, currentWallType, currentWallID);
+                        startX = -1;
+                        currentWallType = "";
+                        currentWallID = -1;
+                    }
+                    continue;
                 }
-                else                  // 0以外を見つけたらその一個前が0なのでそこまで壁を生成
+                // セルのデータを分割
+                string[] data = cell.Split('_');
+                string type = data[0];
+                int id = data.Length > 1 ? int.Parse(data[1]) : -1;
+
+                bool isWall = (type == "0" || type == "12");
+
+                if (isWall)
+                {
+                    if (startX == -1)
+                    {
+                        startX = x;
+                        currentWallType = type;
+                        currentWallID = id;
+                    }
+                    // 壁の種類かIDが変わったら、それまでの壁を生成して区切る
+                    else if (currentWallType != type || currentWallID != id)
+                    {
+                        CreateWallBlock(startX, x - 1, y, objWall, currentWallType, currentWallID);
+                        startX = x;
+                        currentWallType = type;
+                        currentWallID = id;
+                    }
+                }
+                else // 壁以外のマス（敵やアイテムなど）
                 {
                     if (startX != -1)
                     {
-                        CreateWallBlock(startX, x - 1, y, objWall);
+                        CreateWallBlock(startX, x - 1, y, objWall, currentWallType, currentWallID);
                         startX = -1;
+                        currentWallType = "";
+                        currentWallID = -1;
                     }
                 }
             }
             if (startX != -1)
             {
-                CreateWallBlock(startX, width - 1, y, objWall);
+                CreateWallBlock(startX, width - 1, y, objWall, currentWallType, currentWallID);
             }
         }
     }
@@ -262,7 +305,7 @@ public class ElementGenerator : MonoBehaviour
 	/// <param name="endX"></param>
 	/// <param name="y"></param>
 	/// <param name="parent"></param>
-    void CreateWallBlock(int startX, int endX, int y, GameObject parent)
+    void CreateWallBlock(int startX, int endX, int y, GameObject parent, string wallType, int wallID)
     {
         int length = endX - startX + 1;
 
@@ -274,7 +317,28 @@ public class ElementGenerator : MonoBehaviour
         float centerX = startX + (length / 2f) - 0.5f;
         cube.transform.position = new Vector3(centerX, 2f, y);
 
-		// デバック用：コライダーON/OFF切り替え
+        if (wallType == "12")
+        {
+            MeshRenderer renderer = cube.GetComponent<MeshRenderer>();
+            if (renderer != null)
+            {
+                renderer.enabled = false;
+            }
+            // 透明壁の通知用スクリプト
+            cube.AddComponent<WallCollision>();
+
+            // IDが設定されている場合のみ辞書に登録
+            if (wallID != -1)
+            {
+                if (!gimmickWallDic.ContainsKey(wallID))
+                {
+                    gimmickWallDic[wallID] = new List<GameObject>();
+                }
+                gimmickWallDic[wallID].Add(cube);
+            }
+        }
+
+        // デバック用：コライダーON/OFF切り替え
         var col = cube.GetComponent<Collider>();
         if (col != null)
         {
