@@ -165,8 +165,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isLocalPlayer: 0
-  walkSpeed: 20
-  crouchSpeed: 5
+  walkSpeed: 10
+  crouchSpeed: 3
   sneakVolume: 0
   walkVolume: 1
   catchFadePanel: {fileID: 0}

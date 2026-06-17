@@ -15,6 +15,7 @@ public class NameInputManager : MonoBehaviour
 	public GameObject titlePanel;
 	public GameObject roomSelectPanel;
 	public Text warningText;
+	public RoomSelectManager roomSelectManager;
 
 	#endregion
 
@@ -90,7 +91,7 @@ public class NameInputManager : MonoBehaviour
 		}
 
 		if (titlePanel != null) titlePanel.SetActive(false);
-		var roomSelectManager = FindObjectOfType<RoomSelectManager>();
+		//var roomSelectManager = FindObjectOfType<RoomSelectManager>();
 		if (roomSelectManager != null) roomSelectManager.ShowRoomSelect();
 	}
 
