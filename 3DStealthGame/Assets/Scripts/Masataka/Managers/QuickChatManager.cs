@@ -1,7 +1,8 @@
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-
+using UnityEngine.UI;
+using System.Collections;
 /// <summary>
 /// 定型文チャットの送受信と表示を管理するクラス。
 /// Yボタンでパネルを開閉し、ボタンを選択して相手に定型文を送る。
@@ -29,11 +30,14 @@ public class QuickChatManager : MonoBehaviour
 		"ゴールに向かおう"
 	};
 
-	#endregion
+    [SerializeField] private GameObject chatButton;
+    [SerializeField] private GameObject chatImage;
 
-	#region 内部状態
+    #endregion
 
-	private Button[] _buttons;
+    #region 内部状態
+
+    private Button[] _buttons;
 	private WebSocketClient _wsClient;
 	private bool _isOpen = false;
 
@@ -98,12 +102,20 @@ public class QuickChatManager : MonoBehaviour
 	{
 		_isOpen = !_isOpen;
 		if (chatFrame != null) chatFrame.SetActive(_isOpen);
-	}
+        StartCoroutine(SelectChatButton());
+    }
 
-	/// <summary>
-	/// ボタンが押されたとき定型文を送信してパネルを閉じる
-	/// </summary>
-	private void OnChatButtonClicked(int index)
+    private IEnumerator SelectChatButton()
+    {
+        yield return new WaitForEndOfFrame();
+        EventSystem.current.SetSelectedGameObject(chatButton);
+        chatImage.SetActive(true);
+    }
+
+    /// <summary>
+    /// ボタンが押されたとき定型文を送信してパネルを閉じる
+    /// </summary>
+    private void OnChatButtonClicked(int index)
 	{
 		if (_wsClient == null) return;
 		_wsClient.SendChatMessage(messages[index]);
