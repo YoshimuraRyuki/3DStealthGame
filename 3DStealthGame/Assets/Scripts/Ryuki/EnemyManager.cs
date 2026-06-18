@@ -480,7 +480,7 @@ public class EnemyManager : MonoBehaviour
                     var wsClient = FindObjectOfType<WebSocketClient>();
                     if (wsClient != null) wsClient.SendRemoteRespawn();
                     currentAlertCount = alertCount; // 警戒度リセット
-                                                    //_isRespawning = false; // ここでリセット
+                                                    _isRespawning = false; // ここでリセット
                 }
             }
         }

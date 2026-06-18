@@ -166,31 +166,27 @@ public class SwitchManager : MonoBehaviour
         }
     }
 
-    #endregion
+	#endregion
 
-    #region 澤田作：サーバ関連
+	#region 澤田作：サーバ関連
 
-    /// <summary>
-    /// 受信用
-    /// </summary>
-    public void OnSwitchActivated()
-    {
-        isEndAction = true;
-        isPlayerInRange = false;
-		//if (em != null) em.PlayAnimationWall();
-        
-        //if(gameObject.tag == ("Enemy") || gameObject.tag == ("StrongEnemy")) return;
-            
-
-        rd.material.color = Color.red;
-
+	/// <summary>
+	/// 受信用
+	/// </summary>
+	public void OnSwitchActivated()
+	{
+		isEndAction = true;
+		isPlayerInRange = false;
+		if (em != null) em.PlayAnimationWall();
+		OpenGimmickWall(targetEnemyID);
+		rd.material.color = Color.red;
 	}
 
-    #endregion
+	#endregion
 
-    #region Unityイベント
+	#region Unityイベント
 
-    void Start()
+	void Start()
     {
 		Invoke("DelayedStart", 0.5f);
 	}

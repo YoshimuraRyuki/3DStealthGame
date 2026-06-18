@@ -17,12 +17,11 @@ public class ReturnToTitle : MonoBehaviour
 
 		if (pad || key)
 		{
-			SceneManager.LoadScene("Title");
+			ReturnTitle();
 		}
 	}
 
 	#endregion
-
 
 	#region タイトル復帰
 
@@ -34,7 +33,7 @@ public class ReturnToTitle : MonoBehaviour
 		WebSocketClient wsClient = FindObjectOfType<WebSocketClient>();
 		if (wsClient != null)
 		{
-			//await wsClient.DisconnectAndReset();
+			await wsClient.DisconnectAndReset();
 		}
 
 		SceneManager.LoadScene("Title");

@@ -439,6 +439,7 @@ MonoBehaviour:
   roomMemberPanel: {fileID: 0}
   roomButton: {fileID: 0}
   readyPanelButton: {fileID: 0}
+  readyButton: {fileID: 0}
 --- !u!1 &260609588
 GameObject:
   m_ObjectHideFlags: 0
@@ -1743,6 +1744,7 @@ MonoBehaviour:
   roomMemberPanel: {fileID: 1019032279}
   roomButton: {fileID: 1853382630}
   readyPanelButton: {fileID: 1581334629}
+  readyButton: {fileID: 1581334631}
 --- !u!4 &932163366
 Transform:
   m_ObjectHideFlags: 0
