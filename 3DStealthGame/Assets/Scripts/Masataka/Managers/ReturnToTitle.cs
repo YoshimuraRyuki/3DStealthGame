@@ -22,8 +22,6 @@ public class ReturnToTitle : MonoBehaviour
 	}
 
 	#endregion
-<<<<<<< HEAD
-=======
 
 
 	#region タイトル復帰
@@ -36,12 +34,11 @@ public class ReturnToTitle : MonoBehaviour
 		WebSocketClient wsClient = FindObjectOfType<WebSocketClient>();
 		if (wsClient != null)
 		{
-			await wsClient.DisconnectAndReset();
+			//await wsClient.DisconnectAndReset();
 		}
 
 		SceneManager.LoadScene("Title");
 	}
 
 	#endregion
->>>>>>> masataka_0617
 }
