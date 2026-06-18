@@ -240,7 +240,6 @@ public class WebSocketClient : MonoBehaviour
 
 	private Vector3 _lastRemotePosition = Vector3.zero;
 	private bool _stunSent = false;
-	private int _connectGeneration = 0;
 
 	#endregion
 
@@ -258,19 +257,6 @@ public class WebSocketClient : MonoBehaviour
 
 	void Awake()
 	{
-		var existing = FindObjectsOfType<WebSocketClient>();
-		if (existing.Length > 1)
-		{
-			// 自分より先に存在するインスタンスがあれば自分を破棄
-			foreach (var other in existing)
-			{
-				if (other != this)
-				{
-					Destroy(gameObject);
-					return;
-				}
-			}
-		}
 		Application.runInBackground = true;
 		Application.targetFrameRate = 60;
 		DontDestroyOnLoad(this.gameObject);
@@ -282,10 +268,10 @@ public class WebSocketClient : MonoBehaviour
 	{
 		Application.runInBackground = true;
 		playerName = "";
-		/*websocket = new WebSocket(GetServerUrl("test"));
+		websocket = new WebSocket(GetServerUrl("test"));
 		websocket.OnOpen += () => Debug.Log("サーバーに接続");
 		websocket.OnMessage += OnMessageReceived;
-		websocket.OnError += (e) => Debug.Log("エラー: " + e);*/
+		websocket.OnError += (e) => Debug.Log("エラー: " + e);
 	}
 
 	async void Update()
@@ -352,14 +338,8 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	void OnSceneLoaded(Scene scene, LoadSceneMode mode)
 	{
-		Debug.Log($"OnSceneLoaded: {scene.name}");
 		isGameSceneLoaded = scene.name == "MapTest";
-
-		if (scene.name == "Title")
-		{
-			// Titleシーン再ロード時に参照を取り直す
-			roomMemberPanel = FindObjectOfType<RoomMemberPanel>();
-		}
+		//Debug.Log($"OnSceneLoaded: {scene.name} isGameSceneLoaded={isGameSceneLoaded}");
 
 		if (scene.name != "MapTest")
 		{
@@ -377,15 +357,18 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	public async void ConnectToRoom(string roomId)
 	{
-		Debug.Log("ConnectToRoom開始");
-		var ws = new WebSocket(GetServerUrl(roomId));
-		ws.OnOpen += OnWebSocketOpened;
-		ws.OnMessage += OnMessageReceived;
-		ws.OnError += (e) => Debug.Log($"接続エラー: {e}");
-		websocket = ws;
-		Debug.Log("Connect呼ぶ");
-		await ws.Connect();
-		Debug.Log("Connect完了");
+		if (websocket != null)
+		{
+			try { await websocket.Close(); } catch { }
+			websocket = null;
+		}
+
+		websocket = new WebSocket(GetServerUrl(roomId));
+		websocket.OnOpen += OnWebSocketOpened;
+		websocket.OnMessage += OnMessageReceived;
+		websocket.OnError += (e) => Debug.Log("エラー: " + e);
+
+		await websocket.Connect();
 	}
 
 	/// <summary>プレイヤー名を設定する</summary>
@@ -399,7 +382,6 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	public async void OnQuitButtonClicked()
 	{
-
 		if (websocket != null)
 		{
 			websocket.OnMessage -= OnMessageReceived;
@@ -423,46 +405,11 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	public async void OnReadyButtonClicked()
 	{
-		Debug.Log($"準備完了押した websocket={websocket?.State}");
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
 		string json = "{\"type\":\"ready\",\"position\":{\"x\":0,\"y\":1,\"z\":0}}";
 		await websocket.SendText(json);
 	}
 
-	/// <summary>
-	/// 接続を切断してゲームセッションの状態を初期化する。
-	/// タイトル復帰時に呼ぶ。
-	/// </summary>
-	public async System.Threading.Tasks.Task DisconnectAndReset()
-	{
-		//_connectGeneration++;
-		if (websocket != null)
-		{
-			websocket.OnMessage -= OnMessageReceived;
-			websocket.OnOpen -= OnWebSocketOpened;
-			if (websocket.State == WebSocketState.Open)
-			{
-				try { await websocket.Close(); } catch { }
-			}
-			websocket = null;
-		}
-
-		if (myPlayer != null) { Destroy(myPlayer); myPlayer = null; }
-		ClearRemotePlayers();
-
-		myId = null;
-		//playerName = "";
-		myPlayerNumber = 0;
-		spawnPositions.Clear();
-		pendingMessages.Clear();
-		hasSpawnPos = false;
-		pendingSpawnPos = Vector3.zero;
-		_enemyObjects = null;
-		enemyTargetPositions.Clear();
-		enemyTargetAngles.Clear();
-
-		Debug.Log("リセット完了");
-	}
 	#endregion
 
 	#region メッセージ受信
@@ -906,13 +853,12 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void HandleSwitchActivatedMessage(string json)
 	{
-		//Debug.Log($"switch_activated受信: {json}");
 		var msg = JsonUtility.FromJson<SwitchActivatedMessage>(json);
-		//Debug.Log($"switch_id: {msg.switch_id}");
-		var switches = FindObjectsOfType<SwitchManager>();
-		foreach (var sw in switches)
+		var eg = FindObjectOfType<ElementGenerator>();
+		if (eg == null) return;
+
+		foreach (var sw in eg.GetSwitchList())
 		{
-			//Debug.Log($"スイッチID確認: {sw.targetEnemyID}");
 			if (sw.targetEnemyID == msg.switch_id)
 			{
 				sw.OnSwitchActivated();
