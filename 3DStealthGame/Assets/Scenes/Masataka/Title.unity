@@ -1520,7 +1520,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 403af224c943be5469625c47a6f18b6e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerPrefab: {fileID: 9080468364348804320, guid: da99b9dbceb22af41884bfc73e3a87a0, type: 3}
+  playerPrefab: {fileID: 5850422698325972365, guid: 562c759f1f32f6b43bb650852338caba, type: 3}
   myPlayer: {fileID: 0}
   serverUrl: ws://192.168.56.102:8080/ws?room_id=test&name=Player1
   localPlayerMaterial: {fileID: 2100000, guid: 374c239778b6c5e4fb42491f4d42a8ae, type: 2}

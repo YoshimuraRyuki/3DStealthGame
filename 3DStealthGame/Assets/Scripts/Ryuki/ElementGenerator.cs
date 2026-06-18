@@ -520,10 +520,10 @@ public class ElementGenerator : MonoBehaviour
 
 				if (map[i, j] == "0") index = 0;      // •Ç
 				else if (map[i, j] == "1") index = 1; // •”‰®
-				else if (map[i, j] == "2") index = 2; // ’Ê˜H
+                else if (map[i, j] == "2" || map[i, j] == "12") index = 2; // ’Ê˜H
 
 
-				objMapExist[i, j] = Instantiate(mapTilesList[index]);
+                objMapExist[i, j] = Instantiate(mapTilesList[index]);
 
 				// Map2D’¼‰º‚ÉŠK‘w‚ğˆÚ“®
 				objMapExist[i, j].transform.SetParent(objMap2D.transform, false);
@@ -533,15 +533,15 @@ public class ElementGenerator : MonoBehaviour
 				objMapExist[i, j].GetComponent<RectTransform>().anchoredPosition = vector2;
 
 				// ƒ~ƒjƒ}ƒbƒvF•ÏX
-				if ((map[i, j] == "1")) // •”‰®
+				if (map[i, j] == "1") // •”‰®
 				{
 					objMapExist[i, j].GetComponent<Image>().color = ROOM_COLOR;
 				}
-				else if ((map[i, j] == "2")) // ’Ê˜H
+				else if (map[i, j] == "2" || map[i, j] == "12") // ’Ê˜H
 				{
 					objMapExist[i, j].GetComponent<Image>().color = AISLE_COLOR;
 				}
-				else if ((map[i, j] == "3")) // “G
+				else if (map[i, j] == "3") // “G
 				{
 					objMapExist[i, j].GetComponent<Image>().color = ENEMY_COLOR;
 				}
@@ -809,7 +809,7 @@ public class ElementGenerator : MonoBehaviour
 				{
 					img.color = ROOM_COLOR;
 				}
-				else if (map[pos.x, pos.y] == "2")
+				else if (map[pos.x, pos.y] == "2" || map[pos.x, pos.y] == "12")
 				{
 					img.color = AISLE_COLOR;
 				}
@@ -925,7 +925,11 @@ public class ElementGenerator : MonoBehaviour
 			case "3":
 				img.color = PLAYER_COLOR;
 				break;
-		}
+
+            case "12":
+                img.color = AISLE_COLOR;
+                break;
+        }
 	}
 
 	/// <summary>
