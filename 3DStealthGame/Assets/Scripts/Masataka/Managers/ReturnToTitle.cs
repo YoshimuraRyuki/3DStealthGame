@@ -22,4 +22,26 @@ public class ReturnToTitle : MonoBehaviour
 	}
 
 	#endregion
+<<<<<<< HEAD
+=======
+
+
+	#region タイトル復帰
+
+	/// <summary>
+	/// WebSocket切断・各種状態をリセットしてタイトルへ遷移する。
+	/// </summary>
+	private async void ReturnTitle()
+	{
+		WebSocketClient wsClient = FindObjectOfType<WebSocketClient>();
+		if (wsClient != null)
+		{
+			await wsClient.DisconnectAndReset();
+		}
+
+		SceneManager.LoadScene("Title");
+	}
+
+	#endregion
+>>>>>>> masataka_0617
 }

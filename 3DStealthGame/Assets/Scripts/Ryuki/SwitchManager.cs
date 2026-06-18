@@ -181,6 +181,7 @@ public class SwitchManager : MonoBehaviour
         
         //if(gameObject.tag == ("Enemy") || gameObject.tag == ("StrongEnemy")) return;
             
+
         rd.material.color = Color.red;
 
 	}
