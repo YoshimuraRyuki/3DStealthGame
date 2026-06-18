@@ -1030,6 +1030,7 @@ public class WebSocketClient : MonoBehaviour
 		if (obj == null) return;
 		obj.transform.position = new Vector3(msg.position.x, msg.position.y, msg.position.z);
 		targetPositions[msg.id] = obj.transform.position;
+		LogManager.Instance?.AddLog("味方がリスポーンした", "#ff6666");
 	}
 
 	/// <summary>
@@ -1037,14 +1038,28 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void HandleRemoteRespawnMessage(string json)
 	{
-		if (!IsGuestPlayer()) return;
+		if (IsGuestPlayer())
+		{
+			// 自分（ゲスト）が捕まった本人
+			if (myPlayer == null) return;
+			var pc = myPlayer.GetComponent<PlayerController>();
+			if (pc == null) return;
+			pc.RespawnWithEffectPublic();
+			LogManager.Instance?.AddLog("リスポーンした", "#ff6666");
+		}
+		else if (IsHostPlayer())
+		{
+			// ホストは見ているだけ
+			LogManager.Instance?.AddLog("味方がリスポーンした", "#ff6666");
+		}
+		/*if (!IsGuestPlayer()) return;
 
 		if (myPlayer == null) return;
 		var pc = myPlayer.GetComponent<PlayerController>();
 		if (pc == null) return;
 
 		pc.RespawnWithEffectPublic();
-		LogManager.Instance?.AddLog("味方がリスポーンした", "#ff6666");
+		LogManager.Instance?.AddLog("味方がリスポーンした", "#ff6666");*/
 
 		/*var spawnPos = GetSpawnPosition();
         myPlayer.transform.position = spawnPos != Vector3.zero ? spawnPos : myPlayer.transform.position;
