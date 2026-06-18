@@ -17,14 +17,11 @@ public class ReturnToTitle : MonoBehaviour
 
 		if (pad || key)
 		{
-			SceneManager.LoadScene("Title");
+			ReturnTitle();
 		}
 	}
 
 	#endregion
-<<<<<<< HEAD
-=======
-
 
 	#region タイトル復帰
 
@@ -43,5 +40,4 @@ public class ReturnToTitle : MonoBehaviour
 	}
 
 	#endregion
->>>>>>> masataka_0617
 }
