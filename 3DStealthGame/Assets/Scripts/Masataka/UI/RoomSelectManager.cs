@@ -31,6 +31,7 @@ public class RoomSelectManager : MonoBehaviour
 
 	#endregion
 
+
 	#region インスペクター設定
 
 	public string serverBaseUrl = "https://stealth-game-server.onrender.com";

@@ -1264,6 +1264,7 @@ public class WebSocketClient : MonoBehaviour
 	// プレイヤーのリスポーンと連携用。削除しないこと。
 	public void SetSpawnPosition(int playerNum, Vector3 pos) { spawnPositions[playerNum] = pos; }
 
+
 	/// <summary>
 	/// 自分の開始位置を返す（リスポーン時などに使用）
 	/// </summary>
