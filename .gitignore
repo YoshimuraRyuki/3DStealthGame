@@ -1,3 +1,5 @@
 3DStealthGame/Library/
 3DStealthGame/Logs/
 3DStealthGame/Temp/
+.vs/
+*.csproj
