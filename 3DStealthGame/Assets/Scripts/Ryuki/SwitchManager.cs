@@ -161,7 +161,7 @@ public class SwitchManager : MonoBehaviour
 		Debug.Log($"OnSwitchActivated�Ă΂ꂽ em={em} targetEnemyID={targetEnemyID}");
 		if (em != null) em.PlayAnimationWall();
         
-        if(gameObject.tag == ("Enemy") || gameObject.tag == ("StrongEnemy")) return;
+        //if(gameObject.tag == ("Enemy") || gameObject.tag == ("StrongEnemy")) return;
             
         rd.material.color = Color.red;
 

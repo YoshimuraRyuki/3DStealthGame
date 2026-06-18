@@ -906,13 +906,12 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void HandleSwitchActivatedMessage(string json)
 	{
-		//Debug.Log($"switch_activated受信: {json}");
 		var msg = JsonUtility.FromJson<SwitchActivatedMessage>(json);
-		//Debug.Log($"switch_id: {msg.switch_id}");
-		var switches = FindObjectsOfType<SwitchManager>();
-		foreach (var sw in switches)
+		var eg = FindObjectOfType<ElementGenerator>();
+		if (eg == null) return;
+
+		foreach (var sw in eg.GetSwitchList())
 		{
-			//Debug.Log($"スイッチID確認: {sw.targetEnemyID}");
 			if (sw.targetEnemyID == msg.switch_id)
 			{
 				sw.OnSwitchActivated();
