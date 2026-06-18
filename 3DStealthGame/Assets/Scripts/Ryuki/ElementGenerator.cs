@@ -326,7 +326,7 @@ public class ElementGenerator : MonoBehaviour
 				renderer.enabled = false;
 			}
 			// 透明壁の通知用スクリプト
-			cube.AddComponent<WallCollision>();
+			//cube.AddComponent<WallCollision>();
 
 			// IDが設定されている場合のみ辞書に登録
 			if (wallID != -1)
