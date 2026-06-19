@@ -86,6 +86,7 @@
     <Compile Include="Assets\Scripts\Masataka\Managers\ResultData.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\RoomSelectManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.cs" />
+    <Compile Include="Assets\BTM_Assets\BTM_Items_Gems\Scripts\SimpleGemsAnim.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\ResultManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\ReturnToTitle.cs" />
   </ItemGroup>
