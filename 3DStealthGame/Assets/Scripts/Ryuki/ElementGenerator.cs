@@ -34,6 +34,8 @@ public class ElementGenerator : MonoBehaviour
     GameObject[] respawnPointsList = new GameObject[1];             // リスポーン地点リスト
     GameObject wallObjects;                                         // マップ作成用キューブ
     Sprite goalIcon;                                                // ゴールアイコン
+    Sprite switchOFFIcon;                                                // スイッチアイコン
+    Sprite switchONIcon;                                                // スイッチアイコン
 
     #endregion
 
@@ -186,7 +188,7 @@ public class ElementGenerator : MonoBehaviour
 
         // ゴール
         goalObjects = (GameObject)Resources.Load("Prefabs/Ryuki/Goal");
-        goalIcon = (Sprite)Resources.Load("Images/IconGoal");
+        goalIcon = Resources.Load<Sprite>("Images/Ryuki/IconGoal");
 
         // 敵リスト
         enemiesList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Enemy");
@@ -199,6 +201,8 @@ public class ElementGenerator : MonoBehaviour
 
         // スイッチ
         switchesList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Switch");
+        switchOFFIcon = Resources.Load<Sprite>("Images/Ryuki/SwitchOFF");
+        switchONIcon = Resources.Load<Sprite>("Images/Ryuki/SwitchON");
 
         // 巡回ポイント
         patrolPointsList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/PatrolPoint");
@@ -780,6 +784,8 @@ public class ElementGenerator : MonoBehaviour
                 Image img = objMapExist[goalX, goalY].GetComponent<Image>();
 
                 img.sprite = goalIcon;
+
+                img.color = Color.white;
             }
         }
     }
@@ -798,9 +804,18 @@ public class ElementGenerator : MonoBehaviour
             if (IsInsideMap(SwitchX, SwitchY, objMapExist))
             {
                 Image img = objMapExist[SwitchX, SwitchY].GetComponent<Image>();
+                SwitchManager sw = SwitchObj.GetComponentInChildren<SwitchManager>();
 
-                // スイッチの色
-                img.color = SWITCH_COLOR;
+                if (sw != null && sw.isPressed)
+                {
+                    img.sprite = switchONIcon;
+                }
+                else
+                {
+                    img.sprite = switchOFFIcon;
+                }
+
+                img.color = Color.white;
             }
         }
     }

@@ -16,18 +16,6 @@ public class MenuSelector : MonoBehaviour
 
     void Update()
     {
-        if (EventSystem.current.currentSelectedGameObject != null)
-        {
-            Debug.Log(
-                "現在選択中: " +
-                EventSystem.current.currentSelectedGameObject.name
-            );
-        }
-        else
-        {
-            Debug.Log("現在選択中: なし");
-        }
-
         if (!isEditing) return;
 
         // Bボタンで入力終了
