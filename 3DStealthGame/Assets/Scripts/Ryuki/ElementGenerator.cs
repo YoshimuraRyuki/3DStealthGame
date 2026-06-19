@@ -326,7 +326,7 @@ public class ElementGenerator : MonoBehaviour
 				renderer.enabled = false;
 			}
 			// 透明壁の通知用スクリプト
-			//cube.AddComponent<WallCollision>();
+			cube.AddComponent<WallCollision>();
 
 			// IDが設定されている場合のみ辞書に登録
 			if (wallID != -1)
@@ -398,7 +398,7 @@ public class ElementGenerator : MonoBehaviour
 						break;
 
 					case MapObjectType.Item: // アイテム
-						Instantiate(itemsList[0], pos, Quaternion.identity);
+						Instantiate(itemsList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
 						objItems = GameObject.FindGameObjectsWithTag("Item");
 						map[x, y] = "1";
 						break;
@@ -516,14 +516,15 @@ public class ElementGenerator : MonoBehaviour
 		{
 			for (int j = 0; j < map.GetLength(1); j++)
 			{
+				string cell = map[i, j] ?? "";
+				string cellType = cell.Split('_')[0];
+
 				int index = 0;
+				if (cellType == "0") index = 0;
+				else if (cellType == "1") index = 1;
+				else if (cellType == "2" || cellType == "12") index = 2;
 
-				if (map[i, j] == "0") index = 0;      // 壁
-				else if (map[i, j] == "1") index = 1; // 部屋
-                else if (map[i, j] == "2" || map[i, j] == "12") index = 2; // 通路
-
-
-                objMapExist[i, j] = Instantiate(mapTilesList[index]);
+				objMapExist[i, j] = Instantiate(mapTilesList[index]);
 
 				// Map2D直下に階層を移動
 				objMapExist[i, j].transform.SetParent(objMap2D.transform, false);
@@ -533,17 +534,21 @@ public class ElementGenerator : MonoBehaviour
 				objMapExist[i, j].GetComponent<RectTransform>().anchoredPosition = vector2;
 
 				// ミニマップ色変更
-				if (map[i, j] == "1") // 部屋
+				if (cellType == "1")
 				{
 					objMapExist[i, j].GetComponent<Image>().color = ROOM_COLOR;
 				}
-				else if (map[i, j] == "2" || map[i, j] == "12") // 通路
+				else if (cellType == "2")
 				{
 					objMapExist[i, j].GetComponent<Image>().color = AISLE_COLOR;
 				}
-				else if (map[i, j] == "3") // 敵
+				else if (cellType == "3")
 				{
 					objMapExist[i, j].GetComponent<Image>().color = ENEMY_COLOR;
+				}
+				else if (cellType == "12")
+				{
+					objMapExist[i, j].GetComponent<Image>().color = AISLE_COLOR;
 				}
 			}
 		}
@@ -605,8 +610,12 @@ public class ElementGenerator : MonoBehaviour
 			if (IsInsideMap(oldX, oldY, mapExist))
 			{
 				Image oldImg = mapExist[oldX, oldY].GetComponent<Image>();
+
+				string cellData = map[oldX, oldY];
+				string tileType = string.IsNullOrEmpty(cellData) ? "" : cellData.Split('_')[0];
+
 				if (map[oldX, oldY] == "1") oldImg.color = ROOM_COLOR;
-				else if (map[oldX, oldY] == "2") oldImg.color = AISLE_COLOR;
+				else if (map[oldX, oldY] == "2" || map[oldX, oldY] == "12") oldImg.color = AISLE_COLOR;
 				else oldImg.color = ROOM_COLOR;
 			}
 
@@ -912,6 +921,9 @@ public class ElementGenerator : MonoBehaviour
 	{
 		Image img = objMapExist[x, y].GetComponent<Image>();
 
+		string cellData = map[x, y];
+		string tileType = string.IsNullOrEmpty(cellData) ? "" : cellData.Split('_')[0];
+
 		switch (map[x, y])
 		{
 			case "1":
@@ -926,10 +938,10 @@ public class ElementGenerator : MonoBehaviour
 				img.color = PLAYER_COLOR;
 				break;
 
-            case "12":
-                img.color = AISLE_COLOR;
-                break;
-        }
+			case "12":
+				img.color = AISLE_COLOR;
+				break;
+		}
 	}
 
 	/// <summary>
