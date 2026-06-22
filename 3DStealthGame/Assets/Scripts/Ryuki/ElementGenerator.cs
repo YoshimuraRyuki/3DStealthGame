@@ -34,8 +34,9 @@ public class ElementGenerator : MonoBehaviour
     GameObject[] respawnPointsList = new GameObject[1];             // リスポーン地点リスト
     GameObject wallObjects;                                         // マップ作成用キューブ
     Sprite goalIcon;                                                // ゴールアイコン
-    Sprite switchOFFIcon;                                                // スイッチアイコン
-    Sprite switchONIcon;                                                // スイッチアイコン
+    Sprite switchOFFIcon;                                           // スイッチアイコン
+    Sprite switchONIcon;                                            // スイッチアイコン
+    Sprite itemIcon;                                                // アイテムアイコン
 
     #endregion
 
@@ -198,6 +199,7 @@ public class ElementGenerator : MonoBehaviour
 
         // アイテムリスト
         itemsList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Item");
+        itemIcon = Resources.Load<Sprite>("Images/Ryuki/IconItem");
 
         // スイッチ
         switchesList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Switch");
@@ -699,6 +701,44 @@ public class ElementGenerator : MonoBehaviour
 
     #region ミニマップアイコン
 
+    /// <summary>
+    /// 指定したマス目にアイコンを変える
+    /// </summary>
+    /// <param name="tileObj"></param>
+    /// <param name="iconSprite"></param>
+    /// <param name="tileColor"></param>
+    void SetMiniMapIcon(GameObject tileObj, Sprite iconSprite, Color tileColor)
+    {
+        if (tileObj == null) return;
+
+        Image tileImg = tileObj.GetComponent<Image>();
+        tileImg.color = tileColor;
+        tileImg.sprite = null; 
+
+        Transform existingIcon = tileObj.transform.Find("MiniMapIcon");
+        GameObject iconObj;
+
+        if (existingIcon == null)
+        {
+            iconObj = new GameObject("MiniMapIcon", typeof(RectTransform), typeof(Image));
+            iconObj.transform.SetParent(tileObj.transform, false);
+
+            RectTransform iconRect = iconObj.GetComponent<RectTransform>();
+            iconRect.anchorMin = Vector2.zero;
+            iconRect.anchorMax = Vector2.one;
+            iconRect.sizeDelta = Vector2.zero;
+        }
+        else
+        {
+            iconObj = existingIcon.gameObject;
+        }
+
+        // アイコン画像を設定
+        Image iconImg = iconObj.GetComponent<Image>();
+        iconImg.sprite = iconSprite;
+        iconImg.color = Color.white;
+    }
+
     void UpdatePlayerMiniMap()
     {
         Vector3 playerPos = player.position;
@@ -752,18 +792,37 @@ public class ElementGenerator : MonoBehaviour
         // 全アイテム更新
         foreach (GameObject itemObj in objItems)
         {
+            if (itemObj == null) continue;
+
             Vector3 itemPos = itemObj.transform.position;
 
             int itemX = Mathf.RoundToInt(itemPos.x);
-
             int itemY = Mathf.RoundToInt(itemPos.z);
 
             if (IsInsideMap(itemX, itemY, objMapExist))
             {
-                Image img = objMapExist[itemX, itemY].GetComponent<Image>();
+                SetMiniMapIcon(objMapExist[itemX, itemY], itemIcon, ROOM_COLOR);
+            }
+        }
+    }
 
-                // アイテムの色
-                img.color = ITEM_COLOR;
+    /// <summary>
+    /// アイテム取得時にアイコンを消す処理
+    /// </summary>
+    /// <param name="worldPos"></param>
+    public void RemoveItemIcon(Vector3 worldPos)
+    {
+        int x = Mathf.RoundToInt(worldPos.x);
+        int y = Mathf.RoundToInt(worldPos.z);
+
+        if (IsInsideMap(x, y, objMapExist) && objMapExist[x, y] != null)
+        {
+            // そのマスの「MiniMapIcon」を探す
+            Transform iconTransform = objMapExist[x, y].transform.Find("MiniMapIcon");
+            if (iconTransform != null)
+            {
+                // アイコンが見つかったらピンポイントで削除
+                Destroy(iconTransform.gameObject);
             }
         }
     }
@@ -776,16 +835,11 @@ public class ElementGenerator : MonoBehaviour
             Vector3 goalPos = goalObj.transform.position;
 
             int goalX = Mathf.RoundToInt(goalPos.x);
-
             int goalY = Mathf.RoundToInt(goalPos.z);
 
             if (IsInsideMap(goalX, goalY, objMapExist))
             {
-                Image img = objMapExist[goalX, goalY].GetComponent<Image>();
-
-                img.sprite = goalIcon;
-
-                img.color = Color.white;
+                SetMiniMapIcon(objMapExist[goalX, goalY], goalIcon, ROOM_COLOR);
             }
         }
     }
@@ -798,24 +852,14 @@ public class ElementGenerator : MonoBehaviour
             Vector3 SwitchPos = SwitchObj.transform.position;
 
             int SwitchX = Mathf.RoundToInt(SwitchPos.x);
-
             int SwitchY = Mathf.RoundToInt(SwitchPos.z);
 
             if (IsInsideMap(SwitchX, SwitchY, objMapExist))
             {
-                Image img = objMapExist[SwitchX, SwitchY].GetComponent<Image>();
                 SwitchManager sw = SwitchObj.GetComponentInChildren<SwitchManager>();
+                Sprite currentSwitchIcon = (sw != null && sw.isPressed) ? switchONIcon : switchOFFIcon;
 
-                if (sw != null && sw.isPressed)
-                {
-                    img.sprite = switchONIcon;
-                }
-                else
-                {
-                    img.sprite = switchOFFIcon;
-                }
-
-                img.color = Color.white;
+                SetMiniMapIcon(objMapExist[SwitchX, SwitchY], currentSwitchIcon, ROOM_COLOR);
             }
         }
     }
