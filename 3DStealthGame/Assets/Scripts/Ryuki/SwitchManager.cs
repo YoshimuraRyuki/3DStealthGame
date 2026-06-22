@@ -31,6 +31,8 @@ public class SwitchManager : MonoBehaviour
     bool isActionSwitch = false;
     bool isEndAction = false;
 
+    public bool isPressed = false; // ミニマップアイコンんを変更するためのフラグ
+
     public bool isEnemyMoveStop = false;
 	private bool _stunSent = false;
     
@@ -101,9 +103,10 @@ public class SwitchManager : MonoBehaviour
         if (Pc.isAction) return;
         isEndAction = true;
         isPlayerInRange = false;
-        rd.material.color = Color.red;
+        rd.material.color = Color.green;
 
         isActionSwitch = false;
+        isPressed = true;
 
         var wsClient = FindObjectOfType<WebSocketClient>();
         if (wsClient != null) wsClient.SendSwitchActivated(targetEnemyID);
@@ -115,17 +118,21 @@ public class SwitchManager : MonoBehaviour
 
     void TryAction()
     {
-        if (!isPlayerInRange) return;
+        //if (!isPlayerInRange) return;
+        if (!isPlayerInRange || isEndAction || isActionSwitch || isActionEnemy) return;
 
         if (CompareTag("Enemy"))
         {
             isActionEnemy = true;
             Pc.isPlayerMoveStop = true;
+            enemy.TextCancel();
+            actionText.gameObject.SetActive(false);
             Pc.PunchEnemy();
         }
 
         if (CompareTag("Switch"))
         {
+            isActionSwitch = true;
             Pc.isAction = true;
             Pc.isPlayerMoveStop = true;
             // ここで1回だけ実行
@@ -135,7 +142,7 @@ public class SwitchManager : MonoBehaviour
                 em.PlayAnimationWall();
                 OpenGimmickWall(targetEnemyID);
             }
-            isActionSwitch = true;
+            actionText.gameObject.SetActive(false);
             Pc.PunchSwitch();
         }
     }
@@ -179,7 +186,7 @@ public class SwitchManager : MonoBehaviour
 		isPlayerInRange = false;
 		if (em != null) em.PlayAnimationWall();
 		OpenGimmickWall(targetEnemyID);
-		rd.material.color = Color.red;
+		rd.material.color = Color.green;
 	}
 
 	#endregion
@@ -253,7 +260,7 @@ public class SwitchManager : MonoBehaviour
             if (pc != null && pc.isLocalPlayer)
                 Pc = pc;
             isPlayerInRange = true;
-            if (actionText != null)
+            if (actionText != null && !Pc.isPlayerMoveStop)
             {
                 actionText.gameObject.SetActive(true);
             }

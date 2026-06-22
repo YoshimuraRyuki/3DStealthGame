@@ -18,7 +18,6 @@ public class UISelectionEffect : MonoBehaviour, ISelectHandler, IDeselectHandler
     // スティック等でこのUIが選ばれた時に実行される
     public void OnSelect(BaseEventData eventData)
     {
-        print("呼ばれた");
         if (selectionVisual != null)
         {
             selectionVisual.SetActive(true);
@@ -30,7 +29,6 @@ public class UISelectionEffect : MonoBehaviour, ISelectHandler, IDeselectHandler
     {
         if (selectionVisual != null)
         {
-        print("削除された");
             selectionVisual.SetActive(false);
         }
     }

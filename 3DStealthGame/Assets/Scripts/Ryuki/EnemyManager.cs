@@ -811,16 +811,21 @@ public class EnemyManager : MonoBehaviour
         animEnemy.SetTrigger("Stun");
         Sm.isEnemyMoveStop = true;
 
-        // 攻撃されたらリアクションテキストを消す
-        if (reactionText != null)
-        {
-            reactionText.gameObject.SetActive(false);
-            isReaction = false;
-        }
         var col = GetComponent<Collider>();
         if (col != null)
         {
             col.enabled = false;
+        }
+    }
+
+    public void TextCancel()
+    {      
+        // 攻撃されたらリアクションテキストを消す
+        if (reactionText != null)
+        {
+            print("呼ばれた");
+            reactionText.gameObject.SetActive(false);
+            isReaction = false;
         }
     }
 
