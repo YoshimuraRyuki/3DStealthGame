@@ -74,11 +74,14 @@
     <Compile Include="Assets\Scripts\Ryuki\MenuSelector.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\PlayerController.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\ItemManager.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Managers\StaminaItemManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\NameTag.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\QuickChatManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\TutorialManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Camera\PlayerCamera.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Managers\StaminaManager.cs" />
     <Compile Include="Assets\Scripts\Ryuki\WallCollision.cs" />
+    <Compile Include="Assets\Scripts\Masataka\UI\StaminaGaugeUI.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\NameInputManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\MissionManager.cs" />
     <Compile Include="Assets\Scripts\Ryuki\EnemyManager.cs" />

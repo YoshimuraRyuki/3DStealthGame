@@ -13,12 +13,14 @@ public class ElementGenerator : MonoBehaviour
 {
     #region 定数
 
-    readonly Color ROOM_COLOR = new Color(0, 0.8f, 1, 0.5f);        // 部屋の色
-    readonly Color AISLE_COLOR = new Color(0, 1, 0, 0.5f);          // 通路の色
-    readonly Color PLAYER_COLOR = new Color(1, 1, 0, 1);            // プレイヤーの色
-    readonly Color ENEMY_COLOR = new Color(1, 0, 0, 0.5f);          // 敵の色
-    readonly Color ITEM_COLOR = new Color(1, 0, 1, 1f);             // アイテムの色
-    readonly Color SWITCH_COLOR = new Color(1, 0, 1, 1f);           // スイッチの色
+    readonly Color ROOM_COLOR = new Color(0.5f, 0.5f, 0.5f, 0.5f);        // 部屋の色
+    readonly Color AISLE_COLOR = new Color(0.5f, 0.5f, 0.5f, 0.5f);          // 通路の色
+    //readonly Color PLAYER_COLOR = new Color(0, 0, 1, 1);            // プレイヤーの色
+	readonly Color PLAYER1_COLOR = new Color(0, 0.5f, 1, 1);    // 青（ホスト）
+	readonly Color PLAYER2_COLOR = new Color(0, 1, 0.3f, 1);    // 緑（ゲスト）
+	readonly Color ENEMY_COLOR = new Color(1, 0, 0, 0.5f);          // 敵の色
+ //   readonly Color ITEM_COLOR = new Color(1, 0, 1, 1f);             // アイテムの色
+ //   readonly Color SWITCH_COLOR = new Color(1, 0, 1, 1f);           // スイッチの色
 
     #endregion
 
@@ -597,61 +599,57 @@ public class ElementGenerator : MonoBehaviour
         map2DRect.anchoredPosition = new Vector2(posX, posY);
     }
 
-    void UpdatePlayerOnMap(
-    Transform target,
-    ref int curX, ref int curY,
-    ref int oldX, ref int oldY,
-    GameObject[,] mapExist,
-    RectTransform targetRect,
-    RectTransform maskRect)
-    {
-        if (mapExist == null || target == null) return;
+	void UpdatePlayerOnMap(
+	 Transform target,
+	 ref int curX, ref int curY,
+	 ref int oldX, ref int oldY,
+	 GameObject[,] mapExist,
+	 RectTransform targetRect,
+	 RectTransform maskRect,
+	 Color playerColor) // ←追加
+	{
+		if (mapExist == null || target == null) return;
 
-        curX = Mathf.RoundToInt(target.position.x);
-        curY = Mathf.RoundToInt(target.position.z);
+		curX = Mathf.RoundToInt(target.position.x);
+		curY = Mathf.RoundToInt(target.position.z);
 
-        if (oldX != curX || oldY != curY)
-        {
-            // 前のマスを地形色に戻す
-            if (IsInsideMap(oldX, oldY, mapExist))
-            {
-                Image oldImg = mapExist[oldX, oldY].GetComponent<Image>();
+		if (oldX != curX || oldY != curY)
+		{
+			if (IsInsideMap(oldX, oldY, mapExist))
+			{
+				Image oldImg = mapExist[oldX, oldY].GetComponent<Image>();
+				string cellData = map[oldX, oldY];
+				string tileType = string.IsNullOrEmpty(cellData) ? "" : cellData.Split('_')[0];
+				if (tileType == "1") oldImg.color = ROOM_COLOR;
+				else if (tileType == "2" || tileType == "12") oldImg.color = AISLE_COLOR;
+				else oldImg.color = ROOM_COLOR;
+			}
 
-                string cellData = map[oldX, oldY];
-                string tileType = string.IsNullOrEmpty(cellData) ? "" : cellData.Split('_')[0];
+			if (IsInsideMap(curX, curY, mapExist))
+			{
+				mapExist[curX, curY].GetComponent<Image>().color = playerColor; // ←変更
+			}
 
-                if (map[oldX, oldY] == "1") oldImg.color = ROOM_COLOR;
-                else if (map[oldX, oldY] == "2" || map[oldX, oldY] == "12") oldImg.color = AISLE_COLOR;
-                else oldImg.color = ROOM_COLOR;
-            }
+			oldX = curX;
+			oldY = curY;
+		}
 
-            // 現在のマスをプレイヤー色に
-            if (IsInsideMap(curX, curY, mapExist))
-            {
-                mapExist[curX, curY].GetComponent<Image>().color = PLAYER_COLOR;
-            }
+		float centerX = maskRect.rect.width * 0.5f;
+		float centerY = maskRect.rect.height * 0.5f;
+		float playerCellX = (curX * cellSize) + (cellSize * 0.5f);
+		float playerCellY = (curY * cellSize) + (cellSize * 0.5f);
+		targetRect.anchoredPosition = new Vector2(centerX - playerCellX, centerY - playerCellY);
+	}
 
-            oldX = curX;
-            oldY = curY;
-        }
+	#endregion
 
-        // ミニマップを中心に移動
-        float centerX = maskRect.rect.width * 0.5f;
-        float centerY = maskRect.rect.height * 0.5f;
-        float playerCellX = (curX * cellSize) + (cellSize * 0.5f);
-        float playerCellY = (curY * cellSize) + (cellSize * 0.5f);
-        targetRect.anchoredPosition = new Vector2(centerX - playerCellX, centerY - playerCellY);
-    }
+	#region 澤田作：サーバ関連処理
 
-    #endregion
-
-    #region 澤田作：サーバ関連処理
-
-    /// <summary>
-    /// ただしAwake時点ではmyPlayerがまだ生成されていない（init受信後に生成される）ので、コールバックで後から渡す方式にします。
-    /// </summary>
-    /// <param name="t"></param>
-    public void SetPlayerTransform(Transform t)
+	/// <summary>
+	/// ただしAwake時点ではmyPlayerがまだ生成されていない（init受信後に生成される）ので、コールバックで後から渡す方式にします。
+	/// </summary>
+	/// <param name="t"></param>
+	public void SetPlayerTransform(Transform t)
     {
         player = t;
         // ミニマップの初期中心も更新
@@ -757,7 +755,7 @@ public class ElementGenerator : MonoBehaviour
             }
 
             // 現在位置をプレイヤー色に
-            if (IsInsideMap(currentPlayerX, currentPlayerY, objMapExist))
+            /*if (IsInsideMap(currentPlayerX, currentPlayerY, objMapExist))
             {
                 print("プレイヤー色変える");
 
@@ -765,7 +763,7 @@ public class ElementGenerator : MonoBehaviour
 
                 // プレイヤー位置
                 currentImage.color = PLAYER_COLOR;
-            }
+            }*/
             oldPlayerX = currentPlayerX;
             oldPlayerY = currentPlayerY;
 
@@ -774,18 +772,22 @@ public class ElementGenerator : MonoBehaviour
         // マップを逆方向へ動かす
         CenterMiniMap(currentPlayerX, currentPlayerY);
 
-        // P1（自分）
-        if (player != null)
-            UpdatePlayerOnMap(player, ref currentPlayerX, ref currentPlayerY,
-                              ref oldPlayerX, ref oldPlayerY,
-                              objMapExist_P1, map2DRect_P1, miniMapMaskRect_P1);
+		var wsClient = FindObjectOfType<WebSocketClient>();
+		Color myColor = (wsClient != null && wsClient.IsHostPlayer()) ? PLAYER1_COLOR : PLAYER2_COLOR;
+		Color remoteColor = (wsClient != null && wsClient.IsHostPlayer()) ? PLAYER2_COLOR : PLAYER1_COLOR;
 
-        // P2（相手）
-        if (remotePlayer != null)
-            UpdatePlayerOnMap(remotePlayer, ref currentRemoteX, ref currentRemoteY,
-                              ref oldRemoteX, ref oldRemoteY,
-                              objMapExist_P2, map2DRect_P2, miniMapMaskRect_P2);
-    }
+		// P1（自分）
+		if (player != null)
+			UpdatePlayerOnMap(player, ref currentPlayerX, ref currentPlayerY,
+							  ref oldPlayerX, ref oldPlayerY,
+							  objMapExist_P1, map2DRect_P1, miniMapMaskRect_P1, myColor);
+
+		// P2（相手）
+		if (remotePlayer != null)
+			UpdatePlayerOnMap(remotePlayer, ref currentRemoteX, ref currentRemoteY,
+							  ref oldRemoteX, ref oldRemoteY,
+							  objMapExist_P2, map2DRect_P2, miniMapMaskRect_P2, remoteColor);
+	}
 
     void UpdateItemMiniMap()
     {
@@ -994,10 +996,12 @@ public class ElementGenerator : MonoBehaviour
                 break;
 
             case "3":
-                img.color = PLAYER_COLOR;
+                img.color = PLAYER1_COLOR;
                 break;
-
-            case "12":
+			case "4":
+				img.color = PLAYER2_COLOR;
+				break;
+			case "12":
                 img.color = AISLE_COLOR;
                 break;
         }
