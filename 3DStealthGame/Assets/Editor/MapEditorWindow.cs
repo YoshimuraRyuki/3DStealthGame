@@ -43,7 +43,7 @@ public class MapEditorWindow : EditorWindow
     #region エディタUI関連
 
     MapObjectType selectedType = MapObjectType.Floor;  // 初期のマップタイル
-    int selectedGimmickID = 1;                         // 現在選択されている配置オブジェクトのID
+    int selectedGimmickID = -1;                        // 現在選択されている配置オブジェクトのID
     Vector2 scrollPosition;                            // スクロール位置管理
     const float cellSize = 22f;                        // 正方形マスサイズ定義
 
@@ -112,6 +112,12 @@ public class MapEditorWindow : EditorWindow
 
         scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 
+        // テキスト表示用の中央揃えスタイルを作成
+        GUIStyle centerLabelStyle = new GUIStyle(EditorStyles.miniLabel);
+        centerLabelStyle.alignment = TextAnchor.MiddleCenter;
+        centerLabelStyle.fontStyle = FontStyle.Bold;
+        centerLabelStyle.normal.textColor = Color.black;
+
         for (int r = 0; r < rows; r++)
         {
             EditorGUILayout.BeginHorizontal();
@@ -130,19 +136,33 @@ public class MapEditorWindow : EditorWindow
                 // 判別用のカラー変数を定義
                 Color chipColor = new Color(1.0f, 1.0f, 1.0f, 1.0f);
                 if (typeStr == "0") chipColor = new Color(0.1f, 0.1f, 0.1f, 1.0f); // 壁：ダークグレー
-                else if (typeStr == "12") chipColor = new Color(0.0f, 1.0f, 1.0f, 1.0f); // 透明壁：青緑
-                else if (typeStr == "1") chipColor = new Color(1.0f, 1.0f, 1.0f, 1.0f); // 床：白に近いグレー
-                else if (typeStr == "3" || typeStr == "4") chipColor = new Color(1.0f, 0.0f, 0.0f, 1.0f); // 敵：赤
-                else if (typeStr == "7") chipColor = new Color(0.0f, 1.0f, 0.0f, 1.0f); // スイッチ：緑
+                else if (typeStr == "1") chipColor = new Color(1.0f, 1.0f, 1.0f, 1.0f); // 床：白
+                else if (typeStr == "3") chipColor = new Color(1.0f, 0.5f, 0.0f, 1.0f); // 敵：オレンジ
+                else if (typeStr == "4") chipColor = new Color(1.0f, 0.0f, 0.0f, 1.0f); // 敵：赤
+                else if (typeStr == "5") chipColor = new Color(1.0f, 0.0f, 1.0f, 1.0f); // アイテム：ピンク
                 else if (typeStr == "6") chipColor = new Color(1.0f, 1.0f, 0.0f, 1.0f); // ゴール：黄
-                else if (typeStr == "10") chipColor = new Color(0.0f, 0.3f, 1.0f, 1.0f); // プレイヤー：青
-                else if (typeStr == "11") chipColor = new Color(0.0f, 1.0f, 0.0f, 1.0f); // プレイヤー：緑
-                else if (int.TryParse(typeStr, out int tNum) && tNum > 1) chipColor = new Color(1.0f, 0.0f, 1.0f, 1.0f); // その他アイテムなど：紫
+                else if (typeStr == "7") chipColor = new Color(0.0f, 1.0f, 0.0f, 0.5f); // スイッチ：緑
+                else if (typeStr == "10" || typeStr == "11") chipColor = new Color(1.0f, 1.0f, 0.6f, 1.0f); // プレイヤー：黄
+                else if (typeStr == "12") chipColor = new Color(0.0f, 0.0f, 0.0f, 0.7f); // 透明壁：薄い黒
+                else if (typeStr == "13") chipColor = new Color(1.0f, 0.08f, 0.58f, 1.0f); // 青用アイテム
+                else if (typeStr == "14") chipColor = new Color(1.0f, 0.0f, 0.6f, 1.0f); // 緑用アイテム
+                else if (typeStr == "15") chipColor = new Color(0.0f, 1.0f, 1.0f, 1.0f); // 青用スイッチ
+                else if (typeStr == "16") chipColor = new Color(0.6f, 0.95f, 0.8f, 1.0f); // 緑用スイッチ
+                else if (int.TryParse(typeStr, out int tNum) && tNum > 1) chipColor = new Color(1.0f, 0.0f, 1.0f, 1.0f); // その他：紫
 
                 Rect cellRect = GUILayoutUtility.GetRect(cellSize, cellSize, GUILayout.Width(cellSize), GUILayout.Height(cellSize));
                 Rect drawRect = new Rect(cellRect.x + 0.5f, cellRect.y + 0.5f, cellSize - 1f, cellSize - 1f);
                 EditorGUI.DrawRect(drawRect, chipColor);
-                if (data.Length > 1)
+
+                if (typeStr == "10")
+                {
+                    GUI.Label(drawRect, "1", centerLabelStyle);
+                }
+                else if (typeStr == "11")
+                {
+                    GUI.Label(drawRect, "2", centerLabelStyle);
+                }
+                else if (data.Length > 1)
                 {
                     GUI.Label(drawRect, data[1], EditorStyles.miniLabel);
                 }

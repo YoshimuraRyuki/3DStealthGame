@@ -839,6 +839,8 @@ public class ElementGenerator : MonoBehaviour
 
     void UpdateItemMiniMap()
     {
+        if (objItems == null) return;
+
         // 全アイテム更新
         foreach (GameObject itemObj in objItems)
         {
@@ -879,6 +881,7 @@ public class ElementGenerator : MonoBehaviour
 
     void UpdateGoalMiniMap()
     {
+        if (objGoals == null) return;
         // ゴール更新
         foreach (GameObject goalObj in objGoals)
         {
@@ -899,6 +902,7 @@ public class ElementGenerator : MonoBehaviour
         // 全スイッチ更新
         foreach (GameObject SwitchObj in objSwitchs)
         {
+            if (objSwitchs == null) return;
             Vector3 SwitchPos = SwitchObj.transform.position;
 
             int SwitchX = Mathf.RoundToInt(SwitchPos.x);
@@ -939,6 +943,7 @@ public class ElementGenerator : MonoBehaviour
 
     void UpdateEnemyMap(GameObject[] enemies)
     {
+        if (enemies == null) return;
         foreach (GameObject enemyObj in enemies)
         {
             Vector3 enemyPos = enemyObj.transform.position;
@@ -963,6 +968,7 @@ public class ElementGenerator : MonoBehaviour
     float offset,
     bool useLightColor)
     {
+        if (enemies == null || views == null) return;
         for (int i = 0; i < enemies.Length; i++)
         {
             GameObject enemyObj = enemies[i];
