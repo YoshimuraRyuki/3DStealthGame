@@ -192,19 +192,30 @@ public class EnemyManager : MonoBehaviour
     GameObject GetNearPoint(GameObject currentPoint)
     {
         GameObject[] objs = GameObject.FindGameObjectsWithTag("Point");
-
         List<GameObject> nearPoints = new List<GameObject>();
+        Vector3 currentPos = currentPoint.transform.position;
 
         foreach (GameObject obj in objs)
         {
             if (obj == currentPoint) continue;
 
-            float distance = Vector3.Distance(currentPoint.transform.position, obj.transform.position);
+            Vector3 targetPos = obj.transform.position;
+            float distance = Vector3.Distance(currentPos, targetPos);
 
             // 一定距離以内だけ候補にする
             if (distance <= 10f)
             {
+                Vector3 direction = targetPos - currentPos;
+
+                int wallLayerMask = LayerMask.GetMask("Wall");
+
+                // 壁の向こうにあるポイントだったら次のポイントへ再抽選
+                if (Physics.Raycast(currentPos, direction, distance, wallLayerMask))
+                {
+                    continue;
+                }
                 nearPoints.Add(obj);
+
             }
         }
 

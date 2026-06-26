@@ -13,13 +13,12 @@ public class ElementGenerator : MonoBehaviour
 {
     #region 定数
 
-    readonly Color ROOM_COLOR = new Color(0, 0.8f, 1, 0.5f);        // 部屋の色
-    readonly Color AISLE_COLOR = new Color(0, 1, 0, 0.5f);          // 通路の色
-    readonly Color PLAYER_COLOR = new Color(1, 1, 0, 1);            // プレイヤーの色
+    readonly Color ROOM_COLOR = new Color(0.5f, 0.5f, 0.5f, 0.5f);  // 部屋の色
+    readonly Color AISLE_COLOR = new Color(0.5f, 0.5f, 0.5f, 0.5f); // 通路の色
+    readonly Color PLAYER1_COLOR = new Color(0, 0.5f, 1, 1);        // 青（ホスト）
+    readonly Color PLAYER2_COLOR = new Color(0, 1, 0.3f, 1);        // 緑（ゲスト）
     readonly Color ENEMY_COLOR = new Color(1, 0, 0, 0.5f);          // 敵の色
-    readonly Color ITEM_COLOR = new Color(1, 0, 1, 1f);             // アイテムの色
-    readonly Color SWITCH_COLOR = new Color(1, 0, 1, 1f);           // スイッチの色
-
+    
     #endregion
 
     #region リソース格納用
@@ -33,6 +32,11 @@ public class ElementGenerator : MonoBehaviour
     GameObject[] mapTilesList = new GameObject[4];                  // マップタイルリスト
     GameObject[] respawnPointsList = new GameObject[1];             // リスポーン地点リスト
     GameObject wallObjects;                                         // マップ作成用キューブ
+
+    // 仮作成用プレイヤースイッチギミックに必要なアイテム
+    GameObject[] powerItemBlue = new GameObject[1];                 // 青用アイテム               
+    GameObject[] powerItemGreen = new GameObject[1];                // 緑用アイテム
+
     Sprite goalIcon;                                                // ゴールアイコン
     Sprite switchOFFIcon;                                           // スイッチアイコン
     Sprite switchONIcon;                                            // スイッチアイコン
@@ -55,10 +59,15 @@ public class ElementGenerator : MonoBehaviour
         Item = 5,
         Goal = 6,
         Switch = 7,
-        Player1 = 8,
+        Respawn = 8,
         PatrolPoint = 9,
-        Player2 = 10,
-        Respawn = 11
+        Player1 = 10,
+        Player2 = 11,
+        InvisibleWall = 12,
+        powerItemBlue = 13,
+        powerItemGreen = 14,
+        switchBlue = 15,
+        switchGreen = 16
     }
     // メンバ変数として追加
     public Dictionary<int, List<GameObject>> gimmickWallDic = new Dictionary<int, List<GameObject>>();
@@ -217,6 +226,10 @@ public class ElementGenerator : MonoBehaviour
 
         // リスポーン地点
         respawnPointsList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Respawn");
+
+        // 仮作成
+        powerItemBlue[0] = Resources.Load<GameObject>("Prefabs/Ryuki/PowerBlue");
+        powerItemGreen[0] = Resources.Load<GameObject>("Prefabs/Ryuki/PowerGreen");
     }
 
     /// <summary>
@@ -416,7 +429,7 @@ public class ElementGenerator : MonoBehaviour
                         break;
 
                     case MapObjectType.Switch: // スイッチ
-                        GameObject switchObj = Instantiate(switchesList[0], pos, Quaternion.identity);
+                        GameObject switchObj = Instantiate(switchesList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
                         objSwitchs = GameObject.FindGameObjectsWithTag("Switch");
                         map[x, y] = "1";
                         // ギミック用
@@ -446,6 +459,43 @@ public class ElementGenerator : MonoBehaviour
                     case MapObjectType.Respawn: // リスポーン
                         Instantiate(respawnPointsList[0], pos, Quaternion.identity);
                         map[x, y] = "1";
+                        break;
+
+                    // 仮で作るアイテム
+                    case MapObjectType.powerItemBlue: // 青用アイテム
+                        Instantiate(powerItemBlue[0], pos + Vector3.up * 0.5f, Quaternion.identity);
+                        map[x, y] = "1";
+                        break;
+
+                    case MapObjectType.powerItemGreen: // 緑用アイテム
+                        Instantiate(powerItemGreen[0], pos + Vector3.up * 0.5f, Quaternion.identity);
+                        map[x, y] = "1";
+                        break;
+
+                    case MapObjectType.switchBlue: // 青用スイッチ
+                        GameObject switchBlueObj = Instantiate(switchesList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
+                        objSwitchs = GameObject.FindGameObjectsWithTag("Switch");
+                        map[x, y] = "1";
+                        // ギミック用
+                        SwitchManager swb = switchBlueObj.GetComponentInChildren<SwitchManager>();
+                        swb.targetEnemyID = id;
+                        switchList.Add(swb);
+                        // 色変更
+                        Renderer rend = switchBlueObj.GetComponent<Renderer>();
+                        if (rend != null) rend.material.color = new Color(0.35f, 0.5f, 0.75f, 1.0f);
+                        break;
+
+                    case MapObjectType.switchGreen: // 青用スイッチ
+                        GameObject switchGreenObj = Instantiate(switchesList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
+                        objSwitchs = GameObject.FindGameObjectsWithTag("Switch");
+                        map[x, y] = "1";
+                        // ギミック用
+                        SwitchManager swg = switchGreenObj.GetComponentInChildren<SwitchManager>();
+                        swg.targetEnemyID = id;
+                        switchList.Add(swg);
+                        // 色変更
+                        Renderer rend2 = switchGreenObj.GetComponent<Renderer>();
+                        if (rend2 != null) rend2.material.color = new Color(0.35f, 0.6f, 0.42f, 1.0f);
                         break;
                 }
             }
@@ -598,12 +648,13 @@ public class ElementGenerator : MonoBehaviour
     }
 
     void UpdatePlayerOnMap(
-    Transform target,
-    ref int curX, ref int curY,
-    ref int oldX, ref int oldY,
-    GameObject[,] mapExist,
-    RectTransform targetRect,
-    RectTransform maskRect)
+     Transform target,
+     ref int curX, ref int curY,
+     ref int oldX, ref int oldY,
+     GameObject[,] mapExist,
+     RectTransform targetRect,
+     RectTransform maskRect,
+     Color playerColor) // ←追加
     {
         if (mapExist == null || target == null) return;
 
@@ -612,30 +663,25 @@ public class ElementGenerator : MonoBehaviour
 
         if (oldX != curX || oldY != curY)
         {
-            // 前のマスを地形色に戻す
             if (IsInsideMap(oldX, oldY, mapExist))
             {
                 Image oldImg = mapExist[oldX, oldY].GetComponent<Image>();
-
                 string cellData = map[oldX, oldY];
                 string tileType = string.IsNullOrEmpty(cellData) ? "" : cellData.Split('_')[0];
-
-                if (map[oldX, oldY] == "1") oldImg.color = ROOM_COLOR;
-                else if (map[oldX, oldY] == "2" || map[oldX, oldY] == "12") oldImg.color = AISLE_COLOR;
+                if (tileType == "1") oldImg.color = ROOM_COLOR;
+                else if (tileType == "2" || tileType == "12") oldImg.color = AISLE_COLOR;
                 else oldImg.color = ROOM_COLOR;
             }
 
-            // 現在のマスをプレイヤー色に
             if (IsInsideMap(curX, curY, mapExist))
             {
-                mapExist[curX, curY].GetComponent<Image>().color = PLAYER_COLOR;
+                mapExist[curX, curY].GetComponent<Image>().color = playerColor; // ←変更
             }
 
             oldX = curX;
             oldY = curY;
         }
 
-        // ミニマップを中心に移動
         float centerX = maskRect.rect.width * 0.5f;
         float centerY = maskRect.rect.height * 0.5f;
         float playerCellX = (curX * cellSize) + (cellSize * 0.5f);
@@ -713,7 +759,7 @@ public class ElementGenerator : MonoBehaviour
 
         Image tileImg = tileObj.GetComponent<Image>();
         tileImg.color = tileColor;
-        tileImg.sprite = null; 
+        tileImg.sprite = null;
 
         Transform existingIcon = tileObj.transform.Find("MiniMapIcon");
         GameObject iconObj;
@@ -757,7 +803,7 @@ public class ElementGenerator : MonoBehaviour
             }
 
             // 現在位置をプレイヤー色に
-            if (IsInsideMap(currentPlayerX, currentPlayerY, objMapExist))
+            /*if (IsInsideMap(currentPlayerX, currentPlayerY, objMapExist))
             {
                 print("プレイヤー色変える");
 
@@ -765,7 +811,7 @@ public class ElementGenerator : MonoBehaviour
 
                 // プレイヤー位置
                 currentImage.color = PLAYER_COLOR;
-            }
+            }*/
             oldPlayerX = currentPlayerX;
             oldPlayerY = currentPlayerY;
 
@@ -774,17 +820,21 @@ public class ElementGenerator : MonoBehaviour
         // マップを逆方向へ動かす
         CenterMiniMap(currentPlayerX, currentPlayerY);
 
+        var wsClient = FindObjectOfType<WebSocketClient>();
+        Color myColor = (wsClient != null && wsClient.IsHostPlayer()) ? PLAYER1_COLOR : PLAYER2_COLOR;
+        Color remoteColor = (wsClient != null && wsClient.IsHostPlayer()) ? PLAYER2_COLOR : PLAYER1_COLOR;
+
         // P1（自分）
         if (player != null)
             UpdatePlayerOnMap(player, ref currentPlayerX, ref currentPlayerY,
                               ref oldPlayerX, ref oldPlayerY,
-                              objMapExist_P1, map2DRect_P1, miniMapMaskRect_P1);
+                              objMapExist_P1, map2DRect_P1, miniMapMaskRect_P1, myColor);
 
         // P2（相手）
         if (remotePlayer != null)
             UpdatePlayerOnMap(remotePlayer, ref currentRemoteX, ref currentRemoteY,
                               ref oldRemoteX, ref oldRemoteY,
-                              objMapExist_P2, map2DRect_P2, miniMapMaskRect_P2);
+                              objMapExist_P2, map2DRect_P2, miniMapMaskRect_P2, remoteColor);
     }
 
     void UpdateItemMiniMap()
@@ -994,9 +1044,11 @@ public class ElementGenerator : MonoBehaviour
                 break;
 
             case "3":
-                img.color = PLAYER_COLOR;
+                img.color = PLAYER1_COLOR;
                 break;
-
+            case "4":
+                img.color = PLAYER2_COLOR;
+                break;
             case "12":
                 img.color = AISLE_COLOR;
                 break;

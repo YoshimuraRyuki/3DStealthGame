@@ -4261,7 +4261,7 @@ MonoBehaviour:
   miniMapMaskRect_P1: {fileID: 1070339475}
   map2DRect_P2: {fileID: 1655844094}
   miniMapMaskRect_P2: {fileID: 1070339475}
-  enableWallCollider: 0
+  enableWallCollider: 1
 --- !u!4 &1484845754
 Transform:
   m_ObjectHideFlags: 0
