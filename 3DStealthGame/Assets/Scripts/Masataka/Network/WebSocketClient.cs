@@ -169,6 +169,9 @@ public static class SendMessageBuilder
 	public static string Chat(string message, string senderId)
 	=> $"{{\"type\":\"chat\",\"message\":\"{message}\",\"sender_id\":\"{senderId}\"}}";
 
+	public static string StaminaItemPicked()
+	=> "{\"type\":\"stamina_item_picked\"}";
+
 	public static string EnemyMove(int index, Vector3 pos, float angle, Color light, string reaction, Vector3 lastSound)
 		=> $"{{\"type\":\"enemy_move\",\"enemy_index\":{index}," +
 		   $"\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z},\"angle\":{angle}," +
@@ -282,10 +285,6 @@ public class WebSocketClient : MonoBehaviour
 	{
 		Application.runInBackground = true;
 		playerName = "";
-		/*websocket = new WebSocket(GetServerUrl("test"));
-		websocket.OnOpen += () => Debug.Log("サーバーに接続");
-		websocket.OnMessage += OnMessageReceived;
-		websocket.OnError += (e) => Debug.Log("エラー: " + e);*/
 	}
 
 	async void Update()
@@ -352,7 +351,6 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	void OnSceneLoaded(Scene scene, LoadSceneMode mode)
 	{
-		Debug.Log($"OnSceneLoaded: {scene.name}");
 		isGameSceneLoaded = scene.name == "MapTest";
 
 		if (scene.name == "Title")
@@ -377,15 +375,12 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	public async void ConnectToRoom(string roomId)
 	{
-		Debug.Log("ConnectToRoom開始");
 		var ws = new WebSocket(GetServerUrl(roomId));
 		ws.OnOpen += OnWebSocketOpened;
 		ws.OnMessage += OnMessageReceived;
-		ws.OnError += (e) => Debug.Log($"接続エラー: {e}");
+		//ws.OnError += (e) => Debug.Log($"接続エラー: {e}");
 		websocket = ws;
-		Debug.Log("Connect呼ぶ");
 		await ws.Connect();
-		Debug.Log("Connect完了");
 	}
 
 	/// <summary>プレイヤー名を設定する</summary>
@@ -413,7 +408,6 @@ public class WebSocketClient : MonoBehaviour
 		myId = null;
 		spawnPositions.Clear();
 		pendingMessages.Clear();
-		//Debug.Log("接続を切断しました");
 	}
 
 	private void OnWebSocketOpened() { Debug.Log("接続成功"); }
@@ -423,7 +417,7 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	public async void OnReadyButtonClicked()
 	{
-		Debug.Log($"準備完了押した websocket={websocket?.State}");
+		//Debug.Log($"準備完了押した websocket={websocket?.State}");
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
 		string json = "{\"type\":\"ready\",\"position\":{\"x\":0,\"y\":1,\"z\":0}}";
 		await websocket.SendText(json);
@@ -460,8 +454,6 @@ public class WebSocketClient : MonoBehaviour
 		_enemyObjects = null;
 		enemyTargetPositions.Clear();
 		enemyTargetAngles.Clear();
-
-		Debug.Log("リセット完了");
 	}
 	#endregion
 
@@ -524,6 +516,7 @@ public class WebSocketClient : MonoBehaviour
 		else if (json.Contains("\"type\":\"enemy_stun_cancel\"")) HandleEnemyStunCancelMessage(json);
 		else if (json.Contains("\"type\":\"enemy_stun\"")) HandleEnemyStunMessage(json);
 		else if (json.Contains("\"type\":\"respawn\"")) HandleRespawnMessage(json);
+		else if (json.Contains("\"type\":\"stamina_item_picked\"")) HandleStaminaItemPickedMessage(json);
 		else if (json.Contains("\"type\":\"chat\"")) HandleChatMessage(json);
 		else if (json.Contains("\"type\":\"start_game\""))
 		{
@@ -614,7 +607,7 @@ public class WebSocketClient : MonoBehaviour
 		{
 			TutorialManager.Instance.ShowTutorial(() =>
 			{
-				Debug.Log("ゲームスタート（チュートリアル後）");
+				//Debug.Log("ゲームスタート（チュートリアル後）");
 			});
 		}
 
@@ -739,6 +732,9 @@ public class WebSocketClient : MonoBehaviour
         if (msg.id == myId)*/
 		MissionManager.Instance?.OnItemPicked();
 		LogManager.Instance?.AddLog("アイテムを取得した", "#aadd44");
+
+		// 相手が取ったら自分のスタミナ回復
+		StaminaManager.Instance?.RecoverStamina();
 	}
 
 	/// <summary>
@@ -851,6 +847,15 @@ public class WebSocketClient : MonoBehaviour
 		var msg = JsonUtility.FromJson<ChatMessage>(json);
 		if (msg.sender_id == myId) return;
 		QuickChatManager.Instance?.OnChatReceived(msg.message, msg.sender_name);
+	}
+
+	/// <summary>
+	/// 仲間がスタミナアイテムを取った：自分のスタミナを回復する
+	/// </summary>
+	private void HandleStaminaItemPickedMessage(string json)
+	{
+		StaminaManager.Instance?.RecoverStamina();
+		LogManager.Instance?.AddLog("仲間がスタミナアイテムを取得した", "#ffcc44");
 	}
 
 	#endregion
@@ -1180,6 +1185,15 @@ public class WebSocketClient : MonoBehaviour
 		await websocket.SendText(SendMessageBuilder.Chat(message, myId));
 	}
 
+	/// <summary>
+	/// スタミナアイテム取得をサーバーに通知する
+	/// </summary>
+	public async void SendStaminaItemPicked()
+	{
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
+		await websocket.SendText(SendMessageBuilder.StaminaItemPicked());
+	}
+
 	#endregion
 
 	#region 敵の位置同期
@@ -1261,7 +1275,6 @@ public class WebSocketClient : MonoBehaviour
 	private void DelayedGameStart()
 	{
 		MissionManager.Instance?.OnGameStart();
-		//Debug.Log("DelayedGameStart: MissionManager.OnGameStart()呼び出し");
 	}
 
 	/// <summary>

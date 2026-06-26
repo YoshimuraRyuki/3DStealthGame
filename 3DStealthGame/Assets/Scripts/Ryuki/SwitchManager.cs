@@ -132,7 +132,9 @@ public class SwitchManager : MonoBehaviour
 
         if (CompareTag("Switch"))
         {
-            isActionSwitch = true;
+			if (!StaminaManager.Instance.CanUseStamina(2)) return; // ë´ÇËÇ»ÇØÇÍÇŒâüÇπÇ»Ç¢
+			StaminaManager.Instance.UseStamina(2);
+			isActionSwitch = true;
             Pc.isAction = true;
             Pc.isPlayerMoveStop = true;
             // Ç±Ç±Ç≈1âÒÇæÇØé¿çs
@@ -187,6 +189,7 @@ public class SwitchManager : MonoBehaviour
 		if (em != null) em.PlayAnimationWall();
 		OpenGimmickWall(targetEnemyID);
 		rd.material.color = Color.green;
+		isPressed = true;
 	}
 
 	#endregion
