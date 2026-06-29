@@ -3,16 +3,16 @@
   "WorkspaceRootPath": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Editor\\MapEditorWindow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Assets\\Editor\\MapEditorWindow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{CB22E640-4FCD-8608-928F-3751E686A4DB}|Assembly-CSharp-Editor.csproj|c:\\users\\ydauser01\\documents\\_git\\3dstealthgame\\assets\\editor\\mapeditorwindow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CB22E640-4FCD-8608-928F-3751E686A4DB}|Assembly-CSharp-Editor.csproj|solutionrelative:assets\\editor\\mapeditorwindow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|c:\\users\\ydauser01\\documents\\_git\\3dstealthgame\\assets\\scripts\\ryuki\\csvmaploader.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ryuki\\csvmaploader.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|c:\\users\\ydauser01\\documents\\_git\\3dstealthgame\\assets\\scripts\\ryuki\\elementgenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\assets\\scripts\\ryuki\\elementgenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ryuki\\elementgenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\assets\\scripts\\ryuki\\csvmaploader.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ryuki\\csvmaploader.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\assets\\scripts\\ryuki\\enemymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -148,7 +148,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 7,
+          "SelectedChildIndex": 6,
           "Children": [
             {
               "$type": "Document",
@@ -174,8 +174,7 @@
               "ViewState": "AgIAANQAAAAAAAAAAAAuwOcEAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-18T05:11:54.304Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "IsPinned": true
             },
             {
               "$type": "Document",
@@ -188,8 +187,7 @@
               "ViewState": "AgIAAAEAAAAAAAAAAAAuwFEAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-18T06:02:11.214Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "IsPinned": true
             },
             {
               "$type": "Document",
@@ -202,8 +200,7 @@
               "ViewState": "AgIAAMIAAAAAAAAAAAAuwNAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-24T01:49:10.414Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "IsPinned": true
             },
             {
               "$type": "Document",
@@ -216,34 +213,20 @@
               "ViewState": "AgIAAHMAAAAAAAAAAAAuwIcAAAAMAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-28T00:20:53.258Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "IsPinned": true
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 1,
               "Title": "ElementGenerator.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
               "ToolTip": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
               "RelativeToolTip": "Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
-              "ViewState": "AgIAAOQBAAAAAAAAAAAUwAICAAAFAAAAAAAAAA==",
+              "ViewState": "AgIAAGADAAAAAAAAAAAuwPIDAAAhAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-16T05:07:42.565Z",
               "IsPinned": true,
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "CsvMapLoader.cs",
-              "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Ryuki\\CsvMapLoader.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Ryuki\\CsvMapLoader.cs",
-              "ToolTip": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Ryuki\\CsvMapLoader.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Ryuki\\CsvMapLoader.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAA4AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-25T05:54:03.616Z",
               "EditorCaption": ""
             },
             {
@@ -252,12 +235,24 @@
               "Title": "MapEditorWindow.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Editor\\MapEditorWindow.cs",
               "RelativeDocumentMoniker": "Assets\\Editor\\MapEditorWindow.cs",
-              "ToolTip": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Editor\\MapEditorWindow.cs*",
-              "RelativeToolTip": "Assets\\Editor\\MapEditorWindow.cs*",
-              "ViewState": "AgIAABUAAAAAAAAAAAAAACcAAAAAAAAAAAAAAA==",
+              "ToolTip": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Editor\\MapEditorWindow.cs",
+              "RelativeToolTip": "Assets\\Editor\\MapEditorWindow.cs",
+              "ViewState": "AgIAAGQAAAAAAAAAAAAwwGkAAAAoAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-06-25T05:50:14.254Z",
               "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "CsvMapLoader.cs",
+              "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Ryuki\\CsvMapLoader.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Ryuki\\CsvMapLoader.cs",
+              "ToolTip": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Ryuki\\CsvMapLoader.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Ryuki\\CsvMapLoader.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAA4AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-25T05:54:03.616Z"
             },
             {
               "$type": "Document",
@@ -269,7 +264,8 @@
               "RelativeToolTip": "Library\\PackageCache\\com.unity.ugui@1.0.0\\Runtime\\EventSystem\\InputModules\\BaseInput.cs",
               "ViewState": "AgIAADwAAAAAAAAAAAAewEoAAAAvAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-08T05:18:07.16Z"
+              "WhenOpened": "2026-06-08T05:18:07.16Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -281,8 +277,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\Player\\PlayerController.cs",
               "ViewState": "AgIAANEAAAAAAAAAAAAuwOUAAAAVAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-13T05:06:26.088Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-13T05:06:26.088Z"
             },
             {
               "$type": "Document",
@@ -294,8 +289,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\UI\\RoomSelectManager.cs",
               "ViewState": "AgIAAAUAAAAAAAAAAAAuwI8AAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-21T05:58:41.817Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-21T05:58:41.817Z"
             },
             {
               "$type": "Document",
@@ -307,8 +301,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\UI\\RoomMemberPanel.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-08T23:46:50.07Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-08T23:46:50.07Z"
             },
             {
               "$type": "Document",
@@ -320,8 +313,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Ryuki\\WallCollision.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-18T05:03:46.797Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-18T05:03:46.797Z"
             },
             {
               "$type": "Document",
@@ -357,8 +349,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\Managers\\LogManager.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAYAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-12T04:29:24.425Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-12T04:29:24.425Z"
             },
             {
               "$type": "Document",
@@ -370,8 +361,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Ryuki\\UISelectionEffect.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-04T06:06:35.561Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-04T06:06:35.561Z"
             },
             {
               "$type": "Document",
@@ -383,8 +373,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Ryuki\\MenuSelector.cs",
               "ViewState": "AgIAAEEAAAAAAAAAAAAwwBIAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-04T05:55:28.615Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-04T05:55:28.615Z"
             },
             {
               "$type": "Document",
@@ -396,8 +385,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Ryuki\\RespawnPoint.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-03T04:45:16.281Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-03T04:45:16.281Z"
             },
             {
               "$type": "Document",
@@ -421,8 +409,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\Managers\\ResultData.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-25T05:57:18.712Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-25T05:57:18.712Z"
             },
             {
               "$type": "Document",
@@ -434,8 +421,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\Managers\\ResultManager.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAADAAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-25T04:55:50.171Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-25T04:55:50.171Z"
             },
             {
               "$type": "Document",
@@ -447,8 +433,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\Managers\\ReturnToTitle.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAACoAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-31T23:46:16.879Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-31T23:46:16.879Z"
             },
             {
               "$type": "Document",
@@ -460,8 +445,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\Player\\PlayerData.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAATAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-29T00:23:10.512Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-29T00:23:10.512Z"
             },
             {
               "$type": "Document",
@@ -484,8 +468,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Ryuki\\TestPlayer.cs",
               "ViewState": "AgIAAFEAAAAAAAAAAAAAAEAAAAAWAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-27T04:55:04.905Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-27T04:55:04.905Z"
             },
             {
               "$type": "Document",
@@ -531,8 +514,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\Player\\NameTag.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAE0AAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-27T05:03:59.578Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-27T05:03:59.578Z"
             },
             {
               "$type": "Document",
@@ -544,8 +526,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\Camera\\GlobalCamera.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAnAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-21T02:31:47.222Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-21T02:31:47.222Z"
             },
             {
               "$type": "Document",
@@ -557,8 +538,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\UI\\RankingManager.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAMUAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-18T05:10:57.018Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-18T05:10:57.018Z"
             },
             {
               "$type": "Document",
@@ -582,8 +562,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\Camera\\PlayerCamera.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-13T05:14:02.954Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-13T05:14:02.954Z"
             },
             {
               "$type": "Document",

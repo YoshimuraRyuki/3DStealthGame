@@ -11,7 +11,7 @@ public class MapEditorWindow : EditorWindow
 
     public enum MapObjectType
     { 
-        NormalWall = 0,      // 通常の壁 (コード内のtype == "0")
+        NormalWall = 0,      // 通常の壁
         Floor = 1,           // 床・空白
         Road = 2,            // 通路
         Enemy = 3,           // 敵
@@ -23,7 +23,7 @@ public class MapEditorWindow : EditorWindow
         PatrolPoint = 9,     // 巡回ポイント
         Player1 = 10,        // プレイヤー1
         Player2 = 11,        // プレイヤー2
-        InvisibleWall = 12,  // 透明壁 (コード内のtype == "12")
+        InvisibleWall = 12,  // 透明壁
         powerItemBlue = 13,  // 青アイテム
         powerItemGreen = 14, // 緑アイテム
         switchBlue = 15,     // 青スイッチ
@@ -43,11 +43,12 @@ public class MapEditorWindow : EditorWindow
     #region エディタUI関連
 
     MapObjectType selectedType = MapObjectType.Floor;  // 初期のマップタイル
-    int selectedGimmickID = 1;                         // 現在選択されている配置オブジェクトのID
+    int selectedGimmickID = -1;                        // 現在選択されている配置オブジェクトのID
     Vector2 scrollPosition;                            // スクロール位置管理
+    const float cellSize = 22f;                        // 正方形マスサイズ定義
 
     #endregion
-   
+
     [MenuItem("Tools/ステージ作成エディタ")]
     public static void ShowWindow()
     {
@@ -82,12 +83,23 @@ public class MapEditorWindow : EditorWindow
 
         EditorGUILayout.Space();
 
+        // 選択中のオブジェクトに応じた色を取得
+        Color previewColor = GetColorForType(((int)selectedType).ToString());
+        GUIStyle paletteLabelStyle = new GUIStyle(EditorStyles.boldLabel);
+        float brightness = (previewColor.r + previewColor.g + previewColor.b) / 3f;
+        paletteLabelStyle.normal.textColor = (brightness > 0.5f && previewColor.a > 0.4f) ? Color.black : Color.white;
+ 
         // パレット・ID設定エリア
         EditorGUILayout.BeginVertical("box");
         GUILayout.Label("配置するオブジェクト、IDを選択", EditorStyles.boldLabel);
 
+        Color originalGUIColor = GUI.backgroundColor;
+        GUI.backgroundColor = previewColor;
+
         // オブジェクトタイプをドロップダウンで選択
         selectedType = (MapObjectType)EditorGUILayout.EnumPopup("配置するオブジェクト", selectedType);
+        
+        GUI.backgroundColor = originalGUIColor;
 
         // ギミックIDの入力枠
         EditorGUILayout.BeginHorizontal();
@@ -111,6 +123,12 @@ public class MapEditorWindow : EditorWindow
 
         scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 
+        // テキスト表示用の中央揃えスタイルを作成
+        GUIStyle centerLabelStyle = new GUIStyle(EditorStyles.miniLabel);
+        centerLabelStyle.alignment = TextAnchor.MiddleCenter;
+        centerLabelStyle.fontStyle = FontStyle.Bold;
+        centerLabelStyle.normal.textColor = Color.black;
+
         for (int r = 0; r < rows; r++)
         {
             EditorGUILayout.BeginHorizontal();
@@ -123,22 +141,67 @@ public class MapEditorWindow : EditorWindow
 
                 string[] data = cellValue.Split('_');
                 string typeStr = data[0];
+                bool hasID = data.Length > 1;
 
                 // IDごとにボタンの色を変えて視覚的にわかりやすくする
                 Color originalColor = GUI.backgroundColor;
-                if (typeStr == "0") GUI.backgroundColor = new Color(0.2f, 0.2f, 0.2f, 1.0f); // 壁：ダークグレー
-                if (typeStr == "12") GUI.backgroundColor = new Color(0.0f, 0.8f, 0.8f, 1.0f); // 透明壁：青緑
-                else if (typeStr == "1") GUI.backgroundColor = new Color(1.0f, 1.0f, 1.0f, 1.0f); // 床：白に近いグレー
-                else if (typeStr == "3" || typeStr == "4") GUI.backgroundColor = new Color(1.0f, 0.0f, 0.0f, 1.0f); // 敵：赤
-                else if (typeStr == "7") GUI.backgroundColor = new Color(0.0f, 1.0f, 0.0f, 1.0f); // スイッチ：緑
-                else if (typeStr == "6") GUI.backgroundColor = new Color(1.0f, 1.0f, 0.0f, 1.0f); // ゴール：黄
-                else if (typeStr == "10" || typeStr == "11") GUI.backgroundColor = new Color(0.1f, 0.5f, 1.0f, 1.0f); // プレイヤー：青
-                else if (int.TryParse(typeStr, out int tNum) && tNum > 1) GUI.backgroundColor = new Color(0.9f, 0.2f, 0.9f, 1.0f); // その他アイテムなど：紫
+                // 判別用のカラー変数を定義
+                Color chipColor = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+                if (typeStr == "0") chipColor = new Color(0.1f, 0.1f, 0.1f, 1.0f); // 壁：ダークグレー
+                else if (typeStr == "1") chipColor = new Color(1.0f, 1.0f, 1.0f, 1.0f); // 床：白
+                else if (typeStr == "2") chipColor = new Color(0.7f, 0.7f, 0.7f, 1.0f); // 通路：ライトグレー
+                else if (typeStr == "3") chipColor = new Color(1.0f, 0.5f, 0.0f, 1.0f); // 敵：オレンジ
+                else if (typeStr == "4") chipColor = new Color(1.0f, 0.0f, 0.0f, 1.0f); // 敵：赤
+                else if (typeStr == "5") chipColor = new Color(1.0f, 0.0f, 1.0f, 1.0f); // アイテム：ピンク
+                else if (typeStr == "6") chipColor = new Color(1.0f, 1.0f, 0.0f, 1.0f); // ゴール：黄
+                else if (typeStr == "7") chipColor = new Color(0.0f, 1.0f, 0.0f, 0.5f); // スイッチ：緑
+                else if (typeStr == "8") chipColor = new Color(0.0f, 1.0f, 1.0f, 1.0f); // リスポーン：水色
+                else if (typeStr == "9") chipColor = new Color(1.0f, 0.1f, 0.6f, 0.5f); // 追従ポイント：明るいピンク
+                else if (typeStr == "10" || typeStr == "11") chipColor = new Color(1.0f, 1.0f, 0.6f, 1.0f); // プレイヤー：薄い黄
+                else if (typeStr == "12") chipColor = new Color(0.5f, 0.25f, 0.0f, 1.0f); // 透明壁：茶色
+                else if (typeStr == "13") chipColor = new Color(0.0f, 0.0f, 1.0f, 1.0f); // 青用アイテム：青
+                else if (typeStr == "14") chipColor = new Color(0.4f, 1.0f, 0.4f, 1.0f); // 緑用アイテム：ライム緑
+                else if (typeStr == "15") chipColor = new Color(0.0f, 0.0f, 1.0f, 1.0f); // 青用スイッチ：青
+                else if (typeStr == "16") chipColor = new Color(0.4f, 1.0f, 0.4f, 1.0f); // 緑用スイッチ：ライム緑
+                else if (int.TryParse(typeStr, out int tNum) && tNum > 1) chipColor = new Color(1.0f, 0.0f, 1.0f, 1.0f); // その他：紫
+                
+                Rect cellRect = GUILayoutUtility.GetRect(cellSize, cellSize, GUILayout.Width(cellSize), GUILayout.Height(cellSize));
+                Rect drawRect = new Rect(cellRect.x + 0.5f, cellRect.y + 0.5f, cellSize - 1f, cellSize - 1f);
+                EditorGUI.DrawRect(drawRect, chipColor);
 
-                Rect cellRect = GUILayoutUtility.GetRect(40, 25, GUILayout.Width(40), GUILayout.Height(25));
-                GUI.Box(cellRect, cellValue);
+                if (hasID)
+                {
+                    Handles.DrawSolidRectangleWithOutline(drawRect, Color.clear, Color.yellow);
+                }
 
-                GUI.backgroundColor = originalColor;
+                if (typeStr == "10")
+                {
+                    GUI.Label(drawRect, "1", centerLabelStyle);
+                }
+                else if (typeStr == "11")
+                {
+                    GUI.Label(drawRect, "2", centerLabelStyle);
+                }
+                else if (typeStr == "13")
+                {
+                    GUI.Label(drawRect, "I", centerLabelStyle);
+                }
+                else if (typeStr == "14")
+                {
+                    GUI.Label(drawRect, "I", centerLabelStyle);
+                }
+                else if (typeStr == "15")
+                {
+                    GUI.Label(drawRect, "S", centerLabelStyle);
+                }
+                else if (typeStr == "16")
+                {
+                    GUI.Label(drawRect, "S", centerLabelStyle);
+                }
+                else if (data.Length > 1)
+                {
+                    GUI.Label(drawRect, data[1], EditorStyles.miniLabel);
+                }
 
                 // マウスドラッグの判定
                 if (currentEvent != null && cellRect.Contains(currentEvent.mousePosition) &&
@@ -164,7 +227,30 @@ public class MapEditorWindow : EditorWindow
         }
         EditorGUILayout.EndScrollView();
     }
-    
+
+    private Color GetColorForType(string typeStr)
+    {
+        if (typeStr == "0") return new Color(0.1f, 0.1f, 0.1f, 1.0f); // 壁：ダークグレー
+        if (typeStr == "1") return new Color(1.0f, 1.0f, 1.0f, 1.0f); // 床：白
+        if (typeStr == "2") return new Color(0.7f, 0.7f, 0.7f, 1.0f); // 通路：ライトグレー
+        if (typeStr == "3") return new Color(1.0f, 0.5f, 0.0f, 1.0f); // 敵：オレンジ
+        if (typeStr == "4") return new Color(1.0f, 0.0f, 0.0f, 1.0f); // 敵：赤
+        if (typeStr == "5") return new Color(1.0f, 0.0f, 1.0f, 1.0f); // アイテム：ピンク
+        if (typeStr == "6") return new Color(1.0f, 1.0f, 0.0f, 1.0f); // ゴール：黄
+        if (typeStr == "7") return new Color(0.0f, 1.0f, 0.0f, 0.5f); // スイッチ：緑
+        if (typeStr == "8") return new Color(0.0f, 1.0f, 1.0f, 1.0f); // リスポーン：水色
+        if (typeStr == "9") return new Color(1.0f, 0.1f, 0.6f, 0.5f); // 追従ポイント：明るいピンク
+        if (typeStr == "10" || typeStr == "11") return new Color(1.0f, 1.0f, 0.6f, 1.0f); // プレイヤー：薄い黄
+        if (typeStr == "12") return new Color(0.5f, 0.25f, 0.0f, 1.0f); // 透明壁：茶色
+        if (typeStr == "13") return new Color(0.0f, 0.0f, 1.0f, 1.0f); // 青用アイテム：青
+        if (typeStr == "14") return new Color(0.4f, 1.0f, 0.4f, 1.0f); // 緑用アイテム：ライム緑
+        if (typeStr == "15") return new Color(0.0f, 0.0f, 1.0f, 1.0f); // 青用スイッチ：青
+        if (typeStr == "16") return new Color(0.4f, 1.0f, 0.4f, 1.0f); // 緑用スイッチ：ライム緑
+
+        if (int.TryParse(typeStr, out int tNum) && tNum > 1) return new Color(1.0f, 0.0f, 1.0f, 1.0f); // その他：紫
+        return Color.white;
+    }
+
     void SaveToCSV()
     {
         StringBuilder sb = new StringBuilder();
