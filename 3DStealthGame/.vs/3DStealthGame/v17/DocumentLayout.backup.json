@@ -223,10 +223,11 @@
               "RelativeDocumentMoniker": "Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
               "ToolTip": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
               "RelativeToolTip": "Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
-              "ViewState": "AgIAADYAAAAAAAAAAAA4wD4AAAAYAAAAAAAAAA==",
+              "ViewState": "AgIAAGADAAAAAAAAAAAuwPIDAAAhAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-16T05:07:42.565Z",
-              "IsPinned": true
+              "IsPinned": true,
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -236,7 +237,7 @@
               "RelativeDocumentMoniker": "Assets\\Editor\\MapEditorWindow.cs",
               "ToolTip": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Editor\\MapEditorWindow.cs",
               "RelativeToolTip": "Assets\\Editor\\MapEditorWindow.cs",
-              "ViewState": "AgIAADsAAAAAAAAAAAAswGEAAAAgAAAAAAAAAA==",
+              "ViewState": "AgIAAGQAAAAAAAAAAAAwwGkAAAAoAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-06-25T05:50:14.254Z",
               "EditorCaption": ""

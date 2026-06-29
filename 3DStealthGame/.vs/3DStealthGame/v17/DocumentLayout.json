@@ -226,8 +226,7 @@
               "ViewState": "AgIAAGADAAAAAAAAAAAuwPIDAAAhAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-16T05:07:42.565Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "IsPinned": true
             },
             {
               "$type": "Document",
@@ -235,9 +234,9 @@
               "Title": "MapEditorWindow.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Editor\\MapEditorWindow.cs",
               "RelativeDocumentMoniker": "Assets\\Editor\\MapEditorWindow.cs",
-              "ToolTip": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Editor\\MapEditorWindow.cs",
-              "RelativeToolTip": "Assets\\Editor\\MapEditorWindow.cs",
-              "ViewState": "AgIAAGQAAAAAAAAAAAAwwGkAAAAoAAAAAAAAAA==",
+              "ToolTip": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Editor\\MapEditorWindow.cs*",
+              "RelativeToolTip": "Assets\\Editor\\MapEditorWindow.cs*",
+              "ViewState": "AgIAAOIAAAAAAAAAAAAcwOoAAABMAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-06-25T05:50:14.254Z",
               "EditorCaption": ""
@@ -264,8 +263,7 @@
               "RelativeToolTip": "Library\\PackageCache\\com.unity.ugui@1.0.0\\Runtime\\EventSystem\\InputModules\\BaseInput.cs",
               "ViewState": "AgIAADwAAAAAAAAAAAAewEoAAAAvAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-08T05:18:07.16Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-08T05:18:07.16Z"
             },
             {
               "$type": "Document",
