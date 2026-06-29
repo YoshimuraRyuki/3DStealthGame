@@ -27,14 +27,14 @@ public class ItemManager : MonoBehaviour
 			if (wsClient != null && other.gameObject == wsClient.myPlayer)
 			{
 				isPicked = true;
-				wsClient.SendItemPicked(); // サーバーに送信、ミッション管理はサーバーから呼ぶ
-
-                ElementGenerator generator = FindObjectOfType<ElementGenerator>();
-                if (generator != null)
+				wsClient.SendItemPicked(transform.position);
+				ElementGenerator generator = FindObjectOfType<ElementGenerator>();
+				if (generator != null)
                 {
                     // Destroyする前に、自分の位置を伝えてミニマップアイコンを消してもらう
                     generator.RemoveItemIcon(this.transform.position);
                 }
+
                 Destroy(gameObject);
 			}
 		}

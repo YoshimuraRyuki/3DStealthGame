@@ -1166,7 +1166,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxStamina: 10
-  currentStamina: 10
+  currentStamina: 5
   recoverAmount: 3
 --- !u!4 &376791345
 Transform:
