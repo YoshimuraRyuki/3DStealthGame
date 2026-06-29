@@ -3,7 +3,7 @@
 /// <summary>
 /// スタミナ回復アイテムの取得判定を管理するクラス。
 /// 指定したプレイヤーだけが取得できる。
-/// 自分が取れないアイテムは半透明で表示される。
+/// 自分が取れないアイテムは霊体用マテリアルで半透明表示される。
 /// </summary>
 public class StaminaItemManager : MonoBehaviour
 {
@@ -12,29 +12,30 @@ public class StaminaItemManager : MonoBehaviour
 	[Header("何番のプレイヤーが取れるか（1 or 2）")]
 	public int targetPlayerNumber = 1;
 
-	[Header("取れないときの透明度（0〜1）")]
-	public float ghostAlpha = 0.3f;
+	[Header("取れないときに使う霊体用マテリアル")]
+	public Material ghostMaterial;
 
 	#endregion
 
 	#region フィールド
 
 	private bool _isPicked = false;
-
+	private bool _initialized = false;
 	#endregion
 
 	#region Unityイベント
 
-	private void Start()
+	private void Update()
 	{
-		var wsClient = FindObjectOfType<WebSocketClient>();
-		if (wsClient == null) return;
+		if (_initialized) return;
 
-		// 自分が取れないアイテムは半透明にする
+		var wsClient = FindObjectOfType<WebSocketClient>();
+		if (wsClient == null || wsClient.myPlayerNumber == 0) return;
+
+		_initialized = true;
+
 		if (wsClient.myPlayerNumber != targetPlayerNumber)
-		{
 			SetGhostAppearance();
-		}
 	}
 
 	private void OnTriggerEnter(Collider other)
@@ -50,7 +51,7 @@ public class StaminaItemManager : MonoBehaviour
 
 		_isPicked = true;
 		gameObject.SetActive(false);
-		wsClient.SendStaminaItemPicked();
+		wsClient.SendStaminaItemPicked(transform.position); 
 	}
 
 	#endregion
@@ -58,27 +59,15 @@ public class StaminaItemManager : MonoBehaviour
 	#region 内部処理
 
 	/// <summary>
-	/// 取れないアイテムを半透明にする
+	/// 全Rendererのマテリアルを霊体用に差し替える
 	/// </summary>
 	private void SetGhostAppearance()
 	{
+		if (ghostMaterial == null) return;
+
 		foreach (var r in GetComponentsInChildren<Renderer>())
 		{
-			foreach (var mat in r.materials)
-			{
-				mat.SetFloat("_Mode", 3);
-				mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-				mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-				mat.SetInt("_ZWrite", 0);
-				mat.DisableKeyword("_ALPHATEST_ON");
-				mat.EnableKeyword("_ALPHABLEND_ON");
-				mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-				mat.renderQueue = 3000;
-
-				Color c = mat.color;
-				c.a = ghostAlpha;
-				mat.color = c;
-			}
+			r.material = ghostMaterial;
 		}
 	}
 

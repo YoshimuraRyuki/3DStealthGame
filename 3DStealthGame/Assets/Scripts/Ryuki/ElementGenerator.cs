@@ -228,8 +228,8 @@ public class ElementGenerator : MonoBehaviour
         respawnPointsList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Respawn");
 
         // 仮作成
-        powerItemBlue[0] = Resources.Load<GameObject>("Prefabs/Ryuki/PowerBlue");
-        powerItemGreen[0] = Resources.Load<GameObject>("Prefabs/Ryuki/PowerGreen");
+        powerItemBlue[0] = Resources.Load<GameObject>("Prefabs/Masataka/Thunder_Green");
+        powerItemGreen[0] = Resources.Load<GameObject>("Prefabs/Masataka/Thunder_Blue");
     }
 
     /// <summary>
@@ -839,8 +839,10 @@ public class ElementGenerator : MonoBehaviour
 
     void UpdateItemMiniMap()
     {
-        // 全アイテム更新
-        foreach (GameObject itemObj in objItems)
+		if (objItems == null) return; 
+
+		// 全アイテム更新
+		foreach (GameObject itemObj in objItems)
         {
             if (itemObj == null) continue;
 
@@ -879,8 +881,9 @@ public class ElementGenerator : MonoBehaviour
 
     void UpdateGoalMiniMap()
     {
-        // ゴール更新
-        foreach (GameObject goalObj in objGoals)
+		if (objGoals == null) return;
+		// ゴール更新
+		foreach (GameObject goalObj in objGoals)
         {
             Vector3 goalPos = goalObj.transform.position;
 
@@ -899,7 +902,8 @@ public class ElementGenerator : MonoBehaviour
         // 全スイッチ更新
         foreach (GameObject SwitchObj in objSwitchs)
         {
-            Vector3 SwitchPos = SwitchObj.transform.position;
+			if (objSwitchs == null) return;
+			Vector3 SwitchPos = SwitchObj.transform.position;
 
             int SwitchX = Mathf.RoundToInt(SwitchPos.x);
             int SwitchY = Mathf.RoundToInt(SwitchPos.z);
@@ -939,7 +943,8 @@ public class ElementGenerator : MonoBehaviour
 
     void UpdateEnemyMap(GameObject[] enemies)
     {
-        foreach (GameObject enemyObj in enemies)
+		if (enemies == null) return;
+		foreach (GameObject enemyObj in enemies)
         {
             Vector3 enemyPos = enemyObj.transform.position;
 
@@ -963,7 +968,8 @@ public class ElementGenerator : MonoBehaviour
     float offset,
     bool useLightColor)
     {
-        for (int i = 0; i < enemies.Length; i++)
+		if (enemies == null || views == null) return;
+		for (int i = 0; i < enemies.Length; i++)
         {
             GameObject enemyObj = enemies[i];
 

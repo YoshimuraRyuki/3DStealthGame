@@ -169,8 +169,11 @@ public static class SendMessageBuilder
 	public static string Chat(string message, string senderId)
 	=> $"{{\"type\":\"chat\",\"message\":\"{message}\",\"sender_id\":\"{senderId}\"}}";
 
-	public static string StaminaItemPicked()
-	=> "{\"type\":\"stamina_item_picked\"}";
+	public static string StaminaItemPicked(string senderId, Vector3 pos)
+	=> $"{{\"type\":\"stamina_item_picked\",\"sender_id\":\"{senderId}\",\"x\":{pos.x},\"z\":{pos.z}}}";
+
+	public static string ItemPicked(Vector3 pos)
+	=> $"{{\"type\":\"item_picked\",\"x\":{pos.x},\"z\":{pos.z}}}";
 
 	public static string EnemyMove(int index, Vector3 pos, float angle, Color light, string reaction, Vector3 lastSound)
 		=> $"{{\"type\":\"enemy_move\",\"enemy_index\":{index}," +
@@ -728,13 +731,18 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void HandleItemPickedMessage(string json)
 	{
-		/*var msg = JsonUtility.FromJson<GoalMessage>(json);
-        if (msg.id == myId)*/
+		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json);
 		MissionManager.Instance?.OnItemPicked();
 		LogManager.Instance?.AddLog("アイテムを取得した", "#aadd44");
 
-		// 相手が取ったら自分のスタミナ回復
-		StaminaManager.Instance?.RecoverStamina();
+		foreach (var item in FindObjectsOfType<ItemManager>())
+		{
+			if (Vector3.Distance(item.transform.position, new Vector3(msg.x, 0, msg.z)) < 1f)
+			{
+				item.gameObject.SetActive(false);
+				break;
+			}
+		}
 	}
 
 	/// <summary>
@@ -854,8 +862,21 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void HandleStaminaItemPickedMessage(string json)
 	{
+		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json); // x,z流用
+		if (msg.sender_id == myId) return;
+
 		StaminaManager.Instance?.RecoverStamina();
 		LogManager.Instance?.AddLog("仲間がスタミナアイテムを取得した", "#ffcc44");
+
+		// 位置で該当アイテムを探して消す
+		foreach (var item in FindObjectsOfType<StaminaItemManager>())
+		{
+			if (Vector3.Distance(item.transform.position, new Vector3(msg.x, 0, msg.z)) < 1f)
+			{
+				item.gameObject.SetActive(false);
+				break;
+			}
+		}
 	}
 
 	#endregion
@@ -1151,10 +1172,10 @@ public class WebSocketClient : MonoBehaviour
 	/// <summary>
 	/// アイテム取得をサーバーに通知する
 	/// </summary>
-	public async void SendItemPicked()
+	public async void SendItemPicked(Vector3 pos)
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
-		await websocket.SendText(SendMessageBuilder.ItemPicked());
+		await websocket.SendText(SendMessageBuilder.ItemPicked(pos));
 	}
 
 	/// <summary>
@@ -1188,10 +1209,10 @@ public class WebSocketClient : MonoBehaviour
 	/// <summary>
 	/// スタミナアイテム取得をサーバーに通知する
 	/// </summary>
-	public async void SendStaminaItemPicked()
+	public async void SendStaminaItemPicked(Vector3 pos)
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
-		await websocket.SendText(SendMessageBuilder.StaminaItemPicked());
+		await websocket.SendText(SendMessageBuilder.StaminaItemPicked(myId, pos));
 	}
 
 	#endregion
