@@ -101,6 +101,7 @@ public class SwitchManager : MonoBehaviour
     void DoActionSwitch()
     {
         if (Pc.isAction) return;
+
         isEndAction = true;
         isPlayerInRange = false;
         rd.material.color = Color.green;
@@ -121,8 +122,18 @@ public class SwitchManager : MonoBehaviour
         //if (!isPlayerInRange) return;
         if (!isPlayerInRange || isEndAction || isActionSwitch || isActionEnemy) return;
 
+        int blueLayer = LayerMask.NameToLayer("Blue");
+        int greenLayer = LayerMask.NameToLayer("Green");
+        if ((gameObject.layer == blueLayer && Pc.CompareTag("Player1")) || (gameObject.layer == greenLayer && Pc.CompareTag("Player2")))
+        {
+            LogManager.Instance?.AddLog("ëŒâûÇ∑ÇÈêFÇ∂Ç·Ç»Ç¢Ç∆âüÇπÇ»Ç¢ÇÊÇ§Çæ", "#ffcc44");
+            return;
+        }
+
         if (CompareTag("Enemy"))
         {
+            if (enemy.reactionText.text == "!") return;
+
             isActionEnemy = true;
             Pc.isPlayerMoveStop = true;
             enemy.TextCancel();
@@ -132,12 +143,12 @@ public class SwitchManager : MonoBehaviour
 
         if (CompareTag("Switch"))
         {
-			if (!StaminaManager.Instance.CanUseStamina(2)) return; // ë´ÇËÇ»ÇØÇÍÇŒâüÇπÇ»Ç¢
+            if (!StaminaManager.Instance.CanUseStamina(2)) return; // ë´ÇËÇ»ÇØÇÍÇŒâüÇπÇ»Ç¢
 			StaminaManager.Instance.UseStamina(2);
 			isActionSwitch = true;
             Pc.isAction = true;
             Pc.isPlayerMoveStop = true;
-            // Ç±Ç±Ç≈1âÒÇæÇØé¿çs
+            // 1âÒÇæÇØé¿çs
             if (em != null)
             {
                 em.SwitchCountValue(1);
@@ -265,6 +276,7 @@ public class SwitchManager : MonoBehaviour
             isPlayerInRange = true;
             if (actionText != null && !Pc.isPlayerMoveStop)
             {
+                if (enemy.reactionText.text == "!") return;
                 actionText.gameObject.SetActive(true);
             }
         }
@@ -283,4 +295,5 @@ public class SwitchManager : MonoBehaviour
     }
 
     #endregion
+
 }

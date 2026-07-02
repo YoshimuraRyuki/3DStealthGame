@@ -780,7 +780,7 @@ MonoBehaviour:
   enemyID: 0
   gimmickCount: 0
   switchCount: 0
-  showViewDebug: 0
+  showViewDebug: 1
   showSoundDebug: 1
 --- !u!114 &3470185511107027951
 MonoBehaviour:
@@ -794,6 +794,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2bc1347d82b61e94cb7191cdccf2c68c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isPressed: 0
   isEnemyMoveStop: 0
   stanTime: 3
   targetEnemyID: 0

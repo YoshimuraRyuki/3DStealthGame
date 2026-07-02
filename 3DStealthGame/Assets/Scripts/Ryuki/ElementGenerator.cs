@@ -165,7 +165,6 @@ public class ElementGenerator : MonoBehaviour
     #endregion
 
     #region 初期化処理
-
     void Awake()
     {
         // リソース読み込み
@@ -228,8 +227,8 @@ public class ElementGenerator : MonoBehaviour
         respawnPointsList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Respawn");
 
         // 仮作成
-        powerItemBlue[0] = Resources.Load<GameObject>("Prefabs/Masataka/Thunder_Green");
-        powerItemGreen[0] = Resources.Load<GameObject>("Prefabs/Masataka/Thunder_Blue");
+        powerItemBlue[0] = Resources.Load<GameObject>("Prefabs/Masataka/Thunder_Blue");
+        powerItemGreen[0] = Resources.Load<GameObject>("Prefabs/Masataka/Thunder_Green");
     }
 
     /// <summary>
@@ -480,6 +479,7 @@ public class ElementGenerator : MonoBehaviour
                         SwitchManager swb = switchBlueObj.GetComponentInChildren<SwitchManager>();
                         swb.targetEnemyID = id;
                         switchList.Add(swb);
+                        swb.gameObject.layer = LayerMask.NameToLayer("Blue");
                         // 色変更
                         Renderer rend = switchBlueObj.GetComponent<Renderer>();
                         if (rend != null) rend.material.color = new Color(0.35f, 0.5f, 0.75f, 1.0f);
@@ -493,6 +493,7 @@ public class ElementGenerator : MonoBehaviour
                         SwitchManager swg = switchGreenObj.GetComponentInChildren<SwitchManager>();
                         swg.targetEnemyID = id;
                         switchList.Add(swg);
+                        swg.gameObject.layer = LayerMask.NameToLayer("Green");
                         // 色変更
                         Renderer rend2 = switchGreenObj.GetComponent<Renderer>();
                         if (rend2 != null) rend2.material.color = new Color(0.35f, 0.6f, 0.42f, 1.0f);
