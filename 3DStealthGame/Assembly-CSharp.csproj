@@ -93,6 +93,7 @@
     <Compile Include="Assets\BTM_Assets\BTM_Items_Gems\Scripts\SimpleGemsAnim.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\ResultManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\ReturnToTitle.cs" />
+    <Compile Include="Assets\Scripts\Masataka\StaminaAbsorbEffect.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

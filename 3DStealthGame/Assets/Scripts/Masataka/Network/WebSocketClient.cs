@@ -870,20 +870,29 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void HandleStaminaItemPickedMessage(string json)
 	{
-		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json); // x,z流用
+		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json);
 		if (msg.sender_id == myId) return;
-
 		StaminaManager.Instance?.RecoverStamina();
 		LogManager.Instance?.AddLog("仲間がスタミナアイテムを取得した", "#ffcc44");
 
-		// 位置で該当アイテムを探して消す
+		Vector3 itemPos = new Vector3(msg.x, 1f, msg.z);
+
+		// 一番近いスタミナアイテムから色とプレハブを取得
+		StaminaItemManager nearestItem = null;
 		foreach (var item in FindObjectsOfType<StaminaItemManager>())
 		{
 			if (Vector3.Distance(item.transform.position, new Vector3(msg.x, 0, msg.z)) < 1f)
 			{
-				item.gameObject.SetActive(false);
+				nearestItem = item;
 				break;
 			}
+		}
+
+		if (nearestItem != null && myPlayer != null && nearestItem.absorbEffectPrefab != null)
+		{
+			var effect = Instantiate(nearestItem.absorbEffectPrefab, itemPos, Quaternion.identity);
+			effect.Play(itemPos, myPlayer.transform, nearestItem.effectColor);
+			nearestItem.gameObject.SetActive(false);
 		}
 	}
 
@@ -1343,6 +1352,19 @@ public class WebSocketClient : MonoBehaviour
 		if (spawnPositions.ContainsKey(myPlayerNumber))
 			return spawnPositions[myPlayerNumber];
 		return Vector3.zero;
+	}
+
+	/// <summary>
+	/// リモートプレイヤー（相手）のTransformを返す
+	/// </summary>
+	public Transform GetRemotePlayerTransform()
+	{
+		foreach (var kv in playerObjects)
+		{
+			if (kv.Value != null && kv.Value != myPlayer)
+				return kv.Value.transform;
+		}
+		return null;
 	}
 
 	#endregion

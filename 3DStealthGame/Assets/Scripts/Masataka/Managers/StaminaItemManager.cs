@@ -15,6 +15,9 @@ public class StaminaItemManager : MonoBehaviour
 	[Header("取れないときに使う霊体用マテリアル")]
 	public Material ghostMaterial;
 
+	[Header("吸い込みエフェクト")]
+	public StaminaAbsorbEffect absorbEffectPrefab;
+	public Color effectColor = Color.blue; // BlueはColor.blue、GreenはColor.green
 	#endregion
 
 	#region フィールド
@@ -42,17 +45,24 @@ public class StaminaItemManager : MonoBehaviour
 	{
 		if (_isPicked) return;
 		if (!other.CompareTag("Player1") && !other.CompareTag("Player2")) return;
-
 		var wsClient = FindObjectOfType<WebSocketClient>();
 		if (wsClient == null || other.gameObject != wsClient.myPlayer) return;
-
-		// 自分が取れるアイテムじゃなければ無視
 		if (wsClient.myPlayerNumber != targetPlayerNumber) return;
 
 		_isPicked = true;
-		SoundManager.Instance?.PlayPickup();
+
+		// 回復するのは相手なので、吸い込み先も相手プレイヤー
+		Transform remoteTransform = wsClient.GetRemotePlayerTransform();
+
 		gameObject.SetActive(false);
-		wsClient.SendStaminaItemPicked(transform.position); 
+		wsClient.SendStaminaItemPicked(transform.position);
+
+		// エフェクト再生（相手に向かって吸い込まれる）
+		if (absorbEffectPrefab != null && remoteTransform != null)
+		{
+			var effect = Instantiate(absorbEffectPrefab, transform.position, Quaternion.identity);
+			effect.Play(transform.position, remoteTransform, effectColor);
+		}
 	}
 
 	#endregion
