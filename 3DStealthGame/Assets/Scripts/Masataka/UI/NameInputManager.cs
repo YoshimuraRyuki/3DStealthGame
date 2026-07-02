@@ -31,6 +31,7 @@ public class NameInputManager : MonoBehaviour
 
 	void Start()
 	{
+		SoundManager.Instance?.PlayBGM();
 		_placeholder = nameInputField.placeholder.GetComponent<Text>();
 		if (_placeholder != null)
 		{
@@ -77,6 +78,17 @@ public class NameInputManager : MonoBehaviour
 			{
 				warningText.gameObject.SetActive(true);
 				warningText.text = "※ユーザーネームを入力してください";
+				warningText.color = Color.red;
+			}
+			return;
+		}
+
+		if (inputName.Length > 10)
+		{
+			if (warningText != null)
+			{
+				warningText.gameObject.SetActive(true);
+				warningText.text = "※10文字以内で入力してください";
 				warningText.color = Color.red;
 			}
 			return;

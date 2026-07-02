@@ -27,6 +27,7 @@ public class ItemManager : MonoBehaviour
 			if (wsClient != null && other.gameObject == wsClient.myPlayer)
 			{
 				isPicked = true;
+				SoundManager.Instance?.PlayPickup();
 				wsClient.SendItemPicked(transform.position);
 				ElementGenerator generator = FindObjectOfType<ElementGenerator>();
 				if (generator != null)
