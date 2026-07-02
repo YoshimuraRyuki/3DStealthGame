@@ -66,6 +66,8 @@ public class SwitchManager : MonoBehaviour
 			currentStanTime = 0f;
 			isActionEnemy = false;
 			isEndAction = false;
+			SoundManager.Instance?.PlayPunch();
+
 			_stunSent = false; // ƒŠƒZƒbƒg
 			enemy.StunCancel();
 
@@ -109,7 +111,9 @@ public class SwitchManager : MonoBehaviour
         isActionSwitch = false;
         isPressed = true;
 
-        var wsClient = FindObjectOfType<WebSocketClient>();
+		SoundManager.Instance?.PlayPunch();
+
+		var wsClient = FindObjectOfType<WebSocketClient>();
         if (wsClient != null) wsClient.SendSwitchActivated(targetEnemyID);
     }
 
