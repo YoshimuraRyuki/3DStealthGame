@@ -66,6 +66,8 @@ public class SwitchManager : MonoBehaviour
 			currentStanTime = 0f;
 			isActionEnemy = false;
 			isEndAction = false;
+			SoundManager.Instance?.PlayPunch();
+
 			_stunSent = false; // リセット
 			enemy.StunCancel();
 
@@ -91,33 +93,58 @@ public class SwitchManager : MonoBehaviour
 		if (wsClient2 != null) wsClient2.SendEnemyStun(targetEnemyID);
 	}
 
-    #endregion
+	#endregion
 
-    #region スイッチアクション処理
+	#region スイッチアクション処理
 
-    /// <summary>
-    /// スイッチを押したら対応した強化敵の遮る壁を出す
-    /// </summary>
-    void DoActionSwitch()
-    {
-        if (Pc.isAction) return;
+	/// <summary>
+	/// スイッチを押したら対応した強化敵の遮る壁を出す
+	/// </summary>
+	void DoActionSwitch()
+	{
+		if (Pc.isPlayerMoveStop) return;
+		if (Pc.isAction) return;
+		isEndAction = true;
+		isPlayerInRange = false;
+		rd.material.color = Color.green;
+		isActionSwitch = false;
+		isPressed = true;
 
-        isEndAction = true;
-        isPlayerInRange = false;
-        rd.material.color = Color.green;
+		var wsClient = FindObjectOfType<WebSocketClient>();
+		if (wsClient != null) wsClient.SendSwitchActivated(targetEnemyID);
 
-        isActionSwitch = false;
-        isPressed = true;
+		int blueLayer = LayerMask.NameToLayer("Blue");
+		int greenLayer = LayerMask.NameToLayer("Green");
 
-        var wsClient = FindObjectOfType<WebSocketClient>();
-        if (wsClient != null) wsClient.SendSwitchActivated(targetEnemyID);
-    }
+		if (gameObject.layer == blueLayer || gameObject.layer == greenLayer)
+		{
+			// 同じtargetEnemyIDを持つ相手スイッチが押されているか確認
+			bool partnerPressed = false;
+			foreach (var sw in FindObjectsOfType<SwitchManager>())
+			{
+				if (sw == this) continue;
+				if (sw.targetEnemyID == targetEnemyID && sw.isPressed)
+				{
+					partnerPressed = true;
+					break;
+				}
+			}
+			// 両方押されたら鳴らす
+			if (partnerPressed)
+				SoundManager.Instance?.PlayGimmickClear();
+		}
+		else
+		{
+			// 通常スイッチはすぐに鳴らす
+			SoundManager.Instance?.PlayGimmickClear();
+		}
+	}
 
-    #endregion
+	#endregion
 
-    #region プレイヤー入力された時の処理
+	#region プレイヤー入力された時の処理
 
-    void TryAction()
+	void TryAction()
     {
         //if (!isPlayerInRange) return;
         if (!isPlayerInRange || isEndAction || isActionSwitch || isActionEnemy) return;
@@ -203,6 +230,16 @@ public class SwitchManager : MonoBehaviour
 		isPressed = true;
 	}
 
+	/// <summary>
+	/// リスポーン時にアクション状態をリセットする
+	/// </summary>
+	public void ResetActionState()
+	{
+		isActionSwitch = false;
+		isActionEnemy = false;
+		isPlayerInRange = false;
+		if (actionText != null) actionText.gameObject.SetActive(false);
+	}
 	#endregion
 
 	#region Unityイベント
@@ -260,28 +297,32 @@ public class SwitchManager : MonoBehaviour
         }
     }
 
-    #endregion
+	#endregion
 
-    #region 当たり判定処理
+	#region 当たり判定処理
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (isEndAction) return;
-        if (other.CompareTag("Player1") || other.CompareTag("Player2"))
-        {
-            isPlayerInRange = true;
-            var pc = other.GetComponent<PlayerController>();
-            if (pc != null && pc.isLocalPlayer)
-                Pc = pc;
-            isPlayerInRange = true;
-            if (actionText != null && !Pc.isPlayerMoveStop)
-            {
-                if (enemy.reactionText.text == "!") return;
-                actionText.gameObject.SetActive(true);
-            }
-        }
-    }
+	private void OnTriggerEnter(Collider other)
+	{
+		if (isEndAction) return;
+		if (other.CompareTag("Player1") || other.CompareTag("Player2"))
+		{
+			var wsClient = FindObjectOfType<WebSocketClient>();
+			if (wsClient == null) return;
+			if (other.gameObject != wsClient.myPlayer) return;
 
+			var pc = other.GetComponent<PlayerController>();
+			if (pc != null) Pc = pc;
+
+			int blueLayer = LayerMask.NameToLayer("Blue");
+			int greenLayer = LayerMask.NameToLayer("Green");
+			if (gameObject.layer == blueLayer && !wsClient.IsHostPlayer()) return;
+			if (gameObject.layer == greenLayer && !wsClient.IsGuestPlayer()) return;
+
+			isPlayerInRange = true;
+			if (actionText != null && !Pc.isPlayerMoveStop)
+				actionText.gameObject.SetActive(true);
+		}
+	}
     private void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("Player1") || other.CompareTag("Player2"))

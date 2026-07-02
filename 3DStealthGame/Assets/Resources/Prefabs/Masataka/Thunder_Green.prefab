@@ -127,6 +127,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   targetPlayerNumber: 1
   ghostMaterial: {fileID: 2100000, guid: 71733687b08fe5245a500a0d622d93fc, type: 2}
+  absorbEffectPrefab: {fileID: 7959000690857621492, guid: eab397586623635499de3483dea40718, type: 3}
+  effectColor: {r: 0.5024226, g: 0.93962264, b: 0.12587398, a: 1}
 --- !u!65 &-4296247106481936438
 BoxCollider:
   m_ObjectHideFlags: 0
