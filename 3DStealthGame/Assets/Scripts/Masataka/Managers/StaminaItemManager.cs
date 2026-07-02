@@ -50,6 +50,7 @@ public class StaminaItemManager : MonoBehaviour
 		if (wsClient.myPlayerNumber != targetPlayerNumber) return;
 
 		_isPicked = true;
+		SoundManager.Instance?.PlayPickup();
 		gameObject.SetActive(false);
 		wsClient.SendStaminaItemPicked(transform.position); 
 	}

@@ -84,6 +84,7 @@ public class MissionManager : MonoBehaviour
 	/// <summary>ゲーム開始通知を受けてタイマーを開始する</summary>
 	public void OnGameStart()
 	{
+		SoundManager.Instance?.PlayBGM();
 		_elapsedSeconds = 0f;
 		_timerRunning = true;
 		_isTimeUp = false;

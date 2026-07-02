@@ -80,6 +80,7 @@ public class SwitchManager : MonoBehaviour
 		enemy.PlayAnimationEnemy();
 		enemy.ResetPatrolState();
 		enemy.reactionText.text = "×";
+		SoundManager.Instance?.PlayPunch();
 		Pc.isAnimationStart = false;
 		isPlayerInRange = false;
 		isEndAction = true;
@@ -96,19 +97,22 @@ public class SwitchManager : MonoBehaviour
     #region スイッチアクション処理
 
     /// <summary>
-    /// スイッチを押したら対応した強化敵の遮る壁を出す
+    /// Sta
     /// </summary>
     void DoActionSwitch()
     {
-        if (Pc.isAction) return;
+		if (Pc.isPlayerMoveStop) return;
+		if (Pc.isAction) return;
         isEndAction = true;
         isPlayerInRange = false;
         rd.material.color = Color.green;
 
         isActionSwitch = false;
         isPressed = true;
+		SoundManager.Instance?.PlayPunch();
+		SoundManager.Instance?.PlayGimmickClear();
 
-        var wsClient = FindObjectOfType<WebSocketClient>();
+		var wsClient = FindObjectOfType<WebSocketClient>();
         if (wsClient != null) wsClient.SendSwitchActivated(targetEnemyID);
     }
 
@@ -120,10 +124,13 @@ public class SwitchManager : MonoBehaviour
     {
         //if (!isPlayerInRange) return;
         if (!isPlayerInRange || isEndAction || isActionSwitch || isActionEnemy) return;
+		if (Pc.isPlayerMoveStop) return;
 
-        if (CompareTag("Enemy"))
+		if (CompareTag("Enemy"))
         {
-            isActionEnemy = true;
+			if (!StaminaManager.Instance.CanUseStamina(2)) return; // 足りなければ押せない
+			StaminaManager.Instance.UseStamina(2);
+			isActionEnemy = true;
             Pc.isPlayerMoveStop = true;
             enemy.TextCancel();
             actionText.gameObject.SetActive(false);
@@ -132,8 +139,9 @@ public class SwitchManager : MonoBehaviour
 
         if (CompareTag("Switch"))
         {
-			if (!StaminaManager.Instance.CanUseStamina(2)) return; // 足りなければ押せない
-			StaminaManager.Instance.UseStamina(2);
+			if (Pc.isPlayerMoveStop) return;
+			/*if (!StaminaManager.Instance.CanUseStamina(2)) return; // 足りなければ押せない
+			StaminaManager.Instance.UseStamina(2);*/
 			isActionSwitch = true;
             Pc.isAction = true;
             Pc.isPlayerMoveStop = true;
@@ -149,11 +157,22 @@ public class SwitchManager : MonoBehaviour
         }
     }
 
-    #endregion
+	/// <summary>
+	/// リスポーン時にアクション状態をリセットする
+	/// </summary>
+	public void ResetActionState()
+	{
+		isActionSwitch = false;
+		isActionEnemy = false;
+		isPlayerInRange = false;
+		if (actionText != null) actionText.gameObject.SetActive(false);
+	}
 
-    #region ギミック連携用関数
+	#endregion
 
-    public void SetTarget(EnemyManager enemy)
+	#region ギミック連携用関数
+
+	public void SetTarget(EnemyManager enemy)
     {
         em = enemy;
     }

@@ -50,6 +50,9 @@ public class PlayerController : MonoBehaviour
 	public bool isPlayerMoveStop = false; // 移動停止フラグ（スイッチ操作中など）
 	public bool isSneaking = false;
 
+	public bool _isFading = false; // フェード中フラグ
+	public bool IsFading => _isFading;
+
 	public string lastTrigger = ""; // 最後に発火した動作トリガー（同期用）
 
 	private Transform currentRespawnPoint; // リスポーン地点
@@ -93,6 +96,11 @@ public class PlayerController : MonoBehaviour
 	{
 		if (!isLocalPlayer) return;
 		CaptureInput();
+
+		if (_rb.velocity.magnitude > 0.1f && !isSneaking)
+			SoundManager.Instance?.StartWalk();
+		else
+			SoundManager.Instance?.StopWalk();
 	}
 
 	void FixedUpdate()
@@ -311,6 +319,22 @@ public class PlayerController : MonoBehaviour
 	/// <param name="sendToServer">trueなら自分が捕まった本人としてサーバーに通知する</param>
 	private IEnumerator RespawnWithEffect(bool sendToServer)
 	{
+		if (_isFading) yield break; // フェード中なら無視
+		_isFading = true;
+
+		SoundManager.Instance?.PlayRespawn();
+
+		// 死亡時にアクションを封じてIdleに戻す
+		isAction = true;
+		isPlayerMoveStop = true;
+		Am.SetBool("Run", false);
+		Am.SetBool("Sneak", false);
+		Am.SetTrigger("Idle");
+
+		// スイッチのアクション状態もリセット
+	foreach (var sw in FindObjectsOfType<SwitchManager>())
+			sw.ResetActionState();
+
 		// 発見時のテキストを表示
 		if (catchText != null)
 		{
@@ -361,6 +385,9 @@ public class PlayerController : MonoBehaviour
 
 		yield return new WaitForSeconds(0.3f);
 
+		isAction = false;
+		isPlayerMoveStop = false;
+
 		if (catchFadePanel != null)
 		{
 			float elapsed = 0f;
@@ -396,6 +423,12 @@ public class PlayerController : MonoBehaviour
 			c.a = 0f;
 			catchText.color = c;
 		}
+
+
+		// フェードイン完了後
+		isAction = false;
+		isPlayerMoveStop = false;
+		_isFading = false; // フラグ解除
 	}
 
 	private IEnumerator CheckPosition()

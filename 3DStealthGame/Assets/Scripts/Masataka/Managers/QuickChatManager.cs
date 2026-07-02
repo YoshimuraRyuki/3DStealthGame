@@ -90,6 +90,7 @@ public class QuickChatManager : MonoBehaviour
 	/// </summary>
 	public void OnChatReceived(string message, string senderName)
 	{
+		SoundManager.Instance?.PlayNotification();
 		LogManager.Instance?.AddLog($"{senderName}ÅF{message}", "#c0a0ff");
 	}
 
@@ -116,6 +117,7 @@ public class QuickChatManager : MonoBehaviour
     /// </summary>
     private void OnChatButtonClicked(int index)
 	{
+		SoundManager.Instance?.PlayButton();
 		if (_wsClient == null) return;
 		_wsClient.SendChatMessage(messages[index]);
 		LogManager.Instance?.AddLog($"{_wsClient.GetPlayerName()}ÅF{messages[index]}", "#ffffff");

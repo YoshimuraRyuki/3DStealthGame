@@ -3,6 +3,7 @@ using NativeWebSocket;
 using System.Text;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
+using System.Collections;
 
 #region 受信メッセージ定義
 
@@ -248,6 +249,8 @@ public class WebSocketClient : MonoBehaviour
 	private bool _stunSent = false;
 	private int _connectGeneration = 0;
 
+	private bool _remoteRespawnSent = false;
+
 	#endregion
 
 	#region プレイヤー番号判定
@@ -484,7 +487,10 @@ public class WebSocketClient : MonoBehaviour
 			else if (json.Contains("\"type\":\"player_left\"")) HandlePlayerLeftForLobby(json);
 			else if (json.Contains("\"type\":\"player_ready\"")) HandlePlayerReadyForLobby(json);
 			else if (json.Contains("\"type\":\"existing_players\"")) HandleExistingPlayersForLobby(json);
-			pendingMessages.Add(json);
+
+			// remote_respawnはゲーム開始後に再処理しない
+			if (!json.Contains("\"type\":\"remote_respawn\""))
+				pendingMessages.Add(json);
 			return;
 		}
 		ProcessMessage(json);
@@ -768,6 +774,8 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void HandleAllGoalMessage(string json)
 	{
+		SoundManager.Instance?.PlayClear(); 
+		SoundManager.Instance?.StopBGM();
 		MissionManager.Instance?.StopTimer();
 		MissionManager.Instance?.ShowClearMessage();
 		LogManager.Instance?.StopWaitingLog();
@@ -1064,6 +1072,10 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void HandleRemoteRespawnMessage(string json)
 	{
+		//_remoteRespawnSent = false;
+		// 自分がすでにリスポーン中なら無視
+		var mypc = myPlayer?.GetComponent<PlayerController>();
+		if (mypc != null && mypc.IsFading) return;
 		if (IsGuestPlayer())
 		{
 			// 自分（ゲスト）が捕まった本人
@@ -1114,8 +1126,17 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	public async void SendRemoteRespawn()
 	{
+		if (_remoteRespawnSent) return;
+		_remoteRespawnSent = true;
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
 		await websocket.SendText(SendMessageBuilder.RemoteRespawn(myId));
+		StartCoroutine(ResetRemoteRespawnFlagAfterDelay());
+	}
+
+	private IEnumerator ResetRemoteRespawnFlagAfterDelay()
+	{
+		yield return new WaitForSeconds(4f); // リスポーン時間より長く待つ
+		_remoteRespawnSent = false;
 	}
 
 	#endregion
