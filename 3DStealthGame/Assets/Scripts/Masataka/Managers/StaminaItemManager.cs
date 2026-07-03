@@ -51,10 +51,21 @@ public class StaminaItemManager : MonoBehaviour
 
 		_isPicked = true;
 
-		// 回復するのは相手なので、吸い込み先も相手プレイヤー
-		Transform remoteTransform = wsClient.GetRemotePlayerTransform();
+		// ミニマップのアイコンを消す
+        ElementGenerator generator = FindObjectOfType<ElementGenerator>();
+        if (generator != null)
+        {
+            // Destroyする前に、自分の位置を伝えてミニマップアイコンを消してもらう
+            generator.RemoveItemIcon(this.transform.position);
+			print("アイコン消します");
+        }
 
-		gameObject.SetActive(false);
+
+        // 回復するのは相手なので、吸い込み先も相手プレイヤー
+        Transform remoteTransform = wsClient.GetRemotePlayerTransform();
+
+		//gameObject.SetActive(false);
+		Destroy(gameObject);
 		wsClient.SendStaminaItemPicked(transform.position);
 
 		// エフェクト再生（相手に向かって吸い込まれる）

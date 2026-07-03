@@ -41,6 +41,8 @@ public class ElementGenerator : MonoBehaviour
     Sprite switchOFFIcon;                                           // スイッチアイコン
     Sprite switchONIcon;                                            // スイッチアイコン
     Sprite itemIcon;                                                // アイテムアイコン
+    Sprite greenItemIcon;                                           // 緑用アイテムアイコン
+    Sprite blueItemIcon;                                            // 青用アイテムアイコン
 
     #endregion
 
@@ -137,9 +139,13 @@ public class ElementGenerator : MonoBehaviour
 
     GameObject[] objEnemys;                                         // 敵
     GameObject[] objEnemyStrongs;                                   // 強化敵
-    GameObject[] objItems;                                          // アイテム
-    GameObject[] objGoals;                                          // ゴール
-    GameObject[] objSwitchs;                                        // スイッチ
+    List<GameObject> activeItems = new List<GameObject>();          // アイテム
+    List<GameObject> activeGoals = new List<GameObject>();          // ゴール
+    List<GameObject> activeSwitches = new List<GameObject>();       // スイッチ
+    List<GameObject> activeGreenItems = new List<GameObject>();     // スイッチ
+    List<GameObject> activeBlueItems = new List<GameObject>();      // スイッチ
+
+
 
     #endregion
 
@@ -208,7 +214,9 @@ public class ElementGenerator : MonoBehaviour
         // アイテムリスト
         itemsList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Item");
         itemIcon = Resources.Load<Sprite>("Images/Ryuki/IconItem");
-
+        greenItemIcon = Resources.Load<Sprite>("Images/Ryuki/GreenItem");
+        blueItemIcon = Resources.Load<Sprite>("Images/Ryuki/BlueItem");
+        
         // スイッチ
         switchesList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Switch");
         switchOFFIcon = Resources.Load<Sprite>("Images/Ryuki/SwitchOFF");
@@ -416,20 +424,20 @@ public class ElementGenerator : MonoBehaviour
                         break;
 
                     case MapObjectType.Item: // アイテム
-                        Instantiate(itemsList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
-                        objItems = GameObject.FindGameObjectsWithTag("Item");
+                        GameObject itemObj = Instantiate(itemsList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
+                        activeItems.Add(itemObj);
                         map[x, y] = "1";
                         break;
 
                     case MapObjectType.Goal: // ゴール
-                        Instantiate(goalObjects, pos, Quaternion.identity);
-                        objGoals = GameObject.FindGameObjectsWithTag("Goal");
+                        GameObject goalObj = Instantiate(goalObjects, pos, Quaternion.identity);
+                        activeGoals.Add(goalObj);
                         map[x, y] = "1";
                         break;
 
                     case MapObjectType.Switch: // スイッチ
                         GameObject switchObj = Instantiate(switchesList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
-                        objSwitchs = GameObject.FindGameObjectsWithTag("Switch");
+                        activeSwitches.Add(switchObj);
                         map[x, y] = "1";
                         // ギミック用
                         SwitchManager sw = switchObj.GetComponentInChildren<SwitchManager>();
@@ -462,18 +470,20 @@ public class ElementGenerator : MonoBehaviour
 
                     // 仮で作るアイテム
                     case MapObjectType.powerItemBlue: // 青用アイテム
-                        Instantiate(powerItemBlue[0], pos + Vector3.up * 0.5f, Quaternion.identity);
+                        GameObject itemBlueObj = Instantiate(powerItemBlue[0], pos + Vector3.up * 0.5f, Quaternion.identity);
+                        activeBlueItems.Add(itemBlueObj);
                         map[x, y] = "1";
                         break;
 
                     case MapObjectType.powerItemGreen: // 緑用アイテム
-                        Instantiate(powerItemGreen[0], pos + Vector3.up * 0.5f, Quaternion.identity);
+                        GameObject itemGreenObj = Instantiate(powerItemGreen[0], pos + Vector3.up * 0.5f, Quaternion.identity);
+                        activeGreenItems.Add(itemGreenObj);
                         map[x, y] = "1";
                         break;
 
                     case MapObjectType.switchBlue: // 青用スイッチ
                         GameObject switchBlueObj = Instantiate(switchesList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
-                        objSwitchs = GameObject.FindGameObjectsWithTag("Switch");
+                        activeSwitches.Add(switchBlueObj);
                         map[x, y] = "1";
                         // ギミック用
                         SwitchManager swb = switchBlueObj.GetComponentInChildren<SwitchManager>();
@@ -487,7 +497,7 @@ public class ElementGenerator : MonoBehaviour
 
                     case MapObjectType.switchGreen: // 青用スイッチ
                         GameObject switchGreenObj = Instantiate(switchesList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
-                        objSwitchs = GameObject.FindGameObjectsWithTag("Switch");
+                        activeSwitches.Add(switchGreenObj);
                         map[x, y] = "1";
                         // ギミック用
                         SwitchManager swg = switchGreenObj.GetComponentInChildren<SwitchManager>();
@@ -735,6 +745,22 @@ public class ElementGenerator : MonoBehaviour
         UpdateGoalMiniMap();                                                     // ゴール
         UpdateSwitchMiniMap();                                                   // スイッチ
 
+        // 色別でプレイヤーのアイテムを表示
+        var wsClient = FindObjectOfType<WebSocketClient>();
+        if (wsClient != null)
+        {
+            if (wsClient.IsHostPlayer())
+            {
+                // ホスト（プレイヤー1）は緑アイテムのみ表示
+                UpdateGreenItemMiniMap();
+            }
+            else
+            {
+                // ゲスト（プレイヤー2）は青アイテムのみ表示
+                UpdateBlueItemMiniMap();
+            }
+        }
+
         // 敵は独自で移動するため
         ResetEnemyMiniMap();
         UpdateEnemyMap(objEnemys);
@@ -840,10 +866,10 @@ public class ElementGenerator : MonoBehaviour
 
     void UpdateItemMiniMap()
     {
-		if (objItems == null) return; 
+		if (activeItems == null) return; 
 
 		// 全アイテム更新
-		foreach (GameObject itemObj in objItems)
+		foreach (GameObject itemObj in activeItems)
         {
             if (itemObj == null) continue;
 
@@ -876,15 +902,16 @@ public class ElementGenerator : MonoBehaviour
             {
                 // アイコンが見つかったらピンポイントで削除
                 Destroy(iconTransform.gameObject);
+                print("削除実行");
             }
         }
     }
 
     void UpdateGoalMiniMap()
     {
-		if (objGoals == null) return;
+		if (activeGoals == null) return;
 		// ゴール更新
-		foreach (GameObject goalObj in objGoals)
+		foreach (GameObject goalObj in activeGoals)
         {
             Vector3 goalPos = goalObj.transform.position;
 
@@ -901,9 +928,9 @@ public class ElementGenerator : MonoBehaviour
     void UpdateSwitchMiniMap()
     {
         // 全スイッチ更新
-        foreach (GameObject SwitchObj in objSwitchs)
+        foreach (GameObject SwitchObj in activeSwitches)
         {
-			if (objSwitchs == null) return;
+			if (activeSwitches == null) return;
 			Vector3 SwitchPos = SwitchObj.transform.position;
 
             int SwitchX = Mathf.RoundToInt(SwitchPos.x);
@@ -915,6 +942,46 @@ public class ElementGenerator : MonoBehaviour
                 Sprite currentSwitchIcon = (sw != null && sw.isPressed) ? switchONIcon : switchOFFIcon;
 
                 SetMiniMapIcon(objMapExist[SwitchX, SwitchY], currentSwitchIcon, ROOM_COLOR);
+            }
+        }
+    }
+
+    void UpdateGreenItemMiniMap()
+    {
+        if(activeGreenItems == null) return;
+
+        // 全緑アイテム更新
+        foreach (GameObject GreenItemObj in activeGreenItems)
+        {
+            if (GreenItemObj == null) continue;
+            Vector3 itemPos = GreenItemObj.transform.position;
+
+            int itemX = Mathf.RoundToInt(itemPos.x);
+            int itemY = Mathf.RoundToInt(itemPos.z);
+
+            if (IsInsideMap(itemX, itemY, objMapExist))
+            {
+                SetMiniMapIcon(objMapExist[itemX, itemY], greenItemIcon, ROOM_COLOR);
+            }
+        }
+    }
+
+    void UpdateBlueItemMiniMap()
+    {
+        if (activeBlueItems == null) return;
+
+        // 全青アイテム更新
+        foreach (GameObject BlueItemObj in activeBlueItems)
+        {
+            if (BlueItemObj == null) continue;
+            Vector3 itemPos = BlueItemObj.transform.position;
+
+            int itemX = Mathf.RoundToInt(itemPos.x);
+            int itemY = Mathf.RoundToInt(itemPos.z);
+
+            if (IsInsideMap(itemX, itemY, objMapExist))
+            {
+                SetMiniMapIcon(objMapExist[itemX, itemY], blueItemIcon, ROOM_COLOR);
             }
         }
     }
