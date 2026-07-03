@@ -66,7 +66,7 @@ public class SwitchManager : MonoBehaviour
             currentStanTime = 0f;
             isActionEnemy = false;
             isEndAction = false;
-            SoundManager.Instance?.PlayPunch();
+         
 
             _stunSent = false; // リセット
             enemy.StunCancel();
@@ -78,6 +78,18 @@ public class SwitchManager : MonoBehaviour
 
         if (!Pc.isAnimationStart) return;
         if (_stunSent) return; // 二重送信防止
+
+        SoundManager.Instance?.PlayPunch();
+
+        // 敵を殴ったらアイテムをドロップさせる
+        if (Pc.CompareTag("Player1"))
+        {
+            GreenItemDrop();
+        }
+        else if (Pc.CompareTag("Player2"))
+        {
+            BlueItemDrop();
+        }
 
         enemy.PlayAnimationEnemy();
         enemy.ResetPatrolState();
@@ -161,16 +173,6 @@ public class SwitchManager : MonoBehaviour
         {
             if (enemy.reactionText.text == "!") return;
 
-            // 敵を殴ったらアイテムをドロップさせる
-            if (Pc.CompareTag("Player1"))
-            {
-                GreenItemDrop();
-            }
-            else if (Pc.CompareTag("Player2"))
-            {
-                BlueItemDrop();
-            }
-
             isActionEnemy = true;
             Pc.isPlayerMoveStop = true;
             enemy.TextCancel();
@@ -230,17 +232,27 @@ public class SwitchManager : MonoBehaviour
     public void GreenItemDrop()
     {
         float heightOffset = 2f;
-        Vector3 spawnPosition = transform.position + new Vector3(0, heightOffset, 0);
-        var obj = Instantiate(Eg.powerItemGreen[0], spawnPosition, transform.rotation);
-        obj.tag = "PowerItem";
+        float spacing = 0.5f;
+
+        for (int i = 0; i < 2; i++)
+        {
+            Vector3 spawnPosition = transform.position + new Vector3(i * spacing, heightOffset, 0);
+            var obj = Instantiate(Eg.powerItemGreen[0], spawnPosition, transform.rotation);
+            obj.tag = "PowerItem";
+        }
     }
     
     public void BlueItemDrop()
     {
         float heightOffset = 2f;
-        Vector3 spawnPosition = transform.position + new Vector3(0, heightOffset, 0);
-        var obj = Instantiate(Eg.powerItemBlue[0], spawnPosition, transform.rotation);
-        obj.tag = "PowerItem";    
+        float spacing = 0.5f;
+
+        for (int i = 0; i < 2; i++)
+        {
+            Vector3 spawnPosition = transform.position + new Vector3(i * spacing, heightOffset, 0);
+            var obj = Instantiate(Eg.powerItemBlue[0], spawnPosition, transform.rotation);
+            obj.tag = "PowerItem";
+        }
     }
 
     #endregion
