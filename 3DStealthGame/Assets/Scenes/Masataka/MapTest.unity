@@ -4365,7 +4365,7 @@ GameObject:
   - component: {fileID: 1279333908}
   - component: {fileID: 1279333907}
   - component: {fileID: 1279333906}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Terrain
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5086,6 +5086,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eef2ace3c8bd3924bb220c94dd87d54e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  powerItemBlue:
+  - {fileID: 0}
+  powerItemGreen:
+  - {fileID: 0}
   miniMapMaskRect: {fileID: 1070339475}
   map2DRect: {fileID: 1655844094}
   enemyViewPrefab: {fileID: 5600239884965558956, guid: cb5b4d906db438946befd9dabf1bee9d, type: 3}

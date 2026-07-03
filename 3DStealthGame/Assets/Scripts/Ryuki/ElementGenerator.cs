@@ -34,8 +34,8 @@ public class ElementGenerator : MonoBehaviour
     GameObject wallObjects;                                         // マップ作成用キューブ
 
     // 仮作成用プレイヤースイッチギミックに必要なアイテム
-    GameObject[] powerItemBlue = new GameObject[1];                 // 青用アイテム               
-    GameObject[] powerItemGreen = new GameObject[1];                // 緑用アイテム
+    public GameObject[] powerItemBlue = new GameObject[1];                 // 青用アイテム               
+    public GameObject[] powerItemGreen = new GameObject[1];                // 緑用アイテム
 
     Sprite goalIcon;                                                // ゴールアイコン
     Sprite switchOFFIcon;                                           // スイッチアイコン
