@@ -137,13 +137,13 @@ public class ElementGenerator : MonoBehaviour
 
     #region シーン内オブジェクト管理
 
-    GameObject[] objEnemys;                                         // 敵
-    GameObject[] objEnemyStrongs;                                   // 強化敵
-    List<GameObject> activeItems = new List<GameObject>();          // アイテム
-    List<GameObject> activeGoals = new List<GameObject>();          // ゴール
-    List<GameObject> activeSwitches = new List<GameObject>();       // スイッチ
-    List<GameObject> activeGreenItems = new List<GameObject>();     // スイッチ
-    List<GameObject> activeBlueItems = new List<GameObject>();      // スイッチ
+    GameObject[] objEnemys;                                               // 敵
+    GameObject[] objEnemyStrongs;                                         // 強化敵
+    List<GameObject> activeItems = new List<GameObject>();                // アイテム
+    List<GameObject> activeGoals = new List<GameObject>();                // ゴール
+    List<GameObject> activeSwitches = new List<GameObject>();             // スイッチ
+    public List<GameObject> activeGreenItems = new List<GameObject>();    // 緑用アイテム
+    public List<GameObject> activeBlueItems = new List<GameObject>();     // 青用アイテム
 
 
 
@@ -157,10 +157,11 @@ public class ElementGenerator : MonoBehaviour
     public List<SwitchManager> GetSwitchList() => switchList;
     #endregion
 
-    #region 敵のミニマップ更新管理
+    #region ミニマップ更新管理
 
-    List<Vector2Int> oldEnemyPositions = new List<Vector2Int>();    // 敵のマス
-
+    List<Vector2Int> oldEnemyPositions = new List<Vector2Int>();                                         // 敵のマス                                                                     
+    Dictionary<GameObject, Vector2Int> oldGreenItemPositions = new Dictionary<GameObject, Vector2Int>(); // 緑アイテムのマス
+    Dictionary<GameObject, Vector2Int> oldBlueItemPositions = new Dictionary<GameObject, Vector2Int>(); // 緑アイテムのマス
     #endregion
 
     #region デバック設定
@@ -752,6 +753,7 @@ public class ElementGenerator : MonoBehaviour
             if (wsClient.IsHostPlayer())
             {
                 // ホスト（プレイヤー1）は緑アイテムのみ表示
+                //ResetGreenItemMiniMap();
                 UpdateGreenItemMiniMap();
             }
             else
@@ -945,23 +947,114 @@ public class ElementGenerator : MonoBehaviour
             }
         }
     }
+    //void ResetGreenItemMiniMap()
+    //{
+    //    // 前回の敵位置を元に戻す
+    //    foreach (Vector2Int pos in oldGreenItemPositions)
+    //    {
+    //        if (IsInsideMap(pos.x, pos.y, objMapExist))
+    //        {
+    //            GameObject tileObj = objMapExist[pos.x, pos.y];
+    //            if (tileObj == null) continue;
+
+    //            // そのマスにあるアイテムアイコン画像を削除する
+    //            Transform iconTransform = tileObj.transform.Find("MiniMapIcon");
+    //            if (iconTransform != null)
+    //            {
+    //                Destroy(iconTransform.gameObject);
+    //            }
+
+    //            // タイルの色を戻す
+    //            Image img = tileObj.GetComponent<Image>();
+    //            if (img != null)
+    //            {
+    //                if (map[pos.x, pos.y] == "1")
+    //                {
+    //                    img.color = ROOM_COLOR;
+    //                }
+    //                else if (map[pos.x, pos.y] == "2" || map[pos.x, pos.y] == "12")
+    //                {
+    //                    img.color = AISLE_COLOR;
+    //                }
+    //            }
+    //        }
+    //    }
+    //    // 今回の敵位置保存用
+    //    oldGreenItemPositions.Clear();
+    //}
 
     void UpdateGreenItemMiniMap()
     {
         if(activeGreenItems == null) return;
+        List<GameObject> removedItems = new List<GameObject>();
 
         // 全緑アイテム更新
         foreach (GameObject GreenItemObj in activeGreenItems)
         {
-            if (GreenItemObj == null) continue;
+            if (GreenItemObj == null)
+            {
+                removedItems.Add(GreenItemObj);
+                continue;
+            }
+
             Vector3 itemPos = GreenItemObj.transform.position;
 
             int itemX = Mathf.RoundToInt(itemPos.x);
             int itemY = Mathf.RoundToInt(itemPos.z);
+            Vector2Int currentTile = new Vector2Int(itemX, itemY);
+            if (!IsInsideMap(itemX, itemY, objMapExist)) continue;
 
-            if (IsInsideMap(itemX, itemY, objMapExist))
+            // すでに登録されているアイテムか確認
+            if (oldGreenItemPositions.TryGetValue(GreenItemObj, out Vector2Int oldTile))
             {
-                SetMiniMapIcon(objMapExist[itemX, itemY], greenItemIcon, ROOM_COLOR);
+                // 前回とマスが変わっていないなら何もしない
+                if (oldTile == currentTile)
+                {
+                    continue;
+                }
+
+                // マスが変わった場合古いマスのアイコンを削除
+                if (IsInsideMap(oldTile.x, oldTile.y, objMapExist))
+                {
+                    GameObject oldTileObj = objMapExist[oldTile.x, oldTile.y];
+                    if (oldTileObj != null)
+                    {
+                        Transform oldIcon = oldTileObj.transform.Find("MiniMapIcon");
+                        if (oldIcon != null) Destroy(oldIcon.gameObject);
+
+                        // タイルの色を元に戻す
+                        Image img = oldTileObj.GetComponent<Image>();
+                        if (img != null)
+                        {
+                            img.color = (map[oldTile.x, oldTile.y] == "1") ? ROOM_COLOR : AISLE_COLOR;
+                        }
+                    }
+                }
+                // 新しい位置に更新
+                oldGreenItemPositions[GreenItemObj] = currentTile;
+            }
+            else
+            {
+                // 初めてミニマップに登場したアイテムの場合現在の位置を登録
+                oldGreenItemPositions.Add(GreenItemObj, currentTile);
+            }
+            // 新しいマスにアイコンを設置
+            SetMiniMapIcon(objMapExist[itemX, itemY], greenItemIcon, ROOM_COLOR);
+        }
+
+        // 存在しないアイテムのデータをDictionaryから削除
+        foreach (GameObject deadItem in removedItems)
+        {
+            if (deadItem != null && oldGreenItemPositions.ContainsKey(deadItem))
+            {
+                // 消える直前のマスのアイコンを掃除
+                Vector2Int lastTile = oldGreenItemPositions[deadItem];
+                if (IsInsideMap(lastTile.x, lastTile.y, objMapExist) && objMapExist[lastTile.x, lastTile.y] != null)
+                {
+                    Transform icon = objMapExist[lastTile.x, lastTile.y].transform.Find("MiniMapIcon");
+                    if (icon != null) Destroy(icon.gameObject);
+                }
+                oldGreenItemPositions.Remove(deadItem);
             }
         }
     }
@@ -969,19 +1062,76 @@ public class ElementGenerator : MonoBehaviour
     void UpdateBlueItemMiniMap()
     {
         if (activeBlueItems == null) return;
+        List<GameObject> removedItems = new List<GameObject>();
 
         // 全青アイテム更新
         foreach (GameObject BlueItemObj in activeBlueItems)
         {
-            if (BlueItemObj == null) continue;
-            Vector3 itemPos = BlueItemObj.transform.position;
+            if (BlueItemObj == null)
+            {
+                removedItems.Add(BlueItemObj);
+                continue;
+            }
 
+            Vector3 itemPos = BlueItemObj.transform.position;
             int itemX = Mathf.RoundToInt(itemPos.x);
             int itemY = Mathf.RoundToInt(itemPos.z);
+            Vector2Int currentTile = new Vector2Int(itemX, itemY);
+            if (!IsInsideMap(itemX, itemY, objMapExist)) continue;
 
-            if (IsInsideMap(itemX, itemY, objMapExist))
+            // すでに登録されているアイテムか確認
+            if (oldBlueItemPositions.TryGetValue(BlueItemObj, out Vector2Int oldTile))
             {
-                SetMiniMapIcon(objMapExist[itemX, itemY], blueItemIcon, ROOM_COLOR);
+                // 前回とマスが変わっていないなら何もしない
+                if (oldTile == currentTile)
+                {
+                    continue;
+                }
+
+                // マスが変わった場合古いマスのアイコンを削除
+                if (IsInsideMap(oldTile.x, oldTile.y, objMapExist))
+                {
+                    GameObject oldTileObj = objMapExist[oldTile.x, oldTile.y];
+                    if (oldTileObj != null)
+                    {
+                        Transform oldIcon = oldTileObj.transform.Find("MiniMapIcon");
+                        if (oldIcon != null) Destroy(oldIcon.gameObject);
+
+                        // タイルの色を元に戻す
+                        Image img = oldTileObj.GetComponent<Image>();
+                        if (img != null)
+                        {
+                            img.color = (map[oldTile.x, oldTile.y] == "1") ? ROOM_COLOR : AISLE_COLOR;
+                        }
+                    }
+                }
+
+                // 新しい位置に更新
+                oldBlueItemPositions[BlueItemObj] = currentTile;
+            }
+            else
+            {
+                // 初めてミニマップに登場したアイテムの場合、現在の位置を登録
+                oldBlueItemPositions.Add(BlueItemObj, currentTile);
+            }
+
+            // 新しいマスにアイコンを設置
+            SetMiniMapIcon(objMapExist[itemX, itemY], blueItemIcon, ROOM_COLOR);
+        }
+
+        // 存在しないアイテムのデータをDictionaryから削除
+        foreach (GameObject deadItem in removedItems)
+        {
+            if (deadItem != null && oldBlueItemPositions.ContainsKey(deadItem))
+            {
+                // 消える直前のマスのアイコンを掃除
+                Vector2Int lastTile = oldBlueItemPositions[deadItem];
+                if (IsInsideMap(lastTile.x, lastTile.y, objMapExist) && objMapExist[lastTile.x, lastTile.y] != null)
+                {
+                    Transform icon = objMapExist[lastTile.x, lastTile.y].transform.Find("MiniMapIcon");
+                    if (icon != null) Destroy(icon.gameObject);
+                }
+                oldBlueItemPositions.Remove(deadItem);
             }
         }
     }

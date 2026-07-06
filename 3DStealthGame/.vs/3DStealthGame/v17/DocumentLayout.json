@@ -3,16 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\assets\\scripts\\ryuki\\elementgenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ryuki\\elementgenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\assets\\scripts\\masataka\\managers\\staminaitemmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\managers\\staminaitemmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\assets\\scripts\\masataka\\managers\\itemmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\managers\\itemmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|c:\\users\\ydauser01\\documents\\_git\\3dstealthgame\\assets\\scripts\\masataka\\staminaabsorbeffect.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\staminaabsorbeffect.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\assets\\scripts\\ryuki\\elementgenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ryuki\\elementgenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\assets\\scripts\\ryuki\\switchmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -21,10 +25,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\assets\\scripts\\ryuki\\enemymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ryuki\\enemymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\assets\\scripts\\masataka\\managers\\itemmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\masataka\\managers\\itemmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{13877ECB-6668-25CE-BED5-787445A90D88}|Assembly-CSharp.csproj|C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\assets\\scripts\\masataka\\network\\websocketclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -160,20 +160,8 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 8,
+          "SelectedChildIndex": 10,
           "Children": [
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{eefa5220-e298-11d0-8f78-00a0c9110057}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{b1e99781-ab81-11d0-b683-00aa00a3ee26}"
-            },
             {
               "$type": "Document",
               "DocumentIndex": 8,
@@ -216,7 +204,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "EnemyManager.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Ryuki\\EnemyManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Ryuki\\EnemyManager.cs",
@@ -230,7 +218,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "SwitchManager.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Ryuki\\SwitchManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Ryuki\\SwitchManager.cs",
@@ -244,17 +232,29 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 3,
               "Title": "ElementGenerator.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
               "ToolTip": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
               "RelativeToolTip": "Assets\\Scripts\\Ryuki\\ElementGenerator.cs",
-              "ViewState": "AgIAAG8DAAAAAAAAAIAwwHsDAAAQAAAAAAAAAA==",
+              "ViewState": "AgIAAOkCAAAAAAAAAAAowAIDAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-16T05:07:42.565Z",
               "IsPinned": true,
               "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{eefa5220-e298-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{b1e99781-ab81-11d0-b683-00aa00a3ee26}"
             },
             {
               "$type": "Document",
@@ -271,13 +271,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "StaminaItemManager.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Masataka\\Managers\\StaminaItemManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\Managers\\StaminaItemManager.cs",
               "ToolTip": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Masataka\\Managers\\StaminaItemManager.cs",
               "RelativeToolTip": "Assets\\Scripts\\Masataka\\Managers\\StaminaItemManager.cs",
-              "ViewState": "AgIAAC8AAAAAAAAAAAAUwDoAAAAeAAAAAAAAAA==",
+              "ViewState": "AgIAADIAAAAAAAAAAAAUwEMAAAAWAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-06-26T02:32:22.173Z",
               "EditorCaption": ""
@@ -594,6 +594,19 @@
             },
             {
               "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ItemManager.cs",
+              "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Masataka\\Managers\\ItemManager.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\Managers\\ItemManager.cs",
+              "ToolTip": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Masataka\\Managers\\ItemManager.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Masataka\\Managers\\ItemManager.cs",
+              "ViewState": "AgIAABoAAAAAAAAAAAAgwDoAAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-25T05:57:16.907Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 37,
               "Title": "TutorialManager.cs",
               "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\Git\\3DStealthGame\\3DStealthGame\\Assets\\Scripts\\Masataka\\Managers\\TutorialManager.cs",
@@ -650,40 +663,6 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{004be353-6879-467c-9d1e-9ac23cdf6d49}"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "Orientation": 0,
-      "VerticalTabListWidth": 256,
-      "FloatingWindowState": {
-        "Id": "d8aa6c15-fc56-450f-99e3-391122244d9f",
-        "Display": 1,
-        "X": 143,
-        "Y": 102,
-        "Width": 1522,
-        "Height": 630,
-        "WindowState": 0
-      },
-      "DocumentGroups": [
-        {
-          "DockedWidth": 200,
-          "SelectedChildIndex": 0,
-          "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "ItemManager.cs",
-              "DocumentMoniker": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Masataka\\Managers\\ItemManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Masataka\\Managers\\ItemManager.cs",
-              "ToolTip": "C:\\Users\\ydauser01\\Documents\\_git\\3DStealthGame\\Assets\\Scripts\\Masataka\\Managers\\ItemManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Masataka\\Managers\\ItemManager.cs",
-              "ViewState": "AgIAAAsAAAAAAAAAAAAQwB0AAAAoAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-25T05:57:16.907Z",
-              "EditorCaption": ""
             }
           ]
         }

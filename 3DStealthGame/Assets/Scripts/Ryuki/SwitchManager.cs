@@ -238,6 +238,7 @@ public class SwitchManager : MonoBehaviour
         {
             Vector3 spawnPosition = transform.position + new Vector3(i * spacing, heightOffset, 0);
             var obj = Instantiate(Eg.powerItemGreen[0], spawnPosition, transform.rotation);
+            Eg.activeGreenItems.Add(obj);
             obj.tag = "PowerItem";
         }
     }
@@ -251,6 +252,7 @@ public class SwitchManager : MonoBehaviour
         {
             Vector3 spawnPosition = transform.position + new Vector3(i * spacing, heightOffset, 0);
             var obj = Instantiate(Eg.powerItemBlue[0], spawnPosition, transform.rotation);
+            Eg.activeBlueItems.Add(obj);
             obj.tag = "PowerItem";
         }
     }
