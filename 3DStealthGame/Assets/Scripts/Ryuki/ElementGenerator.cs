@@ -496,7 +496,7 @@ public class ElementGenerator : MonoBehaviour
                         if (rend != null) rend.material.color = new Color(0.35f, 0.5f, 0.75f, 1.0f);
                         break;
 
-                    case MapObjectType.switchGreen: // 青用スイッチ
+                    case MapObjectType.switchGreen: // 緑用スイッチ
                         GameObject switchGreenObj = Instantiate(switchesList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
                         activeSwitches.Add(switchGreenObj);
                         map[x, y] = "1";
