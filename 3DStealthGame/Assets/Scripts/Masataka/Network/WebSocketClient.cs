@@ -130,6 +130,17 @@ public class ChatMessage
 	public string sender_name;
 }
 
+[System.Serializable]
+public class StaminaItemDropMessage
+{
+	public string type;
+	public string sender_id;
+	public int drop_type;
+	public int enemy_id; 
+	public float x;
+	public float y;
+	public float z;
+}
 #endregion
 
 /// <summary>
@@ -175,6 +186,12 @@ public static class SendMessageBuilder
 
 	public static string ItemPicked(Vector3 pos)
 	=> $"{{\"type\":\"item_picked\",\"x\":{pos.x},\"z\":{pos.z}}}";
+
+	public static string StaminaItemDrop(string senderId, int dropType, Vector3 pos)
+	=> $"{{\"type\":\"stamina_item_drop\",\"sender_id\":\"{senderId}\",\"drop_type\":{dropType},\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z}}}";
+
+	public static string StaminaItemDropRequest(string senderId, int dropType, Vector3 pos)
+=> $"{{\"type\":\"stamina_item_drop_request\",\"sender_id\":\"{senderId}\",\"drop_type\":{dropType},\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z}}}";
 
 	public static string EnemyMove(int index, Vector3 pos, float angle, Color light, string reaction, Vector3 lastSound)
 		=> $"{{\"type\":\"enemy_move\",\"enemy_index\":{index}," +
@@ -381,6 +398,21 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	public async void ConnectToRoom(string roomId)
 	{
+		if (websocket != null)
+		{
+			websocket.OnMessage -= OnMessageReceived;
+			websocket.OnOpen -= OnWebSocketOpened;
+			if (websocket.State == WebSocketState.Open)
+			{
+				try { await websocket.Close(); } catch { }
+			}
+			else
+			{
+				websocket.CancelConnection();
+			}
+			websocket = null;
+		}
+
 		var ws = new WebSocket(GetServerUrl(roomId));
 		ws.OnOpen += OnWebSocketOpened;
 		ws.OnMessage += OnMessageReceived;
@@ -388,6 +420,7 @@ public class WebSocketClient : MonoBehaviour
 		websocket = ws;
 		await ws.Connect();
 	}
+
 
 	/// <summary>プレイヤー名を設定する</summary>
 	public void SetPlayerName(string name) { playerName = name; }
@@ -400,12 +433,18 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	public async void OnQuitButtonClicked()
 	{
-
 		if (websocket != null)
 		{
 			websocket.OnMessage -= OnMessageReceived;
 			websocket.OnOpen -= OnWebSocketOpened;
-			if (websocket.State == WebSocketState.Open) await websocket.Close();
+			if (websocket.State == WebSocketState.Open)
+			{
+				try { await websocket.Close(); } catch { }
+			}
+			else
+			{
+				websocket.CancelConnection();
+			}
 			websocket = null;
 		}
 
@@ -443,6 +482,10 @@ public class WebSocketClient : MonoBehaviour
 			if (websocket.State == WebSocketState.Open)
 			{
 				try { await websocket.Close(); } catch { }
+			}
+			else
+			{
+				websocket.CancelConnection();
 			}
 			websocket = null;
 		}
@@ -527,6 +570,10 @@ public class WebSocketClient : MonoBehaviour
 		else if (json.Contains("\"type\":\"respawn\"")) HandleRespawnMessage(json);
 		else if (json.Contains("\"type\":\"stamina_item_picked\"")) HandleStaminaItemPickedMessage(json);
 		else if (json.Contains("\"type\":\"chat\"")) HandleChatMessage(json);
+		else if (json.Contains("\"type\":\"stamina_item_drop_request\"")) HandleStaminaItemDropRequestMessage(json);
+		else if (json.Contains("\"type\":\"stamina_item_drop\"")) HandleStaminaItemDropMessage(json);
+		
+
 		else if (json.Contains("\"type\":\"start_game\""))
 		{
 			if (SceneManager.GetActiveScene().name == "MapTest")
@@ -737,17 +784,35 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void HandleItemPickedMessage(string json)
 	{
+		Debug.Log($"[item生JSON] {json}");
 		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json);
 		MissionManager.Instance?.OnItemPicked();
 		LogManager.Instance?.AddLog("アイテムを取得した", "#aadd44");
 
+		// 一番近いアイテムを探す（高さは比較せずXZ平面のみで判定）
+		ItemManager nearestItem = null;
+		float nearestDist = float.MaxValue;
 		foreach (var item in FindObjectsOfType<ItemManager>())
 		{
-			if (Vector3.Distance(item.transform.position, new Vector3(msg.x, 0, msg.z)) < 1f)
+			Vector2 itemXZ = new Vector2(item.transform.position.x, item.transform.position.z);
+			Vector2 msgXZ = new Vector2(msg.x, msg.z);
+			float dist = Vector2.Distance(itemXZ, msgXZ);
+
+			if (dist < 2f && dist < nearestDist)
 			{
-				item.gameObject.SetActive(false);
-				break;
+				nearestDist = dist;
+				nearestItem = item;
 			}
+		}
+
+		if (nearestItem != null)
+		{
+			// ミニマップアイコンも消す
+			var generator = FindObjectOfType<ElementGenerator>();
+			if (generator != null)
+				generator.RemoveItemIcon(nearestItem.transform.position);
+
+			Destroy(nearestItem.gameObject);
 		}
 	}
 
@@ -877,16 +942,25 @@ public class WebSocketClient : MonoBehaviour
 
 		Vector3 itemPos = new Vector3(msg.x, 1f, msg.z);
 
-		// 一番近いスタミナアイテムから色とプレハブを取得
+		// 一番近いスタミナアイテムを探す（高さは比較せずXZ平面のみで判定）
 		StaminaItemManager nearestItem = null;
-		foreach (var item in FindObjectsOfType<StaminaItemManager>())
+		float nearestDist = float.MaxValue;
+		var candidates = FindObjectsOfType<StaminaItemManager>();
+		foreach (var item in candidates)
 		{
-			if (Vector3.Distance(item.transform.position, new Vector3(msg.x, 0, msg.z)) < 1f)
+			Vector2 itemXZ = new Vector2(item.transform.position.x, item.transform.position.z);
+			Vector2 msgXZ = new Vector2(msg.x, msg.z);
+			float dist = Vector2.Distance(itemXZ, msgXZ);
+
+			if (dist < 2f && dist < nearestDist)
 			{
+				nearestDist = dist;
 				nearestItem = item;
-				break;
 			}
 		}
+
+		// 調査用（動作確認後に削除）
+		Debug.Log($"[picked受信] pos=({msg.x:F1},{msg.z:F1}) 候補数={candidates.Length} ヒット={(nearestItem != null ? nearestItem.name + " dist=" + nearestDist.ToString("F2") : "なし")}");
 
 		if (nearestItem != null && myPlayer != null && nearestItem.absorbEffectPrefab != null)
 		{
@@ -894,6 +968,46 @@ public class WebSocketClient : MonoBehaviour
 			effect.Play(itemPos, myPlayer.transform, nearestItem.effectColor);
 			nearestItem.gameObject.SetActive(false);
 		}
+	}
+
+	/// <summary>
+	/// 相手が敵を殴ってスタミナアイテムがドロップした：自分の画面にも生成する
+	/// </summary>
+	private void HandleStaminaItemDropMessage(string json)
+	{
+		var msg = JsonUtility.FromJson<StaminaItemDropMessage>(json);
+		if (msg.sender_id == myId) return; // 自分のドロップは無視（すでに生成済み）
+
+		var sw = FindObjectOfType<SwitchManager>();
+		if (sw == null) return;
+
+		Vector3 pos = new Vector3(msg.x, msg.y, msg.z);
+		if (msg.drop_type == 1)
+			sw.SpawnGreenItem(pos);
+		else
+			sw.SpawnBlueItem(pos);
+	}
+
+	/// <summary>
+	/// ゲストからのドロップリクエスト：ホストだけが生成して配信する
+	/// </summary>
+	private void HandleStaminaItemDropRequestMessage(string json)
+	{
+		if (!IsHostPlayer()) return;
+
+		var msg = JsonUtility.FromJson<StaminaItemDropMessage>(json);
+		if (msg.sender_id == myId) return;
+
+		var sw = FindObjectOfType<SwitchManager>();
+		if (sw == null) return;
+
+		Vector3 dropPos = new Vector3(msg.x, msg.y, msg.z);
+		if (msg.drop_type == 1)
+			sw.SpawnGreenItem(dropPos);
+		else
+			sw.SpawnBlueItem(dropPos);
+
+		SendStaminaItemDrop(msg.drop_type, dropPos);
 	}
 
 	#endregion
@@ -1245,6 +1359,21 @@ public class WebSocketClient : MonoBehaviour
 		await websocket.SendText(SendMessageBuilder.StaminaItemPicked(myId, pos));
 	}
 
+	/// <summary>
+	/// スタミナアイテムのドロップをサーバーに通知する
+	/// dropType: 1=Green, 2=Blue
+	/// </summary>
+	public async void SendStaminaItemDrop(int dropType, Vector3 pos)
+	{
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
+		await websocket.SendText(SendMessageBuilder.StaminaItemDrop(myId, dropType, pos));
+	}
+
+	public async void SendStaminaItemDropRequest(int dropType, Vector3 pos)
+	{
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
+		await websocket.SendText(SendMessageBuilder.StaminaItemDropRequest(myId, dropType, pos));
+	}
 	#endregion
 
 	#region 敵の位置同期

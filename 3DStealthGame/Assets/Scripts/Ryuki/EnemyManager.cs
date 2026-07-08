@@ -845,7 +845,7 @@ public class EnemyManager : MonoBehaviour
     public void StunCancel()
     {
         animEnemy.SetTrigger("StunCancel");
-        if (Sm != null) Sm.isEnemyMoveStop = false; // ’Ç‰Á
+        if (Sm != null) Sm.isEnemyMoveStop = false; 
         var col = GetComponent<Collider>();
         if (col != null) col.enabled = true;
     }

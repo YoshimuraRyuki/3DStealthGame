@@ -1,3 +1,4 @@
+using Benjathemaker;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -80,18 +81,28 @@ public class SwitchManager : MonoBehaviour
         if (_stunSent) return; // 二重送信防止
 
         SoundManager.Instance?.PlayPunch();
+		Debug.Log("ドロップ処理到達");
 
-        // 敵を殴ったらアイテムをドロップさせる
-        if (Pc.CompareTag("Player1"))
-        {
-            GreenItemDrop();
-        }
-        else if (Pc.CompareTag("Player2"))
-        {
-            BlueItemDrop();
-        }
+		// 敵を殴ったらアイテムをドロップさせる
+		var wsClient3 = FindObjectOfType<WebSocketClient>();
+		if (wsClient3 != null)
+		{
+			int dropType = Pc.CompareTag("Player1") ? 1 : 2;
+			Vector3 dropPos = transform.position + Vector3.up * 2f;
 
-        enemy.PlayAnimationEnemy();
+			if (wsClient3.IsHostPlayer())
+			{
+				if (dropType == 1) SpawnGreenItem(dropPos);
+				else SpawnBlueItem(dropPos);
+				wsClient3.SendStaminaItemDrop(dropType, dropPos);
+			}
+			else
+			{
+				wsClient3.SendStaminaItemDropRequest(dropType, dropPos);
+			}
+		}
+
+		enemy.PlayAnimationEnemy();
         enemy.ResetPatrolState();
         enemy.reactionText.text = "×";
         Pc.isAnimationStart = false;
@@ -158,8 +169,11 @@ public class SwitchManager : MonoBehaviour
 
     void TryAction()
     {
-        //if (!isPlayerInRange) return;
-        if (!isPlayerInRange || isEndAction || isActionSwitch || isActionEnemy) return;
+		if (CompareTag("Enemy") && isPlayerInRange == false && isEndAction)
+			Debug.Log($"[調査] 敵{targetEnemyID}: isEndAction残留で殴れない状態");
+
+		//if (!isPlayerInRange) return;
+		if (!isPlayerInRange || isEndAction || isActionSwitch || isActionEnemy) return;
 
         int blueLayer = LayerMask.NameToLayer("Blue");
         int greenLayer = LayerMask.NameToLayer("Green");
@@ -225,44 +239,100 @@ public class SwitchManager : MonoBehaviour
         }
     }
 
-    #endregion
+	#endregion
+	#region アイテム関連
 
-    #region アイテム関連
+	public Vector3 GreenItemDrop()
+	{
+		Vector3 basePos = transform.position + Vector3.up * 2f;
+		SpawnGreenItem(basePos);
+		return basePos;
+	}
 
-    public void GreenItemDrop()
-    {
-        float heightOffset = 2f;
-        float spacing = 0.5f;
+	public Vector3 BlueItemDrop()
+	{
+		Vector3 basePos = transform.position + Vector3.up * 2f;
+		SpawnBlueItem(basePos);
+		return basePos;
+	}
 
-        for (int i = 0; i < 2; i++)
-        {
-            Vector3 spawnPosition = transform.position + new Vector3(i * spacing, heightOffset, 0);
-            var obj = Instantiate(Eg.powerItemGreen[0], spawnPosition, transform.rotation);
-            obj.tag = "PowerItem";
-        }
-    }
-    
-    public void BlueItemDrop()
-    {
-        float heightOffset = 2f;
-        float spacing = 0.5f;
+	/// <summary>
+	/// 緑アイテムを生成する（相手からの受信時にも使う）
+	/// </summary>
+	public void SpawnGreenItem(Vector3 basePos)
+	{
+		int count = 2;
+		float scatterRadius = 1.2f; // 散らばる距離
+		for (int i = 0; i < count; i++)
+		{
+			// 番号から方向を決める（乱数を使わないので両画面で一致する）
+			float angle = (360f / count) * i * Mathf.Deg2Rad;
+			Vector3 landPos = new Vector3(
+				basePos.x + Mathf.Cos(angle) * scatterRadius,
+				0.5f,
+				basePos.z + Mathf.Sin(angle) * scatterRadius);
 
-        for (int i = 0; i < 2; i++)
-        {
-            Vector3 spawnPosition = transform.position + new Vector3(i * spacing, heightOffset, 0);
-            var obj = Instantiate(Eg.powerItemBlue[0], spawnPosition, transform.rotation);
-            obj.tag = "PowerItem";
-        }
-    }
+			var obj = Instantiate(Eg.powerItemGreen[0], basePos, transform.rotation);
+			obj.tag = "PowerItem";
 
-    #endregion
+			// PowerItemの物理演出はオンラインだと同期ズレするので無効化し、
+			// ItemDropEffectの決定的な放物線に置き換える
+			var pi = obj.GetComponent<PowerItem>();
+			if (pi != null) Destroy(pi);
 
-    #region 澤田作：サーバ関連
+			var sg = obj.GetComponent<SimpleGemsAnim>();
+			if (sg != null) sg.enabled = false;
 
-    /// <summary>
-    /// 受信用
-    /// </summary>
-    public void OnSwitchActivated()
+			var rb = obj.GetComponent<Rigidbody>();
+			if (rb != null) { rb.isKinematic = true; rb.useGravity = false; }
+			foreach (var c in obj.GetComponentsInChildren<Collider>())
+				c.isTrigger = true;
+
+			obj.AddComponent<ItemDropEffect>().Init(basePos, landPos);
+		}
+	}
+
+	/// <summary>
+	/// 青アイテムを生成する（相手からの受信時にも使う）
+	/// </summary>
+	public void SpawnBlueItem(Vector3 basePos)
+	{
+		int count = 2;
+		float scatterRadius = 1.2f;
+		for (int i = 0; i < count; i++)
+		{
+			float angle = (360f / count) * i * Mathf.Deg2Rad;
+			Vector3 landPos = new Vector3(
+				basePos.x + Mathf.Cos(angle) * scatterRadius,
+				0.5f,
+				basePos.z + Mathf.Sin(angle) * scatterRadius);
+
+			var obj = Instantiate(Eg.powerItemBlue[0], basePos, transform.rotation);
+			obj.tag = "PowerItem";
+
+			var pi = obj.GetComponent<PowerItem>();
+			if (pi != null) Destroy(pi);
+
+			var sg = obj.GetComponent<SimpleGemsAnim>();
+			if (sg != null) sg.enabled = false;
+
+			var rb = obj.GetComponent<Rigidbody>();
+			if (rb != null) { rb.isKinematic = true; rb.useGravity = false; }
+			foreach (var c in obj.GetComponentsInChildren<Collider>())
+				c.isTrigger = true;
+
+			obj.AddComponent<ItemDropEffect>().Init(basePos, landPos);
+		}
+	}
+
+	#endregion
+
+	#region 澤田作：サーバ関連
+
+	/// <summary>
+	/// 受信用
+	/// </summary>
+	public void OnSwitchActivated()
     {
         isEndAction = true;
         isPlayerInRange = false;
@@ -280,7 +350,14 @@ public class SwitchManager : MonoBehaviour
         isActionSwitch = false;
         isActionEnemy = false;
         isPlayerInRange = false;
-        if (actionText != null) actionText.gameObject.SetActive(false);
+
+		if (CompareTag("Enemy"))
+		{
+			isEndAction = false;
+			_stunSent = false;
+			currentStanTime = 0f;
+		}
+		//if (actionText != null) actionText.gameObject.SetActive(false);
     }
     #endregion
 
@@ -360,8 +437,8 @@ public class SwitchManager : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (isEndAction) return;
-        if (other.CompareTag("Player1") || other.CompareTag("Player2"))
+		if (isEndAction) return;
+		if (other.CompareTag("Player1") || other.CompareTag("Player2"))
         {
             var wsClient = FindObjectOfType<WebSocketClient>();
             if (wsClient == null) return;
@@ -390,6 +467,18 @@ public class SwitchManager : MonoBehaviour
         }
     }
 
-    #endregion
+	/// <summary>
+	/// 当たり判定内に留まっている間の処理。
+	/// 殴った後にプレイヤーが範囲内に立ったままだとOnTriggerEnterが再発火しないため、
+	/// スタン明けにここで範囲内状態を復帰させる
+	/// </summary>
+	private void OnTriggerStay(Collider other)
+	{
+		if (isPlayerInRange) return; // すでに範囲内なら何もしない
+		if (isEndAction) return;     // スタン中・押下済みスイッチは対象外
+		OnTriggerEnter(other);       // 入り直しと同じ判定を通す
+	}
+
+	#endregion
 
 }

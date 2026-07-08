@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
 /// スタミナ回復アイテムの取得判定を管理するクラス。
@@ -18,6 +19,9 @@ public class StaminaItemManager : MonoBehaviour
 	[Header("吸い込みエフェクト")]
 	public StaminaAbsorbEffect absorbEffectPrefab;
 	public Color effectColor = Color.blue; // BlueはColor.blue、GreenはColor.green
+
+	[Header("取れるときに使うアウトライン用マテリアル")]
+	public Material outlineMaterial;
 	#endregion
 
 	#region フィールド
@@ -39,6 +43,8 @@ public class StaminaItemManager : MonoBehaviour
 
 		if (wsClient.myPlayerNumber != targetPlayerNumber)
 			SetGhostAppearance();
+		else
+			SetOutlineAppearance();
 	}
 
 	private void OnTriggerEnter(Collider other)
@@ -50,6 +56,8 @@ public class StaminaItemManager : MonoBehaviour
 		if (wsClient.myPlayerNumber != targetPlayerNumber) return;
 
 		_isPicked = true;
+
+		SoundManager.Instance?.PlayPickup();
 
 		// 回復するのは相手なので、吸い込み先も相手プレイヤー
 		Transform remoteTransform = wsClient.GetRemotePlayerTransform();
@@ -79,6 +87,21 @@ public class StaminaItemManager : MonoBehaviour
 		foreach (var r in GetComponentsInChildren<Renderer>())
 		{
 			r.material = ghostMaterial;
+		}
+	}
+
+	/// <summary>
+	/// 全Rendererにアウトライン用マテリアルを追加する
+	/// </summary>
+	private void SetOutlineAppearance()
+	{
+		if (outlineMaterial == null) return;
+		foreach (var r in GetComponentsInChildren<Renderer>())
+		{
+			// 既存マテリアルの後ろにアウトラインを追加する（元の見た目は維持）
+			var mats = new List<Material>(r.sharedMaterials);
+			mats.Add(outlineMaterial);
+			r.materials = mats.ToArray();
 		}
 	}
 

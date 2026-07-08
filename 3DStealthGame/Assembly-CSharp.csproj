@@ -80,6 +80,7 @@
     <Compile Include="Assets\Scripts\Masataka\UI\TutorialManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Camera\PlayerCamera.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\StaminaManager.cs" />
+    <Compile Include="Assets\Scripts\Masataka\ItemDropEffect.cs" />
     <Compile Include="Assets\Scripts\Ryuki\WallCollision.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\StaminaGaugeUI.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\NameInputManager.cs" />
@@ -112,6 +113,7 @@
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Leading Characters.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Properties.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Surface.cginc" />
+    <None Include="Assets\Resources\Materials\Maasataka\ItemOutline.shader" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Following Characters.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Masking.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF Overlay.shader" />

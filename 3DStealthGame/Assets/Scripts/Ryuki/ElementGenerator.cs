@@ -714,11 +714,52 @@ public class ElementGenerator : MonoBehaviour
         remotePlayer = t;
     }
 
-    #endregion
+	#endregion
 
-    #region Update処理
+	#region 澤田作：相手プレイヤーのミニマップ表示
 
-    void Update()
+	Vector2Int oldRemotePos = new Vector2Int(-1, -1); // 前回相手がいたマス
+
+	/// <summary>
+	/// 相手プレイヤーの現在位置をマス色で表示する（敵表示と同じ方式）
+	/// </summary>
+	void UpdateRemotePlayerMiniMap()
+	{
+		// 前回のマスを元の色に戻す
+		if (oldRemotePos.x >= 0 && IsInsideMap(oldRemotePos.x, oldRemotePos.y, objMapExist))
+		{
+			ResetTileColor(oldRemotePos.x, oldRemotePos.y);
+			oldRemotePos = new Vector2Int(-1, -1);
+		}
+		// playerObjectsから直接相手を取得する
+		var wsClient = FindObjectOfType<WebSocketClient>();
+		if (wsClient == null) return;
+		Transform remote = wsClient.GetRemotePlayerTransform();
+		if (remote == null) return;
+
+		int x = Mathf.RoundToInt(remote.position.x);
+		int y = Mathf.RoundToInt(remote.position.z);
+
+		if (IsInsideMap(x, y, objMapExist))
+		{
+			objMapExist[x, y].GetComponent<Image>().color = GetPlayerColor(remote);
+			oldRemotePos = new Vector2Int(x, y);
+		}
+	}
+
+	/// <summary>
+	/// プレイヤーのタグから対応する色を返す（Player1=青、Player2=緑）
+	/// </summary>
+	Color GetPlayerColor(Transform t)
+	{
+		return t.CompareTag("Player1") ? PLAYER2_COLOR : PLAYER1_COLOR;
+	}
+
+	#endregion
+
+	#region Update処理
+
+	void Update()
     {
         UpdateMiniMap(); // ミニマップに反映
     }
@@ -731,7 +772,8 @@ public class ElementGenerator : MonoBehaviour
         if (player == null) return; // プレイヤー生成前はスキップ
 
         UpdatePlayerMiniMap();                                                   // プレイヤー
-        UpdateItemMiniMap();                                                     // アイテム
+		UpdateRemotePlayerMiniMap();
+		UpdateItemMiniMap();                                                     // アイテム
         UpdateGoalMiniMap();                                                     // ゴール
         UpdateSwitchMiniMap();                                                   // スイッチ
 
@@ -825,18 +867,18 @@ public class ElementGenerator : MonoBehaviour
         Color myColor = (wsClient != null && wsClient.IsHostPlayer()) ? PLAYER1_COLOR : PLAYER2_COLOR;
         Color remoteColor = (wsClient != null && wsClient.IsHostPlayer()) ? PLAYER2_COLOR : PLAYER1_COLOR;
 
-        // P1（自分）
-        if (player != null)
-            UpdatePlayerOnMap(player, ref currentPlayerX, ref currentPlayerY,
-                              ref oldPlayerX, ref oldPlayerY,
-                              objMapExist_P1, map2DRect_P1, miniMapMaskRect_P1, myColor);
+		// P1（自分）
+		if (player != null)
+			UpdatePlayerOnMap(player, ref currentPlayerX, ref currentPlayerY,
+							  ref oldPlayerX, ref oldPlayerY,
+							  objMapExist_P1, map2DRect_P1, miniMapMaskRect_P1, GetPlayerColor(player));
 
-        // P2（相手）
-        if (remotePlayer != null)
-            UpdatePlayerOnMap(remotePlayer, ref currentRemoteX, ref currentRemoteY,
-                              ref oldRemoteX, ref oldRemoteY,
-                              objMapExist_P2, map2DRect_P2, miniMapMaskRect_P2, remoteColor);
-    }
+		// P2（相手）
+		if (remotePlayer != null)
+			UpdatePlayerOnMap(remotePlayer, ref currentRemoteX, ref currentRemoteY,
+							  ref oldRemoteX, ref oldRemoteY,
+							  objMapExist_P2, map2DRect_P2, miniMapMaskRect_P2, GetPlayerColor(remotePlayer));
+	}
 
     void UpdateItemMiniMap()
     {
