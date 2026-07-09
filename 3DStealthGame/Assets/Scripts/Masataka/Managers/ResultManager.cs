@@ -25,6 +25,7 @@ public class ResultManager : MonoBehaviour
 	public Text rank2Text;
 	public Text rank3Text;
 
+	[Header("サーバーURL")]
 	public string serverBaseUrl = "http://localhost:8080";
 
 	#endregion
@@ -33,13 +34,30 @@ public class ResultManager : MonoBehaviour
 
 	void Start()
 	{
+		string displayName = GetRankingDisplayName();
+
 		// ResultDataの内容を画面に反映
-		playerNameText.text = $"{ResultData.playerName} & {ResultData.remotePlayerName}";
-		clearTimeText.text = $"{(int)ResultData.elapsedTime}秒";
-		missionCountText.text = $"{ResultData.missionCount} / 3";
+		if (playerNameText != null)
+		{
+			playerNameText.text = displayName;
+		}
+
+		if (clearTimeText != null)
+		{
+			clearTimeText.text = $"{(int)ResultData.elapsedTime}秒";
+		}
+
+		if (missionCountText != null)
+		{
+			missionCountText.text = $"{ResultData.missionCount} / 3";
+		}
 
 		string grade = CalcGrade(ResultData.missionCount, ResultData.elapsedTime);
-		gradeText.text = grade;
+
+		if (gradeText != null)
+		{
+			gradeText.text = grade;
+		}
 
 		StartCoroutine(PostAndFetchRanking());
 	}
@@ -61,50 +79,113 @@ public class ResultManager : MonoBehaviour
 	}
 
 	/// <summary>
-	/// スコアをサーバーに送信し、ランキングを取得してUIに反映する
+	/// ランキングに表示・送信する名前を作る。
+	/// 自分と相手の名前がある場合は「自分 & 相手」にする。
+	/// </summary>
+	private string GetRankingDisplayName()
+	{
+		string playerName = string.IsNullOrEmpty(ResultData.playerName)
+			? "Player"
+			: ResultData.playerName;
+
+		string remoteName = string.IsNullOrEmpty(ResultData.remotePlayerName)
+			? ""
+			: ResultData.remotePlayerName;
+
+		if (string.IsNullOrEmpty(remoteName))
+		{
+			return playerName;
+		}
+
+		if (playerName == remoteName)
+		{
+			return playerName;
+		}
+
+		return $"{playerName} & {remoteName}";
+	}
+
+	/// <summary>
+	/// スコアをサーバーに送信し、ランキングを取得してUIに反映する。
 	/// </summary>
 	IEnumerator PostAndFetchRanking()
 	{
-		// ランキングに送信
-		string json = $"{{\"name\":\"{ResultData.playerName}\",\"clear_time\":{ResultData.elapsedTime},\"mission_count\":{ResultData.missionCount}}}";
+		// ランキングに送信するデータを作成
+		RankingPostRequest postData = new RankingPostRequest
+		{
+			name = GetRankingDisplayName(),
+			clear_time = ResultData.elapsedTime,
+			mission_count = ResultData.missionCount
+		};
 
+		string json = JsonUtility.ToJson(postData);
+
+		// ランキング送信
 		using (UnityWebRequest req = new UnityWebRequest($"{serverBaseUrl}/ranking", "POST"))
 		{
-			req.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(json));
+			byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
+
+			req.uploadHandler = new UploadHandlerRaw(bodyRaw);
 			req.downloadHandler = new DownloadHandlerBuffer();
 			req.SetRequestHeader("Content-Type", "application/json");
 			req.SetRequestHeader("ngrok-skip-browser-warning", "true");
+
 			yield return req.SendWebRequest();
+
+			if (req.result != UnityWebRequest.Result.Success)
+			{
+				Debug.LogWarning($"ランキング送信失敗: {req.error}");
+			}
 		}
 
 		// ランキング取得
 		using (UnityWebRequest req = UnityWebRequest.Get($"{serverBaseUrl}/ranking"))
 		{
 			req.SetRequestHeader("ngrok-skip-browser-warning", "true");
+
 			yield return req.SendWebRequest();
 
 			if (req.result == UnityWebRequest.Result.Success)
 			{
 				var data = JsonUtility.FromJson<RankingResponse>(req.downloadHandler.text);
+
 				if (data != null && data.rankings != null)
+				{
 					UpdateRankingUI(data.rankings);
+				}
+				else
+				{
+					Debug.LogWarning($"ランキングJSON解析失敗: {req.downloadHandler.text}");
+					UpdateRankingUI(null);
+				}
+			}
+			else
+			{
+				Debug.LogWarning($"ランキング取得失敗: {req.error}");
+				UpdateRankingUI(null);
 			}
 		}
 	}
 
 	/// <summary>
-	/// 取得したランキングデータをUIに反映する
+	/// 取得したランキングデータをUIに反映する。
+	/// 順位番号はUI側で表示しているため、ここでは名前・ミッション数・秒数・評価だけ表示する。
 	/// </summary>
 	void UpdateRankingUI(RankingItem[] rankings)
 	{
 		Text[] texts = { rank1Text, rank2Text, rank3Text };
+
 		for (int i = 0; i < texts.Length; i++)
 		{
-			if (i < rankings.Length)
+			if (texts[i] == null) continue;
+
+			if (rankings != null && i < rankings.Length)
 			{
 				var r = rankings[i];
 				string g = CalcGrade(r.mission_count, (float)r.clear_time);
-				texts[i].text = $"{r.name}　{r.mission_count}ミッション　{(int)r.clear_time}秒　{g}";
+
+				texts[i].text =
+					$"{r.name}　{r.mission_count}ミッション　{(int)r.clear_time}秒　{g}";
 			}
 			else
 			{
@@ -118,7 +199,7 @@ public class ResultManager : MonoBehaviour
 	#region ボタン処理
 
 	/// <summary>
-	/// もう一度プレイボタン押下時にゲームシーンへ遷移する
+	/// もう一度プレイボタン押下時にゲームシーンへ遷移する。
 	/// </summary>
 	public void OnRetryButton()
 	{
@@ -126,7 +207,7 @@ public class ResultManager : MonoBehaviour
 	}
 
 	/// <summary>
-	/// タイトルボタン押下時にタイトルシーンへ遷移する
+	/// タイトルボタン押下時にタイトルシーンへ遷移する。
 	/// </summary>
 	public void OnTitleButton()
 	{
@@ -136,7 +217,21 @@ public class ResultManager : MonoBehaviour
 	#endregion
 }
 
-// ランキングの1件分のデータ
+/// <summary>
+/// ランキング送信用データ。
+/// Goサーバー側のJSON形式に合わせる。
+/// </summary>
+[System.Serializable]
+public class RankingPostRequest
+{
+	public string name;
+	public float clear_time;
+	public int mission_count;
+}
+
+/// <summary>
+/// ランキングの1件分のデータ。
+/// </summary>
 [System.Serializable]
 public class RankingItem
 {
@@ -145,7 +240,9 @@ public class RankingItem
 	public int mission_count;
 }
 
-// ランキング取得時のデータ形式
+/// <summary>
+/// ランキング取得時のデータ形式。
+/// </summary>
 [System.Serializable]
 public class RankingResponse
 {
