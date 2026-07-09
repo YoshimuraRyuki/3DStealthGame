@@ -91,6 +91,12 @@ public class GoalMessage
 	public float elapsed;  // クリアタイム（秒）
 }
 
+[System.Serializable]
+public class GoalSendMessage
+{
+	public string type = "goal";
+}
+
 // 敵の位置・状態同期メッセージ
 [System.Serializable]
 public class EnemyMoveMessage
@@ -138,12 +144,66 @@ public class ChatMessage
 }
 
 [System.Serializable]
+public class ChatSendMessage
+{
+	public string type = "chat";
+	public string message;
+	public string sender_id;
+}
+
+[System.Serializable]
 public class StaminaItemDropMessage
 {
 	public string type;
 	public string sender_id;
 	public int drop_type;
 	public int enemy_id; 
+	public float x;
+	public float y;
+	public float z;
+}
+
+[System.Serializable]
+public class EnemyFoundMessage
+{
+	public string type;
+	public string sender_id;
+}
+
+[System.Serializable]
+public class ItemPickedSendMessage
+{
+	public string type = "item_picked";
+	public float x;
+	public float z;
+}
+
+[System.Serializable]
+public class StaminaItemPickedSendMessage
+{
+	public string type = "stamina_item_picked";
+	public string sender_id;
+	public float x;
+	public float z;
+}
+
+[System.Serializable]
+public class StaminaItemDropSendMessage
+{
+	public string type = "stamina_item_drop";
+	public string sender_id;
+	public int drop_type;
+	public float x;
+	public float y;
+	public float z;
+}
+
+[System.Serializable]
+public class StaminaItemDropRequestSendMessage
+{
+	public string type = "stamina_item_drop_request";
+	public string sender_id;
+	public int drop_type;
 	public float x;
 	public float y;
 	public float z;
@@ -157,7 +217,9 @@ public class StaminaItemDropMessage
 public static class SendMessageBuilder
 {
 	public static string Goal()
-		=> "{\"type\":\"goal\"}";
+	{
+		return JsonUtility.ToJson(new GoalSendMessage());
+	}
 
 	public static string PlayerMove(string id, Vector3 pos, Vector3 rot, string animState, string trigger)
 		=> $"{{\"type\":\"player_move\",\"id\":\"{id}\"," +
@@ -186,7 +248,15 @@ public static class SendMessageBuilder
 		=> $"{{\"type\":\"remote_respawn\",\"id\":\"{id}\"}}";
 
 	public static string Chat(string message, string senderId)
-	=> $"{{\"type\":\"chat\",\"message\":\"{message}\",\"sender_id\":\"{senderId}\"}}";
+	{
+		var data = new ChatSendMessage
+		{
+			message = message,
+			sender_id = senderId
+		};
+
+		return JsonUtility.ToJson(data);
+	}
 
 	public static string StaminaItemPicked(string senderId, Vector3 pos)
 	=> $"{{\"type\":\"stamina_item_picked\",\"sender_id\":\"{senderId}\",\"x\":{pos.x},\"z\":{pos.z}}}";
@@ -199,6 +269,9 @@ public static class SendMessageBuilder
 
 	public static string StaminaItemDropRequest(string senderId, int dropType, Vector3 pos)
 => $"{{\"type\":\"stamina_item_drop_request\",\"sender_id\":\"{senderId}\",\"drop_type\":{dropType},\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z}}}";
+
+	public static string EnemyFound(string senderId)
+	=> $"{{\"type\":\"enemy_found\",\"sender_id\":\"{senderId}\"}}";
 
 	public static string EnemyMove(int index, Vector3 pos, float angle, Color light, string reaction, Vector3 lastSound)
 		=> $"{{\"type\":\"enemy_move\",\"enemy_index\":{index}," +
@@ -698,6 +771,10 @@ public class WebSocketClient : MonoBehaviour
 
 			case "player_ready":
 				HandlePlayerReadyMessage(json);
+				break;
+
+			case "enemy_found":
+				HandleEnemyFoundMessage(json);
 				break;
 
 			default:
@@ -1263,6 +1340,20 @@ public class WebSocketClient : MonoBehaviour
 		}
 	}
 
+	/// <summary>
+	/// 相手が敵に見つかった通知を受け取ったときの処理。
+	/// チームミッションなので自分側でもミッション3を失敗にする。
+	/// </summary>
+	private void HandleEnemyFoundMessage(string json)
+	{
+		var msg = JsonUtility.FromJson<EnemyFoundMessage>(json);
+
+		// 自分が送った通知なら無視
+		if (msg != null && msg.sender_id == myId) return;
+
+		MissionManager.Instance?.OnEnemyFound();
+	}
+
 	#endregion
 
 	#region プレイヤー生成・削除
@@ -1487,6 +1578,16 @@ public class WebSocketClient : MonoBehaviour
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
 		await websocket.SendText(SendMessageBuilder.StaminaItemDropRequest(myId, dropType, pos));
+	}
+
+	/// <summary>
+	/// 敵に見つかったことを相手にも通知する。
+	/// ミッション3失敗の同期用。
+	/// </summary>
+	public async void SendEnemyFound()
+	{
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
+		await websocket.SendText(SendMessageBuilder.EnemyFound(myId));
 	}
 	#endregion
 
