@@ -153,11 +153,27 @@ public class ElementGenerator : MonoBehaviour
     List<SwitchManager> switchList = new List<SwitchManager>();
 
     public List<SwitchManager> GetSwitchList() => switchList;
-    #endregion
 
-    #region ミニマップ更新管理
+	private const int AUTO_ENEMY_ID_OFFSET = 10000;
 
-    List<Vector2Int> oldEnemyPositions = new List<Vector2Int>();                                         // 敵のマス                                                                     
+	/// <summary>
+	/// CSVにIDがない敵へ、座標ベースの自動IDを振る。
+	/// 同じCSVなら両クライアントで同じIDになる。
+	/// </summary>
+	private int ResolveEnemyId(int csvId, int x, int y)
+	{
+		if (csvId >= 0)
+		{
+			return csvId;
+		}
+
+		return AUTO_ENEMY_ID_OFFSET + x * 1000 + y;
+	}
+	#endregion
+
+	#region ミニマップ更新管理
+
+	List<Vector2Int> oldEnemyPositions = new List<Vector2Int>();                                         // 敵のマス                                                                     
     Dictionary<GameObject, Vector2Int> oldGreenItemPositions = new Dictionary<GameObject, Vector2Int>(); // 緑アイテムのマス
     Dictionary<GameObject, Vector2Int> oldBlueItemPositions = new Dictionary<GameObject, Vector2Int>(); // 緑アイテムのマス
     #endregion
@@ -398,19 +414,31 @@ public class ElementGenerator : MonoBehaviour
 
                 switch (type)
                 {
-                    case MapObjectType.Enemy: // 敵
-                        GameObject normalEnemyObj = Instantiate(enemiesList[0], pos, Quaternion.identity);
-                        GameObject view = Instantiate(enemyViewPrefab, map2DRect);
-                        viewList.Add(view);
-                        objEnemys = GameObject.FindGameObjectsWithTag("Enemy");
-                        EnemyManager normalEm = normalEnemyObj.GetComponent<EnemyManager>();
-                        if (normalEm != null) normalEm.enemyID = id;
-                        SwitchManager normalSw = normalEnemyObj.GetComponentInChildren<SwitchManager>();
-                        if (normalSw != null) normalSw.targetEnemyID = id; // 追加
-                        map[x, y] = "1";
-                        break;
+					case MapObjectType.Enemy: // 敵
+						GameObject normalEnemyObj = Instantiate(enemiesList[0], pos, Quaternion.identity);
+						GameObject view = Instantiate(enemyViewPrefab, map2DRect);
+						viewList.Add(view);
 
-                    case MapObjectType.StrongEnemy: // 強化敵
+						int normalEnemyId = ResolveEnemyId(id, x, y);
+
+						objEnemys = GameObject.FindGameObjectsWithTag("Enemy");
+
+						EnemyManager normalEm = normalEnemyObj.GetComponent<EnemyManager>();
+						if (normalEm != null)
+						{
+							normalEm.enemyID = normalEnemyId;
+						}
+
+						SwitchManager normalSw = normalEnemyObj.GetComponentInChildren<SwitchManager>();
+						if (normalSw != null)
+						{
+							normalSw.targetEnemyID = normalEnemyId;
+						}
+
+						map[x, y] = "1";
+						break;
+
+					case MapObjectType.StrongEnemy: // 強化敵
                         GameObject enemyObj = Instantiate(strongEnemisList[0], pos, Quaternion.identity);
                         GameObject viewStrong = Instantiate(enemyStrongViewPrefab, map2DRect);
                         viewStrongList.Add(viewStrong);

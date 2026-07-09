@@ -1,40 +1,37 @@
 ﻿using UnityEngine;
-using UnityEngine.UIElements;
 
 /// <summary>
-/// プレイヤーを追従するカメラの制御クラス。
-/// シーンをまたいでも破棄されず、プレイヤー生成後に追従対象を設定できる。
+/// プレイヤーを追いかけるカメラ。
+/// プレイヤーは後から生成されるため、外部から追従対象を設定できるようにしている。
 /// </summary>
 public class GlobalCamera : MonoBehaviour
 {
 	#region フィールド
 
 	public static GlobalCamera Instance;
-	public Vector3 offset = new Vector3(0, 15, -5); // カメラとプレイヤーの距離
 
-	private Transform _target; // 追従対象
+	[SerializeField] private Vector3 offset = new Vector3(0, 15, -5);
+
+	private Transform _target;
 
 	#endregion
 
 	#region Unityイベント
 
-	void Awake()
+	private void Awake()
 	{
-		// シングルトン設定
-		if (Instance == null)
-		{
-			Instance = this;
-			DontDestroyOnLoad(gameObject);
-		}
-		else
+		if (Instance != null && Instance != this)
 		{
 			Destroy(gameObject);
+			return;
 		}
+
+		Instance = this;
+		DontDestroyOnLoad(gameObject);
 	}
 
-	void Start()
+	private void Start()
 	{
-		// 見下ろし視点に初期化
 		transform.rotation = Quaternion.Euler(75, 0, 0);
 
 		if (_target == null)
@@ -47,23 +44,17 @@ public class GlobalCamera : MonoBehaviour
 		}
 	}
 
-	void LateUpdate()
+	private void LateUpdate()
 	{
-		// 追従対象の位置にオフセットを加算してカメラを移動させる
-		if (_target != null)
-		{
-			transform.position = _target.position + offset;
-		}
+		if (_target == null) return;
+
+		transform.position = _target.position + offset;
 	}
 
 	#endregion
 
 	#region 公開メソッド
 
-	/// <summary>
-	/// 追従対象を設定する。プレイヤー生成後に呼ぶ。
-	/// </summary>
-	/// <param name="target">追従させる対象</param>
 	public void SetTarget(Transform target)
 	{
 		_target = target;
