@@ -166,7 +166,7 @@ public class StaminaItemDropMessage
 [System.Serializable]
 public class EnemyFoundMessage
 {
-	public string type;
+	public string type = "enemy_found";
 	public string sender_id;
 }
 
@@ -236,7 +236,20 @@ public static class SendMessageBuilder
 		=> $"{{\"type\":\"switch_activated\",\"switch_id\":{switchId}}}";
 
 	public static string ItemPicked()
-		=> "{\"type\":\"item_picked\"}";
+	{
+		return JsonUtility.ToJson(new ItemPickedSendMessage());
+	}
+
+	public static string ItemPicked(Vector3 pos)
+	{
+		var data = new ItemPickedSendMessage
+		{
+			x = pos.x,
+			z = pos.z
+		};
+
+		return JsonUtility.ToJson(data);
+	}
 
 	public static string EnemyStun(int enemyIndex, string senderId)
 		=> $"{{\"type\":\"enemy_stun\",\"enemy_index\":{enemyIndex},\"sender_id\":\"{senderId}\"}}";
@@ -259,19 +272,54 @@ public static class SendMessageBuilder
 	}
 
 	public static string StaminaItemPicked(string senderId, Vector3 pos)
-	=> $"{{\"type\":\"stamina_item_picked\",\"sender_id\":\"{senderId}\",\"x\":{pos.x},\"z\":{pos.z}}}";
+	{
+		var data = new StaminaItemPickedSendMessage
+		{
+			sender_id = senderId,
+			x = pos.x,
+			z = pos.z
+		};
 
-	public static string ItemPicked(Vector3 pos)
-	=> $"{{\"type\":\"item_picked\",\"x\":{pos.x},\"z\":{pos.z}}}";
+		return JsonUtility.ToJson(data);
+	}
 
 	public static string StaminaItemDrop(string senderId, int dropType, Vector3 pos)
-	=> $"{{\"type\":\"stamina_item_drop\",\"sender_id\":\"{senderId}\",\"drop_type\":{dropType},\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z}}}";
+	{
+		var data = new StaminaItemDropSendMessage
+		{
+			sender_id = senderId,
+			drop_type = dropType,
+			x = pos.x,
+			y = pos.y,
+			z = pos.z
+		};
+
+		return JsonUtility.ToJson(data);
+	}
 
 	public static string StaminaItemDropRequest(string senderId, int dropType, Vector3 pos)
-=> $"{{\"type\":\"stamina_item_drop_request\",\"sender_id\":\"{senderId}\",\"drop_type\":{dropType},\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z}}}";
+	{
+		var data = new StaminaItemDropRequestSendMessage
+		{
+			sender_id = senderId,
+			drop_type = dropType,
+			x = pos.x,
+			y = pos.y,
+			z = pos.z
+		};
+
+		return JsonUtility.ToJson(data);
+	}
 
 	public static string EnemyFound(string senderId)
-	=> $"{{\"type\":\"enemy_found\",\"sender_id\":\"{senderId}\"}}";
+	{
+		var data = new EnemyFoundMessage
+		{
+			sender_id = senderId
+		};
+
+		return JsonUtility.ToJson(data);
+	}
 
 	public static string EnemyMove(int index, Vector3 pos, float angle, Color light, string reaction, Vector3 lastSound)
 		=> $"{{\"type\":\"enemy_move\",\"enemy_index\":{index}," +
@@ -384,13 +432,13 @@ public class WebSocketClient : MonoBehaviour
 		isGameSceneLoaded = SceneManager.GetActiveScene().name == "MapTest";
 	}
 
-	async void Start()
+	void Start()
 	{
 		Application.runInBackground = true;
 		playerName = "";
 	}
 
-	async void Update()
+	void Update()
 	{
 		// 相手プレイヤーの位置をなめらかに反映する
 		foreach (var id in targetPositions.Keys)
@@ -1002,14 +1050,15 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void HandleItemPickedMessage(string json)
 	{
-		Debug.Log($"[item生JSON] {json}");
-		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json);
+
+		var msg = JsonUtility.FromJson<ItemPickedSendMessage>(json);
+
 		MissionManager.Instance?.OnItemPicked();
 		LogManager.Instance?.AddLog("アイテムを取得した", "#aadd44");
 
-		// 一番近いアイテムを探す（高さは比較せずXZ平面のみで判定）
 		ItemManager nearestItem = null;
 		float nearestDist = float.MaxValue;
+
 		foreach (var item in FindObjectsOfType<ItemManager>())
 		{
 			Vector2 itemXZ = new Vector2(item.transform.position.x, item.transform.position.z);
@@ -1025,10 +1074,11 @@ public class WebSocketClient : MonoBehaviour
 
 		if (nearestItem != null)
 		{
-			// ミニマップアイコンも消す
 			var generator = FindObjectOfType<ElementGenerator>();
 			if (generator != null)
+			{
 				generator.RemoveItemIcon(nearestItem.transform.position);
+			}
 
 			Destroy(nearestItem.gameObject);
 		}
@@ -1153,17 +1203,19 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void HandleStaminaItemPickedMessage(string json)
 	{
-		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json);
+		var msg = JsonUtility.FromJson<StaminaItemPickedSendMessage>(json);
+
 		if (msg.sender_id == myId) return;
+
 		StaminaManager.Instance?.RecoverStamina();
 		LogManager.Instance?.AddLog("仲間がスタミナアイテムを取得した", "#ffcc44");
 
 		Vector3 itemPos = new Vector3(msg.x, 1f, msg.z);
 
-		// 一番近いスタミナアイテムを探す（高さは比較せずXZ平面のみで判定）
 		StaminaItemManager nearestItem = null;
 		float nearestDist = float.MaxValue;
 		var candidates = FindObjectsOfType<StaminaItemManager>();
+
 		foreach (var item in candidates)
 		{
 			Vector2 itemXZ = new Vector2(item.transform.position.x, item.transform.position.z);
@@ -1177,13 +1229,19 @@ public class WebSocketClient : MonoBehaviour
 			}
 		}
 
-		// 調査用（動作確認後に削除）
-		Debug.Log($"[picked受信] pos=({msg.x:F1},{msg.z:F1}) 候補数={candidates.Length} ヒット={(nearestItem != null ? nearestItem.name + " dist=" + nearestDist.ToString("F2") : "なし")}");
+		//Debug.Log($"[picked受信] pos=({msg.x:F1},{msg.z:F1}) 候補数={candidates.Length} ヒット={(nearestItem != null ? nearestItem.name + " dist=" + nearestDist.ToString("F2") : "なし")}");
 
 		if (nearestItem != null && myPlayer != null && nearestItem.absorbEffectPrefab != null)
 		{
 			var effect = Instantiate(nearestItem.absorbEffectPrefab, itemPos, Quaternion.identity);
 			effect.Play(itemPos, myPlayer.transform, nearestItem.effectColor);
+
+			var generator = FindObjectOfType<ElementGenerator>();
+			if (generator != null)
+			{
+				generator.RemoveItemIcon(nearestItem.transform.position);
+			}
+
 			nearestItem.gameObject.SetActive(false);
 		}
 	}
