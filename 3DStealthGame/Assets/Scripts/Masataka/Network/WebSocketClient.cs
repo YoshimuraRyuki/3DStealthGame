@@ -1332,59 +1332,32 @@ public class WebSocketClient : MonoBehaviour
 	}
 
 	/// <summary>
-	/// 相手がつかまったときの受信処理：ゲスト（Player2）のみリスポーン演出を実行する
+	/// 相手がつかまったときの受信処理
 	/// </summary>
 	private void HandleRemoteRespawnMessage(string json)
 	{
-		//_remoteRespawnSent = false;
-		// 自分がすでにリスポーン中なら無視
+		// 相手が敵に見つかったので、ミッション3を失敗扱いにする
+		MissionManager.Instance?.OnEnemyFound();
+
 		var mypc = myPlayer?.GetComponent<PlayerController>();
 		if (mypc != null && mypc.IsFading) return;
+
 		if (IsGuestPlayer())
 		{
-			// 自分（ゲスト）が捕まった本人
 			if (myPlayer == null) return;
+
 			var pc = myPlayer.GetComponent<PlayerController>();
 			if (pc == null) return;
+
 			pc.RespawnWithEffectPublic();
 			LogManager.Instance?.AddLog("リスポーンした", "#ff6666");
 		}
 		else if (IsHostPlayer())
 		{
-			// ホストは見ているだけ
 			LogManager.Instance?.AddLog("味方がリスポーンした", "#ff6666");
 		}
-		/*if (!IsGuestPlayer()) return;
-
-		if (myPlayer == null) return;
-		var pc = myPlayer.GetComponent<PlayerController>();
-		if (pc == null) return;
-
-		pc.RespawnWithEffectPublic();
-		LogManager.Instance?.AddLog("味方がリスポーンした", "#ff6666");*/
-
-		/*var spawnPos = GetSpawnPosition();
-        myPlayer.transform.position = spawnPos != Vector3.zero ? spawnPos : myPlayer.transform.position;
-
-        var rb = myPlayer.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.velocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-        }
-
-        var enemies = GameObject.FindGameObjectsWithTag("Enemy");
-        foreach (var e in enemies)
-        {
-            var em = e.GetComponent<EnemyManager>();
-            if (em != null)
-            {
-                em.ResetRespawnFlag();
-                em.currentAlertCount = em.alertCount;
-            }
-        }*/
 	}
-
+	
 	/// <summary>
 	/// 相手がつかまったことをサーバーに通知する
 	/// </summary>

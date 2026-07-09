@@ -120,12 +120,18 @@ public class MissionManager : MonoBehaviour
 	}
 
 	/// <summary>
-	/// 敵に発見されたときにEnemyManagerから呼ぶ。
-	/// EnemyManagerが完成したらこのメソッドを接続してください。
+	/// 敵に発見されたときに呼ぶ。
+	/// 1回でも見つかったら、ミッション3は失敗扱いにする。
 	/// </summary>
 	public void OnEnemyFound()
 	{
+		if (_mission3Failed) return;
+
 		_mission3Failed = true;
+
+		// すでにゴール済みの場合でも、後から失敗扱いにできるようにする
+		_mission3Done = false;
+
 		RefreshUI();
 	}
 

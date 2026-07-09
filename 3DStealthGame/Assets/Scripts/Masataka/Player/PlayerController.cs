@@ -239,8 +239,8 @@ public class PlayerController : MonoBehaviour
 	{
 		//if (isAction) return;
 		print("スイッチアニメーション起動");
-		Am.SetBool("Run", false);
-		Am.SetBool("Sneak", false);
+		//Am.SetBool("Run", false);
+		//Am.SetBool("Sneak", false);
 		Am.SetTrigger("PunchSwitch");
 		lastTrigger = "PunchSwitch";
 	}
@@ -329,7 +329,7 @@ public class PlayerController : MonoBehaviour
 		isPlayerMoveStop = true;
 		Am.SetBool("Run", false);
 		Am.SetBool("Sneak", false);
-		Am.SetTrigger("Idle");
+		//Am.SetTrigger("Idle");
 
 		// スイッチのアクション状態もリセット
 	foreach (var sw in FindObjectsOfType<SwitchManager>())
