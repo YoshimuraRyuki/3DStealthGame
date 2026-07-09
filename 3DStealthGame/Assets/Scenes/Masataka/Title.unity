@@ -1540,7 +1540,7 @@ MonoBehaviour:
   remotePlayerMaterial: {fileID: 2100000, guid: 683caeb4f88236c4d99b770c365b7bc5, type: 2}
   roomMemberPanel: {fileID: 1019032279}
   ngrokUrl: https://rice-washer-suitcase.ngrok-free.dev
-  serverMode: 1
+  serverMode: 2
   myId: 
   myPlayerNumber: 0
 --- !u!1 &777864025

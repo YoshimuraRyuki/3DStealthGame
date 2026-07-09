@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// ゲーム内のBGM・SEを一元管理するクラス。
-/// どこからでも SoundManager.Instance?.Play〇〇() で呼び出せる。
+/// シーンをまたいでも1つだけ残る。
 /// </summary>
 public class SoundManager : MonoBehaviour
 {
@@ -14,16 +14,16 @@ public class SoundManager : MonoBehaviour
 	public AudioClip bgm;
 
 	[Header("SE")]
-	public AudioClip seGimmickClear;  // ギミック作動時
-	public AudioClip seClear;         // ゲームクリア時
-	public AudioClip sePunch;         // パンチアニメ再生時
-	public AudioClip seRespawn;       // リスポーン時
-	public AudioClip seButton;        // UIボタン押下時
-	public AudioClip sePickup;        // アイテム取得時（スタミナアイテムと共用）
-	public AudioClip seWalk;          // 歩行音
-	public AudioClip seDetected;      // 敵に発見されたとき
-	public AudioClip seNotification;  // ログ通知時
-	public AudioClip seLostSight;     // 敵がプレイヤーを見失ったとき
+	public AudioClip seGimmickClear;
+	public AudioClip seClear;
+	public AudioClip sePunch;
+	public AudioClip seRespawn;
+	public AudioClip seButton;
+	public AudioClip sePickup;
+	public AudioClip seWalk;
+	public AudioClip seDetected;
+	public AudioClip seNotification;
+	public AudioClip seLostSight;
 
 	[Header("音量設定")]
 	[Range(0f, 1f)] public float bgmVolume = 0.5f;
@@ -35,35 +35,50 @@ public class SoundManager : MonoBehaviour
 
 	private AudioSource _bgmSource;
 	private AudioSource _seSource;
-	private AudioSource _walkSource; // 歩行音用（ループ再生）
+	private AudioSource _walkSource;
 
 	#endregion
 
 	#region Unityイベント
 
-	void Awake()
+	private void Awake()
 	{
-		if (Instance == null)
-		{
-			Instance = this;
-			DontDestroyOnLoad(gameObject);
-		}
-		else
+		// すでにSoundManagerが存在する場合、後から生成されたものは破棄する
+		if (Instance != null && Instance != this)
 		{
 			Destroy(gameObject);
 			return;
 		}
 
-		// BGM用AudioSource
+		Instance = this;
+		DontDestroyOnLoad(gameObject);
+
+		InitializeAudioSources();
+	}
+
+	private void OnDestroy()
+	{
+		if (Instance == this)
+		{
+			Instance = null;
+		}
+	}
+
+	#endregion
+
+	#region 初期化
+
+	private void InitializeAudioSources()
+	{
+		if (_bgmSource != null) return;
+
 		_bgmSource = gameObject.AddComponent<AudioSource>();
 		_bgmSource.loop = true;
 		_bgmSource.volume = bgmVolume;
 
-		// SE用AudioSource
 		_seSource = gameObject.AddComponent<AudioSource>();
 		_seSource.volume = seVolume;
 
-		// 歩行音用AudioSource（ループ）
 		_walkSource = gameObject.AddComponent<AudioSource>();
 		_walkSource.loop = true;
 		_walkSource.volume = seVolume * 0.6f;
@@ -74,21 +89,25 @@ public class SoundManager : MonoBehaviour
 
 	#region BGM
 
-	/// <summary>
-	/// BGMを再生する
-	/// </summary>
 	public void PlayBGM()
 	{
-		if (bgm == null) return;
+		if (bgm == null || _bgmSource == null) return;
+
+		// 同じBGMがすでに再生中なら何もしない
+		if (_bgmSource.clip == bgm && _bgmSource.isPlaying)
+		{
+			return;
+		}
+
 		_bgmSource.clip = bgm;
+		_bgmSource.loop = true;
+		_bgmSource.volume = bgmVolume;
 		_bgmSource.Play();
 	}
 
-	/// <summary>
-	/// BGMを停止する
-	/// </summary>
 	public void StopBGM()
 	{
+		if (_bgmSource == null) return;
 		_bgmSource.Stop();
 	}
 
@@ -96,53 +115,39 @@ public class SoundManager : MonoBehaviour
 
 	#region SE
 
-	/// <summary>ギミック作動音</summary>
 	public void PlayGimmickClear() => PlaySE(seGimmickClear);
-
-	/// <summary>ゲームクリア音</summary>
 	public void PlayClear() => PlaySE(seClear);
-
-	/// <summary>パンチ音</summary>
 	public void PlayPunch() => PlaySE(sePunch);
-
-	/// <summary>リスポーン音</summary>
 	public void PlayRespawn() => PlaySE(seRespawn);
-
-	/// <summary>UIボタン音</summary>
 	public void PlayButton() => PlaySE(seButton);
-
-	/// <summary>アイテム取得音（スタミナアイテムと共用）</summary>
 	public void PlayPickup() => PlaySE(sePickup);
-
-	/// <summary>発見音</summary>
 	public void PlayDetected() => PlaySE(seDetected);
-
-	/// <summary>ログ通知音</summary>
 	public void PlayNotification() => PlaySE(seNotification);
-
-	/// <summary>見失い音</summary>
 	public void PlayLostSight() => PlaySE(seLostSight);
 
 	#endregion
 
-	#region 歩行音（ループ）
+	#region 歩行音
 
-	/// <summary>
-	/// 歩行音を開始する（移動中に呼ぶ）
-	/// </summary>
 	public void StartWalk()
 	{
-		if (seWalk == null || _walkSource.isPlaying) return;
+		if (seWalk == null || _walkSource == null) return;
+		if (_walkSource.isPlaying) return;
+
+		_walkSource.clip = seWalk;
+		_walkSource.loop = true;
+		_walkSource.volume = seVolume * 0.6f;
 		_walkSource.Play();
 	}
 
-	/// <summary>
-	/// 歩行音を停止する（停止時に呼ぶ）
-	/// </summary>
 	public void StopWalk()
 	{
+		if (_walkSource == null) return;
+
 		if (_walkSource.isPlaying)
+		{
 			_walkSource.Stop();
+		}
 	}
 
 	#endregion
@@ -151,7 +156,7 @@ public class SoundManager : MonoBehaviour
 
 	private void PlaySE(AudioClip clip)
 	{
-		if (clip == null) return;
+		if (clip == null || _seSource == null) return;
 		_seSource.PlayOneShot(clip, seVolume);
 	}
 
