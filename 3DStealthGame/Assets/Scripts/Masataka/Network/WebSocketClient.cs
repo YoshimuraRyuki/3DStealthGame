@@ -9,6 +9,13 @@ using System.Collections;
 
 // 接続初期化メッセージ
 [System.Serializable]
+
+public class NetworkEnvelope
+{
+	public string type;
+}
+
+[System.Serializable]
 public class InitMessage
 {
 	public string type;
@@ -515,27 +522,49 @@ public class WebSocketClient : MonoBehaviour
 	private void OnMessageReceived(byte[] bytes)
 	{
 		string json = Encoding.UTF8.GetString(bytes);
-		//if (json.Contains("enemy_stun"))
-		//Debug.Log($"OnMessageReceived: isGameSceneLoaded={isGameSceneLoaded} json={json}");
+		string type = GetMessageType(json);
 
 		if (!isGameSceneLoaded)
 		{
-			if (json.Contains("\"type\":\"start_game\""))
+			switch (type)
 			{
-				SceneManager.LoadScene("MapTest");
-				return;
+				case "start_game":
+					HandleStartGameMessage();
+					return;
+
+				case "init":
+					HandleInitForLobby(json);
+					break;
+
+				case "player_joined":
+					HandlePlayerJoinedForLobby(json);
+					break;
+
+				case "player_left":
+					HandlePlayerLeftForLobby(json);
+					break;
+
+				case "player_ready":
+					HandlePlayerReadyForLobby(json);
+					break;
+
+				case "existing_players":
+					HandleExistingPlayersForLobby(json);
+					break;
+
+				default:
+					break;
 			}
-			if (json.Contains("\"type\":\"init\"")) HandleInitForLobby(json);
-			else if (json.Contains("\"type\":\"player_joined\"")) HandlePlayerJoinedForLobby(json);
-			else if (json.Contains("\"type\":\"player_left\"")) HandlePlayerLeftForLobby(json);
-			else if (json.Contains("\"type\":\"player_ready\"")) HandlePlayerReadyForLobby(json);
-			else if (json.Contains("\"type\":\"existing_players\"")) HandleExistingPlayersForLobby(json);
 
 			// remote_respawnはゲーム開始後に再処理しない
-			if (!json.Contains("\"type\":\"remote_respawn\""))
+			if (type != "remote_respawn")
+			{
 				pendingMessages.Add(json);
+			}
+
 			return;
 		}
+
 		ProcessMessage(json);
 	}
 
@@ -549,47 +578,131 @@ public class WebSocketClient : MonoBehaviour
 	}
 
 	/// <summary>
-	/// メッセージの種類に応じて対応する処理に振り分ける
+	/// 受信JSONからメッセージ種別だけを取り出す。
+	/// json.Containsで判定せず、共通のtypeフィールドを見る。
+	/// </summary>
+	private string GetMessageType(string json)
+	{
+		if (string.IsNullOrEmpty(json))
+		{
+			return "";
+		}
+
+		try
+		{
+			var envelope = JsonUtility.FromJson<NetworkEnvelope>(json);
+
+			if (envelope == null || string.IsNullOrEmpty(envelope.type))
+			{
+				Debug.LogWarning($"typeが存在しないメッセージ: {json}");
+				return "";
+			}
+
+			return envelope.type;
+		}
+		catch (System.Exception e)
+		{
+			Debug.LogWarning($"メッセージ解析失敗: {e.Message}\njson: {json}");
+			return "";
+		}
+	}
+
+	/// <summary>
+	/// 受信したメッセージをtypeごとに振り分ける。
 	/// </summary>
 	private void ProcessMessage(string json)
 	{
-		if (json.Contains("\"type\":\"init\"")) HandleInitMessage(json);
-		else if (json.Contains("\"type\":\"existing_players\"")) HandleExistingPlayersMessage(json);
-		else if (json.Contains("\"type\":\"player_joined\"")) HandlePlayerJoinedMessage(json);
-		else if (json.Contains("\"type\":\"player_move\"")) HandlePlayerMoveMessage(json);
-		else if (json.Contains("\"type\":\"player_left\"")) HandlePlayerLeftMessage(json);
-		else if (json.Contains("\"type\":\"item_picked\"")) HandleItemPickedMessage(json);
-		else if (json.Contains("\"type\":\"timer_update\"")) HandleTimerUpdate(json);
-		else if (json.Contains("\"type\":\"enemy_move\"")) HandleEnemyMoveMessage(json);
-		else if (json.Contains("\"type\":\"remote_respawn\"")) HandleRemoteRespawnMessage(json);
-		else if (json.Contains("\"type\":\"player_goal\"")) HandlePlayerGoalMessage(json);
-		else if (json.Contains("\"type\":\"all_goal\"")) HandleAllGoalMessage(json);
-		else if (json.Contains("\"type\":\"switch_activated\"")) HandleSwitchActivatedMessage(json);
-		else if (json.Contains("\"type\":\"enemy_stun_cancel\"")) HandleEnemyStunCancelMessage(json);
-		else if (json.Contains("\"type\":\"enemy_stun\"")) HandleEnemyStunMessage(json);
-		else if (json.Contains("\"type\":\"respawn\"")) HandleRespawnMessage(json);
-		else if (json.Contains("\"type\":\"stamina_item_picked\"")) HandleStaminaItemPickedMessage(json);
-		else if (json.Contains("\"type\":\"chat\"")) HandleChatMessage(json);
-		else if (json.Contains("\"type\":\"stamina_item_drop_request\"")) HandleStaminaItemDropRequestMessage(json);
-		else if (json.Contains("\"type\":\"stamina_item_drop\"")) HandleStaminaItemDropMessage(json);
-		
+		string type = GetMessageType(json);
 
-		else if (json.Contains("\"type\":\"start_game\""))
+		switch (type)
 		{
-			if (SceneManager.GetActiveScene().name == "MapTest")
-			{
-				ProcessPendingMessages();
-				MissionManager.Instance?.OnGameStart();
-			}
-			else
-			{
-				SceneManager.LoadScene("MapTest");
-			}
-		}
-		else if (json.Contains("\"type\":\"player_ready\""))
-		{
-			var msg = JsonUtility.FromJson<PlayerReadyMessage>(json);
-			if (roomMemberPanel != null) roomMemberPanel.SetReady(msg.id, true);
+			case "init":
+				HandleInitMessage(json);
+				break;
+
+			case "existing_players":
+				HandleExistingPlayersMessage(json);
+				break;
+
+			case "player_joined":
+				HandlePlayerJoinedMessage(json);
+				break;
+
+			case "player_move":
+				HandlePlayerMoveMessage(json);
+				break;
+
+			case "player_left":
+				HandlePlayerLeftMessage(json);
+				break;
+
+			case "item_picked":
+				HandleItemPickedMessage(json);
+				break;
+
+			case "timer_update":
+				HandleTimerUpdate(json);
+				break;
+
+			case "enemy_move":
+				HandleEnemyMoveMessage(json);
+				break;
+
+			case "remote_respawn":
+				HandleRemoteRespawnMessage(json);
+				break;
+
+			case "player_goal":
+				HandlePlayerGoalMessage(json);
+				break;
+
+			case "all_goal":
+				HandleAllGoalMessage(json);
+				break;
+
+			case "switch_activated":
+				HandleSwitchActivatedMessage(json);
+				break;
+
+			case "enemy_stun_cancel":
+				HandleEnemyStunCancelMessage(json);
+				break;
+
+			case "enemy_stun":
+				HandleEnemyStunMessage(json);
+				break;
+
+			case "respawn":
+				HandleRespawnMessage(json);
+				break;
+
+			case "stamina_item_picked":
+				HandleStaminaItemPickedMessage(json);
+				break;
+
+			case "chat":
+				HandleChatMessage(json);
+				break;
+
+			case "stamina_item_drop_request":
+				HandleStaminaItemDropRequestMessage(json);
+				break;
+
+			case "stamina_item_drop":
+				HandleStaminaItemDropMessage(json);
+				break;
+
+			case "start_game":
+				HandleStartGameMessage();
+				break;
+
+			case "player_ready":
+				HandlePlayerReadyMessage(json);
+				break;
+
+			default:
+				Debug.LogWarning($"未対応のメッセージtype: {type}\njson: {json}");
+				break;
 		}
 	}
 
@@ -597,6 +710,34 @@ public class WebSocketClient : MonoBehaviour
 
 	#region メッセージ処理（ゲームシーン用）
 
+	/// <summary>
+	/// サーバーからゲーム開始通知を受け取ったときの処理。
+	/// </summary>
+	private void HandleStartGameMessage()
+	{
+		if (SceneManager.GetActiveScene().name == "MapTest")
+		{
+			ProcessPendingMessages();
+			MissionManager.Instance?.OnGameStart();
+		}
+		else
+		{
+			SceneManager.LoadScene("MapTest");
+		}
+	}
+
+	/// <summary>
+	/// ロビーでプレイヤーの準備完了通知を受け取ったときの処理。
+	/// </summary>
+	private void HandlePlayerReadyMessage(string json)
+	{
+		var msg = JsonUtility.FromJson<PlayerReadyMessage>(json);
+
+		if (roomMemberPanel != null)
+		{
+			roomMemberPanel.SetReady(msg.id, true);
+		}
+	}
 	/// <summary>
 	/// 接続初期化：自分のプレイヤーを生成してカメラを設定する
 	/// </summary>

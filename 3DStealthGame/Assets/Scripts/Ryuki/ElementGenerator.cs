@@ -424,29 +424,36 @@ public class ElementGenerator : MonoBehaviour
                         strongEnemyList.Add(em);
                         break;
 
-                    case MapObjectType.Item: // アイテム
-                        GameObject itemObj = Instantiate(itemsList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
-                        activeItems.Add(itemObj);
-                        map[x, y] = "1";
-                        break;
+					case MapObjectType.Item: // アイテム
+						GameObject itemObj = Instantiate(itemsList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
+						activeItems.Add(itemObj);
 
-                    case MapObjectType.Goal: // ゴール
+						SetupOutlineTarget(itemObj, 0);
+
+						map[x, y] = "1";
+						break;
+
+					case MapObjectType.Goal: // ゴール
                         GameObject goalObj = Instantiate(goalObjects, pos, Quaternion.identity);
                         activeGoals.Add(goalObj);
                         map[x, y] = "1";
                         break;
 
-                    case MapObjectType.Switch: // スイッチ
-                        GameObject switchObj = Instantiate(switchesList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
-                        activeSwitches.Add(switchObj);
-                        map[x, y] = "1";
-                        // ギミック用
-                        SwitchManager sw = switchObj.GetComponentInChildren<SwitchManager>();
-                        sw.targetEnemyID = id;
-                        switchList.Add(sw);
-                        break;
+					case MapObjectType.Switch: // スイッチ
+						GameObject switchObj = Instantiate(switchesList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
+						activeSwitches.Add(switchObj);
+						map[x, y] = "1";
 
-                    case MapObjectType.Player1: // プレイヤー1
+						// ギミック用
+						SwitchManager sw = switchObj.GetComponentInChildren<SwitchManager>();
+						sw.targetEnemyID = id;
+						switchList.Add(sw);
+
+						SetupOutlineTarget(switchObj, 0);
+
+						break;
+
+					case MapObjectType.Player1: // プレイヤー1
                         var wsClient = FindObjectOfType<WebSocketClient>();
                         if (wsClient != null) wsClient.SetSpawnPosition(1, pos);
                         map[x, y] = "1";
@@ -482,34 +489,40 @@ public class ElementGenerator : MonoBehaviour
                         map[x, y] = "1";
                         break;
 
-                    case MapObjectType.switchBlue: // 青用スイッチ
-                        GameObject switchBlueObj = Instantiate(switchesList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
-                        activeSwitches.Add(switchBlueObj);
-                        map[x, y] = "1";
-                        // ギミック用
-                        SwitchManager swb = switchBlueObj.GetComponentInChildren<SwitchManager>();
-                        swb.targetEnemyID = id;
-                        switchList.Add(swb);
-                        swb.gameObject.layer = LayerMask.NameToLayer("Blue");
-                        // 色変更
-                        Renderer rend = switchBlueObj.GetComponent<Renderer>();
-                        if (rend != null) rend.material.color = new Color(0.35f, 0.5f, 0.75f, 1.0f);
-                        break;
+					case MapObjectType.switchBlue: // 青用スイッチ
+						GameObject switchBlueObj = Instantiate(switchesList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
+						activeSwitches.Add(switchBlueObj);
+						map[x, y] = "1";
 
-                    case MapObjectType.switchGreen: // 緑用スイッチ
-                        GameObject switchGreenObj = Instantiate(switchesList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
-                        activeSwitches.Add(switchGreenObj);
-                        map[x, y] = "1";
-                        // ギミック用
-                        SwitchManager swg = switchGreenObj.GetComponentInChildren<SwitchManager>();
-                        swg.targetEnemyID = id;
-                        switchList.Add(swg);
-                        swg.gameObject.layer = LayerMask.NameToLayer("Green");
-                        // 色変更
-                        Renderer rend2 = switchGreenObj.GetComponent<Renderer>();
-                        if (rend2 != null) rend2.material.color = new Color(0.35f, 0.6f, 0.42f, 1.0f);
-                        break;
-                }
+						SwitchManager swb = switchBlueObj.GetComponentInChildren<SwitchManager>();
+						swb.targetEnemyID = id;
+						switchList.Add(swb);
+						swb.gameObject.layer = LayerMask.NameToLayer("Blue");
+
+						// 青スイッチはPlayer2だけアウトライン
+						SetupOutlineTarget(switchBlueObj, 2);
+
+						Renderer rend = switchBlueObj.GetComponent<Renderer>();
+						if (rend != null) rend.material.color = new Color(0.35f, 0.5f, 0.75f, 1.0f);
+						break;
+
+					case MapObjectType.switchGreen: // 緑用スイッチ
+						GameObject switchGreenObj = Instantiate(switchesList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
+						activeSwitches.Add(switchGreenObj);
+						map[x, y] = "1";
+
+						SwitchManager swg = switchGreenObj.GetComponentInChildren<SwitchManager>();
+						swg.targetEnemyID = id;
+						switchList.Add(swg);
+						swg.gameObject.layer = LayerMask.NameToLayer("Green");
+
+						// 緑スイッチはPlayer1だけアウトライン
+						SetupOutlineTarget(switchGreenObj, 1);
+
+						Renderer rend2 = switchGreenObj.GetComponent<Renderer>();
+						if (rend2 != null) rend2.material.color = new Color(0.35f, 0.6f, 0.42f, 1.0f);
+						break;
+				}
             }
         }
         IDLinking();
@@ -768,6 +781,23 @@ public class ElementGenerator : MonoBehaviour
 
 	#endregion
 
+	#region 澤田作　アイテム強調表示
+	/// <summary>
+	/// 生成したオブジェクトにアウトライン対象プレイヤーを設定する。
+	/// 0=全員, 1=Player1, 2=Player2
+	/// </summary>
+	private void SetupOutlineTarget(GameObject obj, int targetPlayerNumber)
+	{
+		if (obj == null) return;
+
+		var outline = obj.GetComponentInChildren<SwitchOutlinePresenter>();
+
+		if (outline != null)
+		{
+			outline.SetTargetPlayerNumber(targetPlayerNumber);
+		}
+	}
+	#endregion
 	#region Update処理
 
 	void Update()
