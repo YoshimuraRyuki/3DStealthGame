@@ -125,7 +125,6 @@ public class SwitchManager : MonoBehaviour
     /// </summary>
     void DoActionSwitch()
     {
-        if (Pc.isPlayerMoveStop) return;
         if (Pc.isAction) return;
         isEndAction = true;
         isPlayerInRange = false;
@@ -139,7 +138,7 @@ public class SwitchManager : MonoBehaviour
         int blueLayer = LayerMask.NameToLayer("Blue");
         int greenLayer = LayerMask.NameToLayer("Green");
 
-        if (gameObject.layer == blueLayer || gameObject.layer == greenLayer)
+        if (gameObject.layer == blueLayer && CompareTag("Player2") || gameObject.layer == greenLayer && CompareTag("Player1"))
         {
             // 同じtargetEnemyIDを持つ相手スイッチが押されているか確認
             bool partnerPressed = false;
@@ -240,6 +239,7 @@ public class SwitchManager : MonoBehaviour
     }
 
 	#endregion
+
 	#region アイテム関連
 
 	public Vector3 GreenItemDrop()
@@ -349,16 +349,40 @@ public class SwitchManager : MonoBehaviour
     {
         isActionSwitch = false;
         isActionEnemy = false;
-        isPlayerInRange = false;
 
-		if (CompareTag("Enemy"))
-		{
-			isEndAction = false;
-			_stunSent = false;
-			currentStanTime = 0f;
-		}
-		//if (actionText != null) actionText.gameObject.SetActive(false);
+        // --- ここから修正：自分のリスポーン時のみ範囲内フラグをリセットする ---
+        var wsClient = FindObjectOfType<WebSocketClient>();
+        if (wsClient != null && wsClient.myPlayer != null)
+        {
+            // 現在、このスイッチに触れているコライダーをチェック
+            // もし自分のプレイヤーが範囲内に残っているなら、isPlayerInRange は true のままにする
+            Collider[] hitColliders = Physics.OverlapBox(transform.position, transform.localScale / 2);
+            bool myPlayerStillInside = false;
+
+            foreach (var hitCollider in hitColliders)
+            {
+                if (hitCollider.gameObject == wsClient.myPlayer)
+                {
+                    myPlayerStillInside = true;
+                    break;
+                }
+            }
+
+            // 自分が範囲内にいない場合のみ false にする
+            if (!myPlayerStillInside)
+            {
+                isPlayerInRange = false;
+                if (actionText != null) actionText.gameObject.SetActive(false);
+            }
+        }
+        else
+        {
+            // ネットワークが繋がっていない（シングルテストなど）の場合は一応リセット
+            isPlayerInRange = false;
+            if (actionText != null) actionText.gameObject.SetActive(false);
+        }
     }
+
     #endregion
 
     #region Unityイベント
@@ -415,17 +439,24 @@ public class SwitchManager : MonoBehaviour
             actionText.transform.rotation = Quaternion.LookRotation(actionText.transform.position - cameraTransform.position);
         }
 
-        if(isPlayerInRange)
+        if (isPlayerInRange)
         {
             if (actionText != null && !Pc.isPlayerMoveStop)
             {
-                if (enemy.reactionText.text == "!")
-                {
-                    actionText.gameObject.SetActive(false);
-                }
-                else
+                if (CompareTag("Switch"))
                 {
                     actionText.gameObject.SetActive(true);
+                }
+                else if (CompareTag("Enemy"))
+                {
+                    if (enemy != null && enemy.reactionText != null && enemy.reactionText.text == "!")
+                    {
+                        actionText.gameObject.SetActive(false);
+                    }
+                    else
+                    {
+                        actionText.gameObject.SetActive(true);
+                    }
                 }
             }
         }
@@ -446,11 +477,6 @@ public class SwitchManager : MonoBehaviour
 
             var pc = other.GetComponent<PlayerController>();
             if (pc != null) Pc = pc;
-
-            int blueLayer = LayerMask.NameToLayer("Blue");
-            int greenLayer = LayerMask.NameToLayer("Green");
-            if (gameObject.layer == blueLayer && !wsClient.IsHostPlayer()) return;
-            if (gameObject.layer == greenLayer && !wsClient.IsGuestPlayer()) return;
 
             isPlayerInRange = true;
         }
