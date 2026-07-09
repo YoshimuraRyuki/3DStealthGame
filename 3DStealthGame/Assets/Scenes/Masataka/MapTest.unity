@@ -562,7 +562,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 6915e1e58f0a0b94bb7c3790e94fb317, type: 2}
+  - {fileID: 2100000, guid: 457908cc7374a27418c3af22686cf39f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1318,7 +1318,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 6915e1e58f0a0b94bb7c3790e94fb317, type: 2}
+  - {fileID: 2100000, guid: 457908cc7374a27418c3af22686cf39f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1819,7 +1819,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 6915e1e58f0a0b94bb7c3790e94fb317, type: 2}
+  - {fileID: 2100000, guid: 457908cc7374a27418c3af22686cf39f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1858,7 +1858,7 @@ Transform:
   m_GameObject: {fileID: 655542419}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -4.339077, y: 36.106747, z: -53.172825}
+  m_LocalPosition: {x: -4.339077, y: 36.106747, z: -52.96}
   m_LocalScale: {x: 61.580845, y: 4.38078, z: 4.46}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2580,7 +2580,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 6915e1e58f0a0b94bb7c3790e94fb317, type: 2}
+  - {fileID: 2100000, guid: 457908cc7374a27418c3af22686cf39f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2619,8 +2619,8 @@ Transform:
   m_GameObject: {fileID: 879784045}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -36.244778, y: 36.106747, z: -21.134825}
-  m_LocalScale: {x: 68.54572, y: 4.38078, z: 4.46}
+  m_LocalPosition: {x: -36.244778, y: 36.106747, z: -21.0256}
+  m_LocalScale: {x: 68.32638, y: 4.38078, z: 4.46}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 354370315}
@@ -5100,6 +5100,8 @@ MonoBehaviour:
   miniMapMaskRect_P1: {fileID: 1070339475}
   map2DRect_P2: {fileID: 1655844094}
   miniMapMaskRect_P2: {fileID: 1070339475}
+  activeGreenItems: []
+  activeBlueItems: []
   enableWallCollider: 1
 --- !u!4 &1484845754
 Transform:

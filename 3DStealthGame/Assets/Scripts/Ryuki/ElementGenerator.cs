@@ -145,8 +145,6 @@ public class ElementGenerator : MonoBehaviour
     public List<GameObject> activeGreenItems = new List<GameObject>();    // 緑用アイテム
     public List<GameObject> activeBlueItems = new List<GameObject>();     // 青用アイテム
 
-
-
     #endregion
 
     #region ギミック連携管理
