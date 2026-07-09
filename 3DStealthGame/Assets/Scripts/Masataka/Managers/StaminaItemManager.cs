@@ -62,6 +62,15 @@ public class StaminaItemManager : MonoBehaviour
 		// 回復するのは相手なので、吸い込み先も相手プレイヤー
 		Transform remoteTransform = wsClient.GetRemotePlayerTransform();
 
+
+		Vector3 pickedPosition = transform.position;
+
+		var generator = FindObjectOfType<ElementGenerator>();
+		if (generator != null)
+		{
+			generator.RemoveItemIcon(pickedPosition);
+		}
+
 		gameObject.SetActive(false);
 		wsClient.SendStaminaItemPicked(transform.position);
 

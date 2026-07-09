@@ -79,6 +79,7 @@
     <Compile Include="Assets\Scripts\Masataka\Managers\QuickChatManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\TutorialManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Camera\PlayerCamera.cs" />
+    <Compile Include="Assets\Scripts\Masataka\SwitchOutlinePresenter.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\StaminaManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\ItemDropEffect.cs" />
     <Compile Include="Assets\Scripts\Ryuki\WallCollision.cs" />
