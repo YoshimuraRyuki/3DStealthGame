@@ -363,52 +363,87 @@ public class EnemyManager : MonoBehaviour
         // 両方のプレイヤーを確認して近い方をターゲットに
         GameObject p1 = GameObject.FindWithTag("Player1");
         GameObject p2 = GameObject.FindWithTag("Player2");
+
+        if (enemyState == EnemyState.FocusPlayer && targetPlayer != null)
+        {
+            // 現在ロックオン中のターゲットがまだ視界内にいるかをチェックする
+            isFoundPlayer = CheckSinglePlayerVision(targetPlayer);
+
+            if (isFoundPlayer)
+            {
+                _alertTarget = targetPlayer;
+                if (gameObject.tag == "StrongEnemy") return;
+
+                TowardThePlayer(); // ターゲットに向かって移動
+                return;
+            }
+        }
+
         Transform closest = null;
         float minDist = Mathf.Infinity;
         foreach (var p in new[] { p1, p2 })
         {
             if (p == null) continue;
-            float dist = Vector3.Distance(transform.position, p.transform.position);
-            if (dist < minDist) { minDist = dist; closest = p.transform; }
+
+            // 単に距離が近いだけでなく、「視界に入っているか」も同時にチェックする
+            if (CheckSinglePlayerVision(p.transform))
+            {
+                float dist = Vector3.Distance(transform.position, p.transform.position);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    closest = p.transform;
+                }
+            }
         }
-        if (closest != null) targetPlayer = closest;
 
-        if (targetPlayer == null) return;
+        // 視界に入っているプレイヤーがいればターゲットに設定
+        if (closest != null)
+        {
+            targetPlayer = closest;
+            isFoundPlayer = true;
+            _alertTarget = targetPlayer;
 
-        isFoundPlayer = false;
-        // ターゲット方向計算
-        Vector3 dirToTarget = (targetPlayer.position - transform.position).normalized;
-        // 距離計算
-        float dstToTarget = Vector3.Distance(transform.position, targetPlayer.position);
+            if (gameObject.tag == "StrongEnemy") return;
 
-        // 距離が範囲内かチェック
+            TowardThePlayer();
+            enemyState = EnemyState.FocusPlayer;
+        }
+        else
+        {
+            // 誰も視界に入っていなければ発見フラグを折る
+            isFoundPlayer = false;
+        }
+    }
+
+    /// <summary>
+    /// 特定のプレイヤーが視界に入っているかどうかを判定
+    /// </summary>
+    /// <param name="playerTransform"></param>
+    /// <returns></returns>
+    bool CheckSinglePlayerVision(Transform playerTransform)
+    {
+        if (playerTransform == null) return false;
+
+        Vector3 dirToTarget = (playerTransform.position - transform.position).normalized;
+        float dstToTarget = Vector3.Distance(transform.position, playerTransform.position);
+
         if (dstToTarget < viewRadius)
         {
-            // 正面方向となす角度を計算
             float angleToTarget = Vector3.Angle(transform.forward, dirToTarget);
-
-            // 角度が扇型の範囲内かチェック
             if (angleToTarget < viewAngle / 2f)
             {
-                // 間に障害物がないかレイキャストで確認
                 RaycastHit hit;
                 if (Physics.Raycast(transform.position, dirToTarget, out hit, dstToTarget))
                 {
-                    // 障害物に当たった場合
-                    if (hit.transform == targetPlayer || hit.transform.IsChildOf(targetPlayer))
+                    if (hit.transform == playerTransform || hit.transform.IsChildOf(playerTransform))
                     {
-                        //Debug.Log("プレイヤー発見");
-                        isFoundPlayer = true;
-                        _alertTarget = targetPlayer;
-
-                        if (gameObject.tag == "StrongEnemy") return;
-
-                        TowardThePlayer();
-                        enemyState = EnemyState.FocusPlayer;
+                        return true;
                     }
                 }
             }
         }
+        return false;
     }
 
     #endregion
@@ -647,7 +682,8 @@ public class EnemyManager : MonoBehaviour
     /// <param name="volume"></param>
     void HandleSound(Vector3 soundPosition, float volume)
     {
-        if (Sm != null && Sm.isEnemyMoveStop) return; // スタン中は音検知しない
+        if (Sm != null && Sm.isEnemyMoveStop) return;                      // スタン中は音検知しない
+        if (enemyState == EnemyState.FocusPlayer && isFoundPlayer) return; // すでにプレイヤーが目視で追従しているなら、遠くの音には気を取られない
 
         // 音が聞こえる範囲内かどうかを計算
         float distanceToSound = Vector3.Distance(transform.position, soundPosition);
@@ -869,7 +905,7 @@ public class EnemyManager : MonoBehaviour
     public void ResetPatrolState()
     {
         currentTime = 0f;
-
+        targetPlayer = null;
         isStopMove = false;
 
         // 次のポイントを再設定
