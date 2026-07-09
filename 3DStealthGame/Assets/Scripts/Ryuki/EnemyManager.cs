@@ -392,6 +392,25 @@ public class EnemyManager : MonoBehaviour
             {
                 // 見失った瞬間、目視フラグを一旦折る
                 isFoundPlayer = false;
+
+                if (reactionText != null)
+                {
+                    reactionText.text = "?";
+                    reactionText.gameObject.SetActive(true);
+                }
+
+                lastSoundPosition = targetPlayer.position;
+                currentTime = 0; // タイマーリセット
+
+                if (gameObject.tag == "StrongEnemy")
+                {
+                    strongEnemyState = StrongEnemyState.sLookSoundPoint;
+                }
+                else
+                {
+                    enemyState = EnemyState.LookSoundPoint; // 音を確認するステートへ
+                }
+                return;
             }
         }
 
@@ -416,6 +435,19 @@ public class EnemyManager : MonoBehaviour
         // 視界に入っているプレイヤーがいればターゲットに設定
         if (closest != null)
         {
+            if (!isFoundPlayer)
+            {
+                if (reactionText != null)
+                {
+                    reactionText.text = "!";
+                    reactionText.gameObject.SetActive(true); // ビックリマーク表示
+                    isReaction = true;
+                }
+
+                // 待機タイマーなどをリセット（音検知と同様に、動きを再開させるため）
+                currentTime = 0;
+            }
+
             targetPlayer = closest;
             isFoundPlayer = true;
             _alertTarget = targetPlayer;
@@ -523,7 +555,8 @@ public class EnemyManager : MonoBehaviour
         if (currentAlertCount <= 0 && !_isRespawning)
         {
             _isRespawning = true;
-			SoundManager.Instance?.PlayDetected();
+            MissionManager.Instance?.OnEnemyFound();
+            SoundManager.Instance?.PlayDetected();
 			Debug.Log($"捕まった: _alertTarget={_alertTarget?.name} isLocalPlayer={_alertTarget?.GetComponent<PlayerController>()?.isLocalPlayer}");
             if (_alertTarget != null)
             {
