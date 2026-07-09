@@ -55,6 +55,10 @@ public class EnemyManager : MonoBehaviour
     // 移動
     [Header("移動速度")]
     public float speed = 3f;
+    [Header("追従時に停止する距離")]
+    public float stoppingDistance = 3f;
+    [Header("プレイヤー追従時の移動速度")]
+    public float chaseSpeed = 1.5f;
 
     [Header("回転速度")]
     public float rotateSpeed = 3f;
@@ -364,18 +368,30 @@ public class EnemyManager : MonoBehaviour
         GameObject p1 = GameObject.FindWithTag("Player1");
         GameObject p2 = GameObject.FindWithTag("Player2");
 
-        if (enemyState == EnemyState.FocusPlayer && targetPlayer != null)
+        if (enemyState == EnemyState.FocusPlayer && isFoundPlayer && targetPlayer != null)
         {
             // 現在ロックオン中のターゲットがまだ視界内にいるかをチェックする
-            isFoundPlayer = CheckSinglePlayerVision(targetPlayer);
+            bool stillVisible = CheckSinglePlayerVision(targetPlayer);
 
-            if (isFoundPlayer)
+            if (stillVisible)
             {
                 _alertTarget = targetPlayer;
                 if (gameObject.tag == "StrongEnemy") return;
 
-                TowardThePlayer(); // ターゲットに向かって移動
+                //（TowardThePlayerの中の isHearingSound 条件に縛られないように、本来は別処理にするか、フラグ管理を見直すのが理想です）
+                FocusPlayer();
+                float distanceToPlayer = Vector3.Distance(transform.position, targetPlayer.position);                
+                if (distanceToPlayer > stoppingDistance)
+                {
+                    // chaseSpeed（遅くした追従速度）を使って移動させる
+                    transform.position = Vector3.MoveTowards(transform.position, targetPlayer.position, chaseSpeed * Time.deltaTime);
+                }
                 return;
+            }
+            else
+            {
+                // 見失った瞬間、目視フラグを一旦折る
+                isFoundPlayer = false;
             }
         }
 
@@ -406,13 +422,7 @@ public class EnemyManager : MonoBehaviour
 
             if (gameObject.tag == "StrongEnemy") return;
 
-            TowardThePlayer();
             enemyState = EnemyState.FocusPlayer;
-        }
-        else
-        {
-            // 誰も視界に入っていなければ発見フラグを折る
-            isFoundPlayer = false;
         }
     }
 
@@ -723,7 +733,15 @@ public class EnemyManager : MonoBehaviour
                 isReaction = true;
             }
 
-            enemyState = EnemyState.FocusPlayer;
+            // FocusPlayer ではなく、音の方向を見るステートに直接切り替える
+            if (gameObject.tag == "StrongEnemy")
+            {
+                strongEnemyState = StrongEnemyState.sLookSoundPoint;
+            }
+            else
+            {
+                enemyState = EnemyState.LookSoundPoint;
+            }
         }
     }
 
