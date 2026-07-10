@@ -5,11 +5,10 @@ using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using System.Collections;
 
-#region 受信メッセージ定義
+#region メッセージ定義
 
 // 接続初期化メッセージ
 [System.Serializable]
-
 public class NetworkEnvelope
 {
 	public string type;
@@ -56,6 +55,17 @@ public class PlayerMoveMessage
 	public PositionData rotation;
 	public string anim_state;   // "idle" / "run" / "sneak"
 	public string anim_trigger; // "PunchEnemy" / "PunchSwitch" など
+}
+
+[System.Serializable]
+public class PlayerMoveSendMessage
+{
+	public string type = "player_move";
+	public string id;
+	public PositionData position;
+	public PositionData rotation;
+	public string anim_state;
+	public string anim_trigger;
 }
 
 // プレイヤー退室通知メッセージ
@@ -116,6 +126,22 @@ public class EnemyMoveMessage
 	public string sender_id;
 }
 
+[System.Serializable]
+public class EnemyMoveSendMessage
+{
+	public string type = "enemy_move";
+	public int enemy_index;
+	public float x;
+	public float y;
+	public float z;
+	public float angle;
+	public float light_r;
+	public float light_g;
+	public float light_b;
+	public float last_sound_x;
+	public float last_sound_z;
+	public string reaction;
+}
 // スイッチ操作の同期メッセージ
 [System.Serializable]
 public class SwitchActivatedMessage
@@ -157,7 +183,7 @@ public class StaminaItemDropMessage
 	public string type;
 	public string sender_id;
 	public int drop_type;
-	public int enemy_id; 
+	public int enemy_id;
 	public float x;
 	public float y;
 	public float z;
@@ -166,7 +192,7 @@ public class StaminaItemDropMessage
 [System.Serializable]
 public class EnemyFoundMessage
 {
-	public string type;
+	public string type = "enemy_found";
 	public string sender_id;
 }
 
@@ -208,11 +234,47 @@ public class StaminaItemDropRequestSendMessage
 	public float y;
 	public float z;
 }
+
+[System.Serializable]
+public class RespawnSendMessage
+{
+	public string type = "respawn";
+	public string id;
+	public PositionData position;
+}
+
+[System.Serializable]
+public class SwitchActivatedSendMessage
+{
+	public string type = "switch_activated";
+	public int switch_id;
+}
+
+[System.Serializable]
+public class EnemyStunSendMessage
+{
+	public string type;
+	public int enemy_index;
+	public string sender_id;
+}
+
+[System.Serializable]
+public class RemoteRespawnSendMessage
+{
+	public string type = "remote_respawn";
+	public string id;
+}
+
+[System.Serializable]
+public class ReadySendMessage
+{
+	public string type = "ready";
+	public PositionData position;
+}
 #endregion
 
 /// <summary>
-/// 送信メッセージを組み立てるクラス。
-/// JSON直書きによる対応漏れを防ぐ。
+/// サーバーへ送るメッセージを作る。
 /// </summary>
 public static class SendMessageBuilder
 {
@@ -221,31 +283,110 @@ public static class SendMessageBuilder
 		return JsonUtility.ToJson(new GoalSendMessage());
 	}
 
-	public static string PlayerMove(string id, Vector3 pos, Vector3 rot, string animState, string trigger)
-		=> $"{{\"type\":\"player_move\",\"id\":\"{id}\"," +
-		   $"\"position\":{{\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z}}}," +
-		   $"\"rotation\":{{\"x\":{rot.x},\"y\":{rot.y}}}," +
-		   $"\"anim_state\":\"{animState}\"," +
-		   $"\"anim_trigger\":\"{trigger}\"}}";
+	public static string PlayerMove(
+	string id,
+	Vector3 pos,
+	Vector3 rot,
+	string animState,
+	string trigger)
+	{
+		var data = new PlayerMoveSendMessage
+		{
+			id = id,
+			position = new PositionData
+			{
+				x = pos.x,
+				y = pos.y,
+				z = pos.z
+			},
+			rotation = new PositionData
+			{
+				x = rot.x,
+				y = rot.y,
+				z = 0f
+			},
+			anim_state = string.IsNullOrEmpty(animState) ? "idle" : animState,
+			anim_trigger = string.IsNullOrEmpty(trigger) ? "" : trigger
+		};
+
+		return JsonUtility.ToJson(data);
+	}
 
 	public static string Respawn(string id, Vector3 pos)
-		=> $"{{\"type\":\"respawn\",\"id\":\"{id}\"," +
-		   $"\"position\":{{\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z}}}}}";
+	{
+		var data = new RespawnSendMessage
+		{
+			id = id,
+			position = new PositionData
+			{
+				x = pos.x,
+				y = pos.y,
+				z = pos.z
+			}
+		};
+
+		return JsonUtility.ToJson(data);
+	}
 
 	public static string SwitchActivated(int switchId)
-		=> $"{{\"type\":\"switch_activated\",\"switch_id\":{switchId}}}";
+	{
+		var data = new SwitchActivatedSendMessage
+		{
+			switch_id = switchId
+		};
+
+		return JsonUtility.ToJson(data);
+	}
 
 	public static string ItemPicked()
-		=> "{\"type\":\"item_picked\"}";
+	{
+		return JsonUtility.ToJson(new ItemPickedSendMessage());
+	}
+
+	public static string ItemPicked(Vector3 pos)
+	{
+		var data = new ItemPickedSendMessage
+		{
+			x = pos.x,
+			z = pos.z
+		};
+
+		return JsonUtility.ToJson(data);
+	}
 
 	public static string EnemyStun(int enemyIndex, string senderId)
-		=> $"{{\"type\":\"enemy_stun\",\"enemy_index\":{enemyIndex},\"sender_id\":\"{senderId}\"}}";
+	{
+		var data = new EnemyStunSendMessage
+		{
+			type = "enemy_stun",
+			enemy_index = enemyIndex,
+			sender_id = senderId
+		};
+
+		return JsonUtility.ToJson(data);
+	}
 
 	public static string EnemyStunCancel(int enemyIndex, string senderId)
-		=> $"{{\"type\":\"enemy_stun_cancel\",\"enemy_index\":{enemyIndex},\"sender_id\":\"{senderId}\"}}";
+	{
+		var data = new EnemyStunSendMessage
+		{
+			type = "enemy_stun_cancel",
+			enemy_index = enemyIndex,
+			sender_id = senderId
+		};
+
+		return JsonUtility.ToJson(data);
+	}
 
 	public static string RemoteRespawn(string id)
-		=> $"{{\"type\":\"remote_respawn\",\"id\":\"{id}\"}}";
+	{
+		var data = new RemoteRespawnSendMessage
+		{
+			id = id
+		};
+
+		return JsonUtility.ToJson(data);
+	}
 
 	public static string Chat(string message, string senderId)
 	{
@@ -259,89 +400,158 @@ public static class SendMessageBuilder
 	}
 
 	public static string StaminaItemPicked(string senderId, Vector3 pos)
-	=> $"{{\"type\":\"stamina_item_picked\",\"sender_id\":\"{senderId}\",\"x\":{pos.x},\"z\":{pos.z}}}";
+	{
+		var data = new StaminaItemPickedSendMessage
+		{
+			sender_id = senderId,
+			x = pos.x,
+			z = pos.z
+		};
 
-	public static string ItemPicked(Vector3 pos)
-	=> $"{{\"type\":\"item_picked\",\"x\":{pos.x},\"z\":{pos.z}}}";
+		return JsonUtility.ToJson(data);
+	}
 
 	public static string StaminaItemDrop(string senderId, int dropType, Vector3 pos)
-	=> $"{{\"type\":\"stamina_item_drop\",\"sender_id\":\"{senderId}\",\"drop_type\":{dropType},\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z}}}";
+	{
+		var data = new StaminaItemDropSendMessage
+		{
+			sender_id = senderId,
+			drop_type = dropType,
+			x = pos.x,
+			y = pos.y,
+			z = pos.z
+		};
+
+		return JsonUtility.ToJson(data);
+	}
 
 	public static string StaminaItemDropRequest(string senderId, int dropType, Vector3 pos)
-=> $"{{\"type\":\"stamina_item_drop_request\",\"sender_id\":\"{senderId}\",\"drop_type\":{dropType},\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z}}}";
+	{
+		var data = new StaminaItemDropRequestSendMessage
+		{
+			sender_id = senderId,
+			drop_type = dropType,
+			x = pos.x,
+			y = pos.y,
+			z = pos.z
+		};
+
+		return JsonUtility.ToJson(data);
+	}
 
 	public static string EnemyFound(string senderId)
-	=> $"{{\"type\":\"enemy_found\",\"sender_id\":\"{senderId}\"}}";
+	{
+		var data = new EnemyFoundMessage
+		{
+			sender_id = senderId
+		};
 
-	public static string EnemyMove(int index, Vector3 pos, float angle, Color light, string reaction, Vector3 lastSound)
-		=> $"{{\"type\":\"enemy_move\",\"enemy_index\":{index}," +
-		   $"\"x\":{pos.x},\"y\":{pos.y},\"z\":{pos.z},\"angle\":{angle}," +
-		   $"\"light_r\":{light.r},\"light_g\":{light.g},\"light_b\":{light.b}," +
-		   $"\"reaction\":\"{reaction}\"," +
-		   $"\"last_sound_x\":{lastSound.x},\"last_sound_z\":{lastSound.z}}}";
+		return JsonUtility.ToJson(data);
+	}
+
+	public static string EnemyMove(
+	int index,
+	Vector3 pos,
+	float angle,
+	Color light,
+	string reaction,
+	Vector3 lastSound)
+	{
+		var data = new EnemyMoveSendMessage
+		{
+			enemy_index = index,
+			x = pos.x,
+			y = pos.y,
+			z = pos.z,
+			angle = angle,
+			light_r = light.r,
+			light_g = light.g,
+			light_b = light.b,
+			last_sound_x = lastSound.x,
+			last_sound_z = lastSound.z,
+			reaction = string.IsNullOrEmpty(reaction) ? "" : reaction
+		};
+
+		return JsonUtility.ToJson(data);
+	}
+
+	public static string Ready(Vector3 pos)
+	{
+		var data = new ReadySendMessage
+		{
+			position = new PositionData
+			{
+				x = pos.x,
+				y = pos.y,
+				z = pos.z
+			}
+		};
+
+		return JsonUtility.ToJson(data);
+	}
 }
 
 /// <summary>
-/// サーバーとの通信を一元管理するクラス。
-/// プレイヤーの移動・動作・敵の位置・ゲームの進行状況をリアルタイムで送受信する。
-/// シーンをまたいでも破棄されずに動作し続ける。
+/// ゲーム中のWebSocket通信をまとめて扱う。
+/// ルーム接続、プレイヤー同期、敵同期、ゲーム進行通知を担当。
 /// </summary>
 public class WebSocketClient : MonoBehaviour
 {
-	#region インスペクター設定
+	#region Inspector設定
 
 	public GameObject playerPrefab;
 	public GameObject myPlayer;
 	public string serverUrl = "ws://192.168.56.102:8080/ws?room_id=test&name=Player1";
 
-	public Material localPlayerMaterial;  // 自分（Player1）のマテリアル
-	public Material remotePlayerMaterial; // 相手（Player2）のマテリアル
+	public Material localPlayerMaterial;  // Player1
+	public Material remotePlayerMaterial; // Player2
 
 	public RoomMemberPanel roomMemberPanel;
 
 	public string ngrokUrl = "https://rice-washer-suitcase.ngrok-free.dev";
 	public ServerMode serverMode = ServerMode.VirtualBox;
 
-	// 接続先の切り替え用
 	public enum ServerMode
 	{
-		VirtualBox, // 仮想環境
-		LocalHost,  // ローカル実行
-		Ngrok,      // 外部公開トンネル
-		Render,     // クラウドサービス（Render）
-		FlyIO       // クラウドサービス（Fly.io）
+		VirtualBox,
+		LocalHost,
+		Ngrok,
+		Render,
+		FlyIO
 	}
 
 	#endregion
 
-	#region フィールド
+	#region 内部状態
 
 	private WebSocket websocket;
 	public string myId;
+
 	private Dictionary<string, GameObject> playerObjects = new Dictionary<string, GameObject>();
+	private Dictionary<string, Vector3> targetPositions = new Dictionary<string, Vector3>();
+	private Dictionary<string, Quaternion> targetRotations = new Dictionary<string, Quaternion>();
+	private Dictionary<int, Vector3> spawnPositions = new Dictionary<int, Vector3>();
+
 	private bool isGameSceneLoaded;
 	private List<string> pendingMessages = new List<string>();
 
-	private float sendInterval = 0.05f; // 位置送信間隔（秒）
+	private float sendInterval = 0.05f;
 	private float timer = 0f;
-
 	private string playerName;
 
+	// 以前のスポーン調整用。今は保持のみ。
 	private Vector3 pendingSpawnPos = Vector3.zero;
 	private bool hasSpawnPos = false;
 
-	private Dictionary<string, Vector3> targetPositions = new Dictionary<string, Vector3>();
-	private Dictionary<string, Quaternion> targetRotations = new Dictionary<string, Quaternion>();
+	public int myPlayerNumber = 0; // 1=ホスト, 2=ゲスト
 
-	private Dictionary<int, Vector3> spawnPositions = new Dictionary<int, Vector3>();
-	public int myPlayerNumber = 0; // 1=ホスト（敵を送信）, 2=ゲスト（敵を受信）
-	private GameObject[] _enemyObjects; // シーン内の全敵
-
+	private GameObject[] _enemyObjects;
 	private Dictionary<int, Vector3> enemyTargetPositions = new Dictionary<int, Vector3>();
 	private Dictionary<int, float> enemyTargetAngles = new Dictionary<int, float>();
 	private float enemySendTimer = 0f;
 	private float enemySendInterval = 0.05f;
 
+	// 通信調整中に使っていた値。安全確認が終わるまでは残す。
 	private Vector3 _lastRemotePosition = Vector3.zero;
 	private bool _stunSent = false;
 	private int _connectGeneration = 0;
@@ -350,12 +560,9 @@ public class WebSocketClient : MonoBehaviour
 
 	#endregion
 
-	#region プレイヤー番号判定
+	#region プレイヤー番号
 
-	/// <summary>自分がホスト（Player1）かどうか</summary>
 	public bool IsHostPlayer() => myPlayerNumber == 1;
-
-	/// <summary>自分がゲスト（Player2）かどうか</summary>
 	public bool IsGuestPlayer() => myPlayerNumber == 2;
 
 	#endregion
@@ -384,15 +591,17 @@ public class WebSocketClient : MonoBehaviour
 		isGameSceneLoaded = SceneManager.GetActiveScene().name == "GameScene";
 	}
 
-	async void Start()
+
+	void Start()
 	{
 		Application.runInBackground = true;
 		playerName = "";
 	}
 
-	async void Update()
+
+	void Update()
 	{
-		// 相手プレイヤーの位置をなめらかに反映する
+		// 相手プレイヤーを補間
 		foreach (var id in targetPositions.Keys)
 		{
 			if (id == myId) continue;
@@ -418,40 +627,7 @@ public class WebSocketClient : MonoBehaviour
 		}
 	}
 
-	private async void OnApplicationQuit()
-	{
-		if (websocket != null && websocket.State == WebSocketState.Open) await websocket.Close();
-	}
 
-	#endregion
-
-	#region 接続管理
-
-	/// <summary>
-	/// 接続先の設定に応じた接続先アドレスを返す
-	/// </summary>
-	private string GetServerUrl(string roomId)
-	{
-		switch (serverMode)
-		{
-			case ServerMode.VirtualBox:
-				return $"ws://192.168.56.102:8080/ws?room_id={roomId}&name={playerName}";
-			case ServerMode.LocalHost:
-				return $"ws://localhost:8080/ws?room_id={roomId}&name={playerName}";
-			case ServerMode.Ngrok:
-				return $"wss://{ngrokUrl.Replace("https://", "")}/ws?room_id={roomId}&name={playerName}";
-			case ServerMode.Render:
-				return $"wss://stealth-game-server.onrender.com/ws?room_id={roomId}&name={playerName}";
-			case ServerMode.FlyIO:
-				return $"wss://stealth-game-server.fly.dev/ws?room_id={roomId}&name={playerName}";
-			default:
-				return $"ws://192.168.56.102:8080/ws?room_id={roomId}&name={playerName}";
-		}
-	}
-
-	/// <summary>
-	/// シーンが切り替わったときの処理。ゲームシーン以外ではプレイヤーを削除する。
-	/// </summary>
 	void OnSceneLoaded(Scene scene, LoadSceneMode mode)
 	{
 		isGameSceneLoaded = scene.name == "GameScene";
@@ -473,9 +649,43 @@ public class WebSocketClient : MonoBehaviour
 		}
 	}
 
-	/// <summary>
-	/// 指定したルームに接続する。すでに接続中の場合は切断してから再接続する。
-	/// </summary>
+
+	private async void OnApplicationQuit()
+	{
+		if (websocket != null && websocket.State == WebSocketState.Open) await websocket.Close();
+	}
+
+
+	#endregion
+
+	#region 接続管理
+
+	private void OnWebSocketOpened() { Debug.Log("接続成功"); }
+
+	public void SetPlayerName(string name) { playerName = name; }
+	public string GetPlayerName() => playerName;
+
+
+	private string GetServerUrl(string roomId)
+	{
+		switch (serverMode)
+		{
+			case ServerMode.VirtualBox:
+				return $"ws://192.168.56.102:8080/ws?room_id={roomId}&name={playerName}";
+			case ServerMode.LocalHost:
+				return $"ws://localhost:8080/ws?room_id={roomId}&name={playerName}";
+			case ServerMode.Ngrok:
+				return $"wss://{ngrokUrl.Replace("https://", "")}/ws?room_id={roomId}&name={playerName}";
+			case ServerMode.Render:
+				return $"wss://stealth-game-server.onrender.com/ws?room_id={roomId}&name={playerName}";
+			case ServerMode.FlyIO:
+				return $"wss://stealth-game-server.fly.dev/ws?room_id={roomId}&name={playerName}";
+			default:
+				return $"ws://192.168.56.102:8080/ws?room_id={roomId}&name={playerName}";
+		}
+	}
+
+
 	public async void ConnectToRoom(string roomId)
 	{
 		if (websocket != null)
@@ -502,15 +712,15 @@ public class WebSocketClient : MonoBehaviour
 	}
 
 
-	/// <summary>プレイヤー名を設定する</summary>
-	public void SetPlayerName(string name) { playerName = name; }
+	public async void OnReadyButtonClicked()
+	{
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
 
-	/// <summary>プレイヤー名を返す</summary>
-	public string GetPlayerName() => playerName;
+		string json = SendMessageBuilder.Ready(new Vector3(0f, 1f, 0f));
+		await websocket.SendText(json);
+	}
 
-	/// <summary>
-	/// 退室ボタン押下時に接続を切断してプレイヤーを削除する
-	/// </summary>
+
 	public async void OnQuitButtonClicked()
 	{
 		if (websocket != null)
@@ -535,23 +745,7 @@ public class WebSocketClient : MonoBehaviour
 		pendingMessages.Clear();
 	}
 
-	private void OnWebSocketOpened() { Debug.Log("接続成功"); }
 
-	/// <summary>
-	/// 準備完了ボタン押下時にサーバーへ準備完了を通知する
-	/// </summary>
-	public async void OnReadyButtonClicked()
-	{
-		//Debug.Log($"準備完了押した websocket={websocket?.State}");
-		if (websocket == null || websocket.State != WebSocketState.Open) return;
-		string json = "{\"type\":\"ready\",\"position\":{\"x\":0,\"y\":1,\"z\":0}}";
-		await websocket.SendText(json);
-	}
-
-	/// <summary>
-	/// 接続を切断してゲームセッションの状態を初期化する。
-	/// タイトル復帰時に呼ぶ。
-	/// </summary>
 	public async System.Threading.Tasks.Task DisconnectAndReset()
 	{
 		//_connectGeneration++;
@@ -584,14 +778,12 @@ public class WebSocketClient : MonoBehaviour
 		enemyTargetPositions.Clear();
 		enemyTargetAngles.Clear();
 	}
+
+
 	#endregion
 
-	#region メッセージ受信
+	#region 受信入口
 
-	/// <summary>
-	/// サーバーからメッセージを受信したときの処理。
-	/// ゲームシーン読み込み前はキューに保存しておく。
-	/// </summary>
 	private void OnMessageReceived(byte[] bytes)
 	{
 		string json = Encoding.UTF8.GetString(bytes);
@@ -641,19 +833,14 @@ public class WebSocketClient : MonoBehaviour
 		ProcessMessage(json);
 	}
 
-	/// <summary>
-	/// 保存しておいたメッセージをまとめて処理する
-	/// </summary>
+
 	private void ProcessPendingMessages()
 	{
 		foreach (var json in pendingMessages) ProcessMessage(json);
 		pendingMessages.Clear();
 	}
 
-	/// <summary>
-	/// 受信JSONからメッセージ種別だけを取り出す。
-	/// json.Containsで判定せず、共通のtypeフィールドを見る。
-	/// </summary>
+
 	private string GetMessageType(string json)
 	{
 		if (string.IsNullOrEmpty(json))
@@ -680,9 +867,7 @@ public class WebSocketClient : MonoBehaviour
 		}
 	}
 
-	/// <summary>
-	/// 受信したメッセージをtypeごとに振り分ける。
-	/// </summary>
+
 	private void ProcessMessage(string json)
 	{
 		string type = GetMessageType(json);
@@ -783,13 +968,70 @@ public class WebSocketClient : MonoBehaviour
 		}
 	}
 
+
 	#endregion
 
-	#region メッセージ処理（ゲームシーン用）
+	#region ロビー受信
 
-	/// <summary>
-	/// サーバーからゲーム開始通知を受け取ったときの処理。
-	/// </summary>
+	private void HandleInitForLobby(string json)
+	{
+		InitMessage init = JsonUtility.FromJson<InitMessage>(json);
+		myId = init.id;
+		if (roomMemberPanel != null)
+		{
+			roomMemberPanel.RemoveMember("self");
+			roomMemberPanel.AddOrUpdateMember(myId, playerName, false);
+		}
+	}
+
+
+	private void HandlePlayerJoinedForLobby(string json)
+	{
+		var msg = JsonUtility.FromJson<PlayerJoinedMessage>(json);
+		if (msg == null || msg.id == myId) return;
+		if (roomMemberPanel != null) roomMemberPanel.AddOrUpdateMember(msg.id, msg.name, false);
+	}
+
+
+	private void HandleExistingPlayersForLobby(string json)
+	{
+		ExistingPlayersMessage msg = JsonUtility.FromJson<ExistingPlayersMessage>(json);
+		if (msg == null || msg.players == null) return;
+		foreach (var player in msg.players)
+			if (player.id != myId && roomMemberPanel != null)
+				roomMemberPanel.AddOrUpdateMember(player.id, player.name, player.is_ready);
+	}
+
+
+	private void HandlePlayerLeftForLobby(string json)
+	{
+		var msg = JsonUtility.FromJson<PlayerLeftMessage>(json);
+		if (roomMemberPanel != null) roomMemberPanel.RemoveMember(msg.id);
+	}
+
+
+	private void HandlePlayerReadyForLobby(string json)
+	{
+		var msg = JsonUtility.FromJson<PlayerReadyMessage>(json);
+		if (roomMemberPanel != null) roomMemberPanel.SetReady(msg.id, true);
+	}
+
+
+	private void HandlePlayerReadyMessage(string json)
+	{
+		var msg = JsonUtility.FromJson<PlayerReadyMessage>(json);
+
+		if (roomMemberPanel != null)
+		{
+			roomMemberPanel.SetReady(msg.id, true);
+		}
+	}
+
+
+	#endregion
+
+	#region ゲーム開始・プレイヤー同期
+
 	private void HandleStartGameMessage()
 	{
 		if (SceneManager.GetActiveScene().name == "GameScene")
@@ -803,21 +1045,7 @@ public class WebSocketClient : MonoBehaviour
 		}
 	}
 
-	/// <summary>
-	/// ロビーでプレイヤーの準備完了通知を受け取ったときの処理。
-	/// </summary>
-	private void HandlePlayerReadyMessage(string json)
-	{
-		var msg = JsonUtility.FromJson<PlayerReadyMessage>(json);
 
-		if (roomMemberPanel != null)
-		{
-			roomMemberPanel.SetReady(msg.id, true);
-		}
-	}
-	/// <summary>
-	/// 接続初期化：自分のプレイヤーを生成してカメラを設定する
-	/// </summary>
 	private void HandleInitMessage(string json)
 	{
 		if (SceneManager.GetActiveScene().name != "GameScene") return;
@@ -897,9 +1125,7 @@ public class WebSocketClient : MonoBehaviour
 		}
 	}
 
-	/// <summary>
-	/// 既存プレイヤー一覧：後から入室した場合に先に入っていたプレイヤーを生成する
-	/// </summary>
+
 	private void HandleExistingPlayersMessage(string json)
 	{
 		if (SceneManager.GetActiveScene().name != "GameScene") return;
@@ -917,9 +1143,7 @@ public class WebSocketClient : MonoBehaviour
 		}
 	}
 
-	/// <summary>
-	/// 新規プレイヤー参加：後から入室したプレイヤーを生成する
-	/// </summary>
+
 	private void HandlePlayerJoinedMessage(string json)
 	{
 		if (SceneManager.GetActiveScene().name != "GameScene") return;
@@ -938,10 +1162,7 @@ public class WebSocketClient : MonoBehaviour
 		if (roomMemberPanel != null) roomMemberPanel.AddOrUpdateMember(msg.id, msg.name, false);
 	}
 
-	/// <summary>
-	/// プレイヤー移動：位置・向き・動作状態を反映する。
-	/// ホスト側は相手の足音を敵に通知する。
-	/// </summary>
+
 	private void HandlePlayerMoveMessage(string json)
 	{
 		var msg = JsonUtility.FromJson<PlayerMoveMessage>(json);
@@ -955,7 +1176,7 @@ public class WebSocketClient : MonoBehaviour
 		if (msg.rotation != null)
 			targetRotations[msg.id] = Quaternion.Euler(msg.rotation.x, msg.rotation.y, 0);
 
-		// ホスト側のみ：相手の足音を敵に通知する
+		// ホスト側だけ、相手の足音を敵へ渡す
 		if (IsHostPlayer() && msg.id != myId)
 		{
 			Vector3 newPos = new Vector3(msg.position.x, msg.position.y, msg.position.z);
@@ -971,21 +1192,23 @@ public class WebSocketClient : MonoBehaviour
 			}
 		}
 
-		// 動作状態をアニメーションに反映する
+		// アニメーション反映
 		var anim = targetPlayer.GetComponentInChildren<Animator>();
-		if (anim != null && !string.IsNullOrEmpty(msg.anim_state))
+		if (anim == null) return;
+
+		if (!string.IsNullOrEmpty(msg.anim_state))
 		{
 			anim.SetBool("Run", msg.anim_state == "run");
 			anim.SetBool("Sneak", msg.anim_state == "sneak");
 		}
 
 		if (!string.IsNullOrEmpty(msg.anim_trigger))
+		{
 			anim.SetTrigger(msg.anim_trigger);
+		}
 	}
 
-	/// <summary>
-	/// プレイヤー退室：退室したプレイヤーのオブジェクトを削除する
-	/// </summary>
+
 	private void HandlePlayerLeftMessage(string json)
 	{
 		var msg = JsonUtility.FromJson<PlayerLeftMessage>(json);
@@ -997,46 +1220,11 @@ public class WebSocketClient : MonoBehaviour
 		if (roomMemberPanel != null) roomMemberPanel.RemoveMember(msg.id);
 	}
 
-	/// <summary>
-	/// アイテム取得：ミッション管理に取得を通知してログに表示する
-	/// </summary>
-	private void HandleItemPickedMessage(string json)
-	{
-		Debug.Log($"[item生JSON] {json}");
-		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json);
-		MissionManager.Instance?.OnItemPicked();
-		LogManager.Instance?.AddLog("アイテムを取得した", "#aadd44");
 
-		// 一番近いアイテムを探す（高さは比較せずXZ平面のみで判定）
-		ItemManager nearestItem = null;
-		float nearestDist = float.MaxValue;
-		foreach (var item in FindObjectsOfType<ItemManager>())
-		{
-			Vector2 itemXZ = new Vector2(item.transform.position.x, item.transform.position.z);
-			Vector2 msgXZ = new Vector2(msg.x, msg.z);
-			float dist = Vector2.Distance(itemXZ, msgXZ);
+	#endregion
 
-			if (dist < 2f && dist < nearestDist)
-			{
-				nearestDist = dist;
-				nearestItem = item;
-			}
-		}
+	#region ゲーム進行
 
-		if (nearestItem != null)
-		{
-			// ミニマップアイコンも消す
-			var generator = FindObjectOfType<ElementGenerator>();
-			if (generator != null)
-				generator.RemoveItemIcon(nearestItem.transform.position);
-
-			Destroy(nearestItem.gameObject);
-		}
-	}
-
-	/// <summary>
-	/// 片方がゴール：自分かどうかでログメッセージを切り替える
-	/// </summary>
 	private void HandlePlayerGoalMessage(string json)
 	{
 		var msg = JsonUtility.FromJson<GoalMessage>(json);
@@ -1052,12 +1240,10 @@ public class WebSocketClient : MonoBehaviour
 		}
 	}
 
-	/// <summary>
-	/// 全員ゴール：クリア演出を行いリザルト画面へ遷移する
-	/// </summary>
+
 	private void HandleAllGoalMessage(string json)
 	{
-		SoundManager.Instance?.PlayClear(); 
+		SoundManager.Instance?.PlayClear();
 		SoundManager.Instance?.StopBGM();
 		MissionManager.Instance?.StopTimer();
 		MissionManager.Instance?.ShowClearMessage();
@@ -1081,9 +1267,7 @@ public class WebSocketClient : MonoBehaviour
 		);
 	}
 
-	/// <summary>
-	/// リザルト画面への遷移処理（FadeToResult内から呼ばれる）
-	/// </summary>
+
 	private void LoadResultScene()
 	{
 		var msg_dummy = new GoalMessage();
@@ -1102,17 +1286,71 @@ public class WebSocketClient : MonoBehaviour
 		SceneManager.LoadScene("Result");
 	}
 
-	/// <summary>
-	/// 残り時間更新：現時点では未使用
-	/// </summary>
+
 	private void HandleTimerUpdate(string json)
 	{
 		var msg = JsonUtility.FromJson<TimerUpdateMessage>(json);
 	}
 
-	/// <summary>
-	/// 敵の移動同期（ゲスト側のみ処理）：位置・ライト・反応・音検知位置を反映する
-	/// </summary>
+
+	private void HandleRespawnMessage(string json)
+	{
+		var msg = JsonUtility.FromJson<RespawnMessage>(json);
+		if (msg.id == myId)
+		{
+			targetPositions.Remove(myId);
+			LogManager.Instance?.AddLog("リスポーンした", "#ff6666");
+			return;
+		}
+		if (!playerObjects.ContainsKey(msg.id)) return;
+		var obj = playerObjects[msg.id];
+		if (obj == null) return;
+		obj.transform.position = new Vector3(msg.position.x, msg.position.y, msg.position.z);
+		targetPositions[msg.id] = obj.transform.position;
+		LogManager.Instance?.AddLog("味方がリスポーンした", "#ff6666");
+	}
+
+
+	private void HandleRemoteRespawnMessage(string json)
+	{
+		// 相手が敵に見つかったので、ミッション3を失敗扱いにする
+		MissionManager.Instance?.OnEnemyFound();
+
+		var mypc = myPlayer?.GetComponent<PlayerController>();
+		if (mypc != null && mypc.IsFading) return;
+
+		if (IsGuestPlayer())
+		{
+			if (myPlayer == null) return;
+
+			var pc = myPlayer.GetComponent<PlayerController>();
+			if (pc == null) return;
+
+			pc.RespawnWithEffectPublic();
+			LogManager.Instance?.AddLog("リスポーンした", "#ff6666");
+		}
+		else if (IsHostPlayer())
+		{
+			LogManager.Instance?.AddLog("味方がリスポーンした", "#ff6666");
+		}
+	}
+
+
+	private void HandleEnemyFoundMessage(string json)
+	{
+		var msg = JsonUtility.FromJson<EnemyFoundMessage>(json);
+
+		// 自分が送った通知なら無視
+		if (msg != null && msg.sender_id == myId) return;
+
+		MissionManager.Instance?.OnEnemyFound();
+	}
+
+
+	#endregion
+
+	#region 敵・ギミック・アイテム同期
+
 	private void HandleEnemyMoveMessage(string json)
 	{
 		if (IsHostPlayer()) return;
@@ -1138,32 +1376,145 @@ public class WebSocketClient : MonoBehaviour
 		}
 	}
 
-	/// <summary>
-	/// チャットメッセージの受信：ログに表示する
-	/// </summary>
-	private void HandleChatMessage(string json)
+
+	private void HandleEnemyStunMessage(string json)
 	{
-		var msg = JsonUtility.FromJson<ChatMessage>(json);
+		var msg = JsonUtility.FromJson<EnemyStunSendMessage>(json);
+		if (msg == null) return;
+
 		if (msg.sender_id == myId) return;
-		QuickChatManager.Instance?.OnChatReceived(msg.message, msg.sender_name);
+
+		if (msg.enemy_index < 0)
+		{
+			Debug.LogWarning($"enemy_stun の enemy_index が不正です: {msg.enemy_index}");
+			return;
+		}
+
+		if (_enemyObjects == null || _enemyObjects.Length == 0)
+		{
+			_enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
+		}
+
+		foreach (var e in _enemyObjects)
+		{
+			if (e == null) continue;
+
+			var em = e.GetComponent<EnemyManager>();
+			if (em == null) continue;
+
+			if (em.enemyID == msg.enemy_index)
+			{
+				em.PlayAnimationEnemy();
+				break;
+			}
+		}
 	}
 
-	/// <summary>
-	/// 仲間がスタミナアイテムを取った：自分のスタミナを回復する
-	/// </summary>
+
+	private void HandleEnemyStunCancelMessage(string json)
+	{
+		var msg = JsonUtility.FromJson<EnemyStunSendMessage>(json);
+		if (msg == null) return;
+
+		if (msg.sender_id == myId) return;
+
+		if (msg.enemy_index < 0)
+		{
+			Debug.LogWarning($"enemy_stun_cancel の enemy_index が不正です: {msg.enemy_index}");
+			return;
+		}
+
+		if (_enemyObjects == null || _enemyObjects.Length == 0)
+		{
+			_enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
+		}
+
+		foreach (var e in _enemyObjects)
+		{
+			if (e == null) continue;
+
+			var em = e.GetComponent<EnemyManager>();
+			if (em == null) continue;
+
+			if (em.enemyID == msg.enemy_index)
+			{
+				em.StunCancel();
+				break;
+			}
+		}
+	}
+
+
+	private void HandleSwitchActivatedMessage(string json)
+	{
+		var msg = JsonUtility.FromJson<SwitchActivatedMessage>(json);
+		var eg = FindObjectOfType<ElementGenerator>();
+		if (eg == null) return;
+
+		foreach (var sw in eg.GetSwitchList())
+		{
+			if (sw.targetEnemyID == msg.switch_id)
+			{
+				sw.OnSwitchActivated();
+				break;
+			}
+		}
+		LogManager.Instance?.AddLog("どこかのギミックが作動した", "#ffcc44");
+	}
+
+
+	private void HandleItemPickedMessage(string json)
+	{
+
+		var msg = JsonUtility.FromJson<ItemPickedSendMessage>(json);
+
+		MissionManager.Instance?.OnItemPicked();
+		LogManager.Instance?.AddLog("アイテムを取得した", "#aadd44");
+
+		ItemManager nearestItem = null;
+		float nearestDist = float.MaxValue;
+
+		foreach (var item in FindObjectsOfType<ItemManager>())
+		{
+			Vector2 itemXZ = new Vector2(item.transform.position.x, item.transform.position.z);
+			Vector2 msgXZ = new Vector2(msg.x, msg.z);
+			float dist = Vector2.Distance(itemXZ, msgXZ);
+
+			if (dist < 2f && dist < nearestDist)
+			{
+				nearestDist = dist;
+				nearestItem = item;
+			}
+		}
+
+		if (nearestItem != null)
+		{
+			var generator = FindObjectOfType<ElementGenerator>();
+			if (generator != null)
+			{
+				generator.RemoveItemIcon(nearestItem.transform.position);
+			}
+
+			Destroy(nearestItem.gameObject);
+		}
+	}
+
+
 	private void HandleStaminaItemPickedMessage(string json)
 	{
-		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json);
+		var msg = JsonUtility.FromJson<StaminaItemPickedSendMessage>(json);
+
 		if (msg.sender_id == myId) return;
+
 		StaminaManager.Instance?.RecoverStamina();
 		LogManager.Instance?.AddLog("仲間がスタミナアイテムを取得した", "#ffcc44");
 
 		Vector3 itemPos = new Vector3(msg.x, 1f, msg.z);
 
-		// 一番近いスタミナアイテムを探す（高さは比較せずXZ平面のみで判定）
 		StaminaItemManager nearestItem = null;
 		float nearestDist = float.MaxValue;
 		var candidates = FindObjectsOfType<StaminaItemManager>();
+
 		foreach (var item in candidates)
 		{
 			Vector2 itemXZ = new Vector2(item.transform.position.x, item.transform.position.z);
@@ -1177,38 +1528,24 @@ public class WebSocketClient : MonoBehaviour
 			}
 		}
 
-		// 調査用（動作確認後に削除）
-		Debug.Log($"[picked受信] pos=({msg.x:F1},{msg.z:F1}) 候補数={candidates.Length} ヒット={(nearestItem != null ? nearestItem.name + " dist=" + nearestDist.ToString("F2") : "なし")}");
+		//Debug.Log($"[picked受信] pos=({msg.x:F1},{msg.z:F1}) 候補数={candidates.Length} ヒット={(nearestItem != null ? nearestItem.name + " dist=" + nearestDist.ToString("F2") : "なし")}");
 
 		if (nearestItem != null && myPlayer != null && nearestItem.absorbEffectPrefab != null)
 		{
 			var effect = Instantiate(nearestItem.absorbEffectPrefab, itemPos, Quaternion.identity);
 			effect.Play(itemPos, myPlayer.transform, nearestItem.effectColor);
+
+			var generator = FindObjectOfType<ElementGenerator>();
+			if (generator != null)
+			{
+				generator.RemoveItemIcon(nearestItem.transform.position);
+			}
+
 			nearestItem.gameObject.SetActive(false);
 		}
 	}
 
-	/// <summary>
-	/// 相手が敵を殴ってスタミナアイテムがドロップした：自分の画面にも生成する
-	/// </summary>
-	private void HandleStaminaItemDropMessage(string json)
-	{
-		var msg = JsonUtility.FromJson<StaminaItemDropMessage>(json);
-		if (msg.sender_id == myId) return; // 自分のドロップは無視（すでに生成済み）
 
-		var sw = FindObjectOfType<SwitchManager>();
-		if (sw == null) return;
-
-		Vector3 pos = new Vector3(msg.x, msg.y, msg.z);
-		if (msg.drop_type == 1)
-			sw.SpawnGreenItem(pos);
-		else
-			sw.SpawnBlueItem(pos);
-	}
-
-	/// <summary>
-	/// ゲストからのドロップリクエスト：ホストだけが生成して配信する
-	/// </summary>
 	private void HandleStaminaItemDropRequestMessage(string json)
 	{
 		if (!IsHostPlayer()) return;
@@ -1228,255 +1565,40 @@ public class WebSocketClient : MonoBehaviour
 		SendStaminaItemDrop(msg.drop_type, dropPos);
 	}
 
-	#endregion
 
-	#region メッセージ処理（ロビー用）
-
-	/// <summary>接続初期化（ロビー用）：自分のIDを設定してメンバー表示を更新する</summary>
-	private void HandleInitForLobby(string json)
+	private void HandleStaminaItemDropMessage(string json)
 	{
-		InitMessage init = JsonUtility.FromJson<InitMessage>(json);
-		myId = init.id;
-		if (roomMemberPanel != null)
-		{
-			roomMemberPanel.RemoveMember("self");
-			roomMemberPanel.AddOrUpdateMember(myId, playerName, false);
-		}
-	}
+		var msg = JsonUtility.FromJson<StaminaItemDropMessage>(json);
+		if (msg.sender_id == myId) return; // 自分のドロップは無視（すでに生成済み）
 
-	/// <summary>新規プレイヤー参加（ロビー用）：メンバー表示に追加する</summary>
-	private void HandlePlayerJoinedForLobby(string json)
-	{
-		var msg = JsonUtility.FromJson<PlayerJoinedMessage>(json);
-		if (msg == null || msg.id == myId) return;
-		if (roomMemberPanel != null) roomMemberPanel.AddOrUpdateMember(msg.id, msg.name, false);
-	}
+		var sw = FindObjectOfType<SwitchManager>();
+		if (sw == null) return;
 
-	/// <summary>既存プレイヤー一覧（ロビー用）：メンバー表示に追加する</summary>
-	private void HandleExistingPlayersForLobby(string json)
-	{
-		ExistingPlayersMessage msg = JsonUtility.FromJson<ExistingPlayersMessage>(json);
-		if (msg == null || msg.players == null) return;
-		foreach (var player in msg.players)
-			if (player.id != myId && roomMemberPanel != null)
-				roomMemberPanel.AddOrUpdateMember(player.id, player.name, player.is_ready);
-	}
-
-	/// <summary>プレイヤー退室（ロビー用）：メンバー表示から削除する</summary>
-	private void HandlePlayerLeftForLobby(string json)
-	{
-		var msg = JsonUtility.FromJson<PlayerLeftMessage>(json);
-		if (roomMemberPanel != null) roomMemberPanel.RemoveMember(msg.id);
-	}
-
-	/// <summary>準備完了通知（ロビー用）：メンバーの準備状態を更新する</summary>
-	private void HandlePlayerReadyForLobby(string json)
-	{
-		var msg = JsonUtility.FromJson<PlayerReadyMessage>(json);
-		if (roomMemberPanel != null) roomMemberPanel.SetReady(msg.id, true);
-	}
-
-	/// <summary>
-	/// スイッチ操作の受信：対応するスイッチの処理を呼んでログに表示する
-	/// </summary>
-	private void HandleSwitchActivatedMessage(string json)
-	{
-		var msg = JsonUtility.FromJson<SwitchActivatedMessage>(json);
-		var eg = FindObjectOfType<ElementGenerator>();
-		if (eg == null) return;
-
-		foreach (var sw in eg.GetSwitchList())
-		{
-			if (sw.targetEnemyID == msg.switch_id)
-			{
-				sw.OnSwitchActivated();
-				break;
-			}
-		}
-		LogManager.Instance?.AddLog("どこかのギミックが作動した", "#ffcc44");
-	}
-
-	/// <summary>
-	/// 敵スタンの受信：自分が送ったものは無視し、該当の敵にスタンを適用する
-	/// </summary>
-	private void HandleEnemyStunMessage(string json)
-	{
-		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json);
-		if (msg.sender_id == myId) return;
-
-		if (_enemyObjects == null || _enemyObjects.Length == 0)
-			_enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
-
-		foreach (var e in _enemyObjects)
-		{
-			var em = e.GetComponent<EnemyManager>();
-			if (em != null && em.enemyID == msg.enemy_index)
-			{
-				em.PlayAnimationEnemy();
-				break;
-			}
-		}
-	}
-
-	/// <summary>
-	/// 敵スタン解除の受信：自分が送ったものは無視し、該当の敵のスタンを解除する
-	/// </summary>
-	private void HandleEnemyStunCancelMessage(string json)
-	{
-		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json);
-		if (msg.sender_id == myId) return;
-
-		if (_enemyObjects == null || _enemyObjects.Length == 0)
-			_enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
-
-		foreach (var e in _enemyObjects)
-		{
-			var em = e.GetComponent<EnemyManager>();
-			if (em != null && em.enemyID == msg.enemy_index)
-			{
-				em.StunCancel();
-				break;
-			}
-		}
-	}
-
-	/// <summary>
-	/// 相手が敵に見つかった通知を受け取ったときの処理。
-	/// チームミッションなので自分側でもミッション3を失敗にする。
-	/// </summary>
-	private void HandleEnemyFoundMessage(string json)
-	{
-		var msg = JsonUtility.FromJson<EnemyFoundMessage>(json);
-
-		// 自分が送った通知なら無視
-		if (msg != null && msg.sender_id == myId) return;
-
-		MissionManager.Instance?.OnEnemyFound();
-	}
-
-	#endregion
-
-	#region プレイヤー生成・削除
-
-	/// <summary>
-	/// 相手プレイヤーを生成する。番号に応じてマテリアルを設定する。
-	/// </summary>
-	private void SpawnRemotePlayer(PlayerData player)
-	{
-		//Debug.Log($"SpawnRemotePlayer: id={player.id}, player_number={player.player_number}");
-		if (playerObjects.ContainsKey(player.id)) return;
-
-		GameObject newPlayer = Instantiate(playerPrefab);
-		newPlayer.tag = "Player" + player.player_number;
-		if (player.player_number == 1)
-			newPlayer.GetComponentInChildren<Renderer>().material = localPlayerMaterial;
+		Vector3 pos = new Vector3(msg.x, msg.y, msg.z);
+		if (msg.drop_type == 1)
+			sw.SpawnGreenItem(pos);
 		else
-			newPlayer.GetComponentInChildren<Renderer>().material = remotePlayerMaterial;
-
-		AudioListener remoteListener = newPlayer.GetComponent<AudioListener>();
-		if (remoteListener != null) Destroy(remoteListener);
-
-		var controller = newPlayer.GetComponent<PlayerController>();
-		if (controller != null) controller.isLocalPlayer = false;
-
-		var col = newPlayer.GetComponent<Collider>();
-		if (col != null) col.enabled = true;
-		var rb = newPlayer.GetComponent<Rigidbody>();
-		if (rb != null) { rb.isKinematic = true; rb.useGravity = false; }
-
-		newPlayer.transform.position = new Vector3(player.position.x, player.position.y, player.position.z);
-		playerObjects[player.id] = newPlayer;
-		AttachNameTag(newPlayer, player.name, true);
-
-		var eg = FindObjectOfType<ElementGenerator>();
-		if (eg != null) eg.SetPlayerTransform(newPlayer.transform);
+			sw.SpawnBlueItem(pos);
 	}
 
-	/// <summary>
-	/// 相手プレイヤーのオブジェクトをすべて削除する
-	/// </summary>
-	private void ClearRemotePlayers()
+
+	private void HandleChatMessage(string json)
 	{
-		foreach (var obj in playerObjects.Values)
-			if (obj != null) Destroy(obj);
-		playerObjects.Clear();
+		var msg = JsonUtility.FromJson<ChatMessage>(json);
+		if (msg.sender_id == myId) return;
+		QuickChatManager.Instance?.OnChatReceived(msg.message, msg.sender_name);
 	}
 
-	/// <summary>
-	/// リスポーン位置の受信：自分のリスポーンは補間キャッシュをクリア、相手のリスポーンは位置を更新する
-	/// </summary>
-	private void HandleRespawnMessage(string json)
-	{
-		var msg = JsonUtility.FromJson<RespawnMessage>(json);
-		if (msg.id == myId)
-		{
-			targetPositions.Remove(myId);
-			LogManager.Instance?.AddLog("リスポーンした", "#ff6666");
-			return;
-		}
-		if (!playerObjects.ContainsKey(msg.id)) return;
-		var obj = playerObjects[msg.id];
-		if (obj == null) return;
-		obj.transform.position = new Vector3(msg.position.x, msg.position.y, msg.position.z);
-		targetPositions[msg.id] = obj.transform.position;
-		LogManager.Instance?.AddLog("味方がリスポーンした", "#ff6666");
-	}
-
-	/// <summary>
-	/// 相手がつかまったときの受信処理
-	/// </summary>
-	private void HandleRemoteRespawnMessage(string json)
-	{
-		// 相手が敵に見つかったので、ミッション3を失敗扱いにする
-		MissionManager.Instance?.OnEnemyFound();
-
-		var mypc = myPlayer?.GetComponent<PlayerController>();
-		if (mypc != null && mypc.IsFading) return;
-
-		if (IsGuestPlayer())
-		{
-			if (myPlayer == null) return;
-
-			var pc = myPlayer.GetComponent<PlayerController>();
-			if (pc == null) return;
-
-			pc.RespawnWithEffectPublic();
-			LogManager.Instance?.AddLog("リスポーンした", "#ff6666");
-		}
-		else if (IsHostPlayer())
-		{
-			LogManager.Instance?.AddLog("味方がリスポーンした", "#ff6666");
-		}
-	}
-	
-	/// <summary>
-	/// 相手がつかまったことをサーバーに通知する
-	/// </summary>
-	public async void SendRemoteRespawn()
-	{
-		if (_remoteRespawnSent) return;
-		_remoteRespawnSent = true;
-		if (websocket == null || websocket.State != WebSocketState.Open) return;
-		await websocket.SendText(SendMessageBuilder.RemoteRespawn(myId));
-		StartCoroutine(ResetRemoteRespawnFlagAfterDelay());
-	}
-
-	private IEnumerator ResetRemoteRespawnFlagAfterDelay()
-	{
-		yield return new WaitForSeconds(4f); // リスポーン時間より長く待つ
-		_remoteRespawnSent = false;
-	}
 
 	#endregion
 
 	#region 送信処理
 
-	/// <summary>
-	/// 自分の位置・向き・動作状態をサーバーに送信する
-	/// </summary>
 	public async void SendPosition()
 	{
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
 		if (myPlayer == null) return;
+
 		var pc = myPlayer.GetComponent<PlayerController>();
 		string animState = pc != null ? pc.GetAnimState() : "idle";
 		string trigger = pc?.lastTrigger ?? "";
@@ -1491,88 +1613,63 @@ public class WebSocketClient : MonoBehaviour
 		));
 	}
 
-	/// <summary>
-	/// リスポーン位置をサーバーに送信する
-	/// </summary>
+
 	public async void SendRespawn(Vector3 pos)
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
 		await websocket.SendText(SendMessageBuilder.Respawn(myId, pos));
 	}
 
-	/// <summary>
-	/// ゴールをサーバーに通知する
-	/// </summary>
+
 	public async void SendGoal()
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
 		await websocket.SendText(SendMessageBuilder.Goal());
 	}
 
-	/// <summary>
-	/// スイッチ操作をサーバーに通知する
-	/// </summary>
+
 	public async void SendSwitchActivated(int switchIndex)
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
 		await websocket.SendText(SendMessageBuilder.SwitchActivated(switchIndex));
 	}
 
-	/// <summary>
-	/// アイテム取得をサーバーに通知する
-	/// </summary>
-	public async void SendItemPicked(Vector3 pos)
-	{
-		if (websocket == null || websocket.State != WebSocketState.Open) return;
-		await websocket.SendText(SendMessageBuilder.ItemPicked(pos));
-	}
 
-	/// <summary>
-	/// 敵をスタンさせたことをサーバーに通知する
-	/// </summary>
 	public async void SendEnemyStun(int enemyIndex)
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
-		//Debug.Log($"SendEnemyStun送信: enemyIndex={enemyIndex}");
+
 		await websocket.SendText(SendMessageBuilder.EnemyStun(enemyIndex, myId));
 	}
 
-	/// <summary>
-	/// 敵のスタンを解除したことをサーバーに通知する
-	/// </summary>
+
 	public async void SendEnemyStunCancel(int enemyIndex)
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
 		await websocket.SendText(SendMessageBuilder.EnemyStunCancel(enemyIndex, myId));
 	}
 
-	/// <summary>
-	/// 定型文チャットをサーバーに送信する
-	/// </summary>
-	public async void SendChatMessage(string message)
+
+	public async void SendItemPicked(Vector3 pos)
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
-		await websocket.SendText(SendMessageBuilder.Chat(message, myId));
+		await websocket.SendText(SendMessageBuilder.ItemPicked(pos));
 	}
 
-	/// <summary>
-	/// スタミナアイテム取得をサーバーに通知する
-	/// </summary>
+
 	public async void SendStaminaItemPicked(Vector3 pos)
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
 		await websocket.SendText(SendMessageBuilder.StaminaItemPicked(myId, pos));
 	}
 
-	/// <summary>
-	/// スタミナアイテムのドロップをサーバーに通知する
-	/// dropType: 1=Green, 2=Blue
-	/// </summary>
+
 	public async void SendStaminaItemDrop(int dropType, Vector3 pos)
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
 		await websocket.SendText(SendMessageBuilder.StaminaItemDrop(myId, dropType, pos));
 	}
+
 
 	public async void SendStaminaItemDropRequest(int dropType, Vector3 pos)
 	{
@@ -1580,22 +1677,42 @@ public class WebSocketClient : MonoBehaviour
 		await websocket.SendText(SendMessageBuilder.StaminaItemDropRequest(myId, dropType, pos));
 	}
 
-	/// <summary>
-	/// 敵に見つかったことを相手にも通知する。
-	/// ミッション3失敗の同期用。
-	/// </summary>
+
+	public async void SendChatMessage(string message)
+	{
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
+		await websocket.SendText(SendMessageBuilder.Chat(message, myId));
+	}
+
+
 	public async void SendEnemyFound()
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
 		await websocket.SendText(SendMessageBuilder.EnemyFound(myId));
 	}
+
+
+	public async void SendRemoteRespawn()
+	{
+		if (_remoteRespawnSent) return;
+		_remoteRespawnSent = true;
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
+		await websocket.SendText(SendMessageBuilder.RemoteRespawn(myId));
+		StartCoroutine(ResetRemoteRespawnFlagAfterDelay());
+	}
+
+
+	private IEnumerator ResetRemoteRespawnFlagAfterDelay()
+	{
+		yield return new WaitForSeconds(4f); // リスポーン時間より長く待つ
+		_remoteRespawnSent = false;
+	}
+
+
 	#endregion
 
-	#region 敵の位置同期
+	#region 敵同期
 
-	/// <summary>
-	/// ホストは敵の位置を送信し、ゲストは受信した位置へなめらかに移動させる
-	/// </summary>
 	private void UpdateEnemySync()
 	{
 		if (IsHostPlayer())
@@ -1636,9 +1753,7 @@ public class WebSocketClient : MonoBehaviour
 		}
 	}
 
-	/// <summary>
-	/// 敵の位置・ライト色・反応・音検知位置をサーバーに送信する
-	/// </summary>
+
 	private async void SendEnemyMove(int index, Vector3 pos, float angle)
 	{
 		if (websocket == null || websocket.State != WebSocketState.Open) return;
@@ -1660,21 +1775,51 @@ public class WebSocketClient : MonoBehaviour
 		await websocket.SendText(SendMessageBuilder.EnemyMove(index, pos, angle, lightColor, reaction, lastSound));
 	}
 
+
 	#endregion
 
-	#region ユーティリティ
+	#region プレイヤー生成・削除
 
-	/// <summary>
-	/// ゲーム開始をシーン読み込み直後の遅延対策として少し遅らせて通知する
-	/// </summary>
-	private void DelayedGameStart()
+	private void SpawnRemotePlayer(PlayerData player)
 	{
-		MissionManager.Instance?.OnGameStart();
+		//Debug.Log($"SpawnRemotePlayer: id={player.id}, player_number={player.player_number}");
+		if (playerObjects.ContainsKey(player.id)) return;
+
+		GameObject newPlayer = Instantiate(playerPrefab);
+		newPlayer.tag = "Player" + player.player_number;
+		if (player.player_number == 1)
+			newPlayer.GetComponentInChildren<Renderer>().material = localPlayerMaterial;
+		else
+			newPlayer.GetComponentInChildren<Renderer>().material = remotePlayerMaterial;
+
+		AudioListener remoteListener = newPlayer.GetComponent<AudioListener>();
+		if (remoteListener != null) Destroy(remoteListener);
+
+		var controller = newPlayer.GetComponent<PlayerController>();
+		if (controller != null) controller.isLocalPlayer = false;
+
+		var col = newPlayer.GetComponent<Collider>();
+		if (col != null) col.enabled = true;
+		var rb = newPlayer.GetComponent<Rigidbody>();
+		if (rb != null) { rb.isKinematic = true; rb.useGravity = false; }
+
+		newPlayer.transform.position = new Vector3(player.position.x, player.position.y, player.position.z);
+		playerObjects[player.id] = newPlayer;
+		AttachNameTag(newPlayer, player.name, true);
+
+		var eg = FindObjectOfType<ElementGenerator>();
+		if (eg != null) eg.SetPlayerTransform(newPlayer.transform);
 	}
 
-	/// <summary>
-	/// プレイヤーの頭上に名前タグを生成してアタッチする
-	/// </summary>
+
+	private void ClearRemotePlayers()
+	{
+		foreach (var obj in playerObjects.Values)
+			if (obj != null) Destroy(obj);
+		playerObjects.Clear();
+	}
+
+
 	private void AttachNameTag(GameObject playerObj, string name, bool visible)
 	{
 		GameObject tagObj = new GameObject("NameTag");
@@ -1684,13 +1829,18 @@ public class WebSocketClient : MonoBehaviour
 		tag.SetVisible(visible);
 	}
 
-	// プレイヤーのリスポーンと連携用。削除しないこと。
-	public void SetSpawnPosition(int playerNum, Vector3 pos) { spawnPositions[playerNum] = pos; }
+
+	#endregion
+
+	#region ユーティリティ
+
+	// プレイヤーのリスポーン位置をElementGeneratorから受け取る。
+	public void SetSpawnPosition(int playerNum, Vector3 pos)
+	{
+		spawnPositions[playerNum] = pos;
+	}
 
 
-	/// <summary>
-	/// 自分の開始位置を返す（リスポーン時などに使用）
-	/// </summary>
 	public Vector3 GetSpawnPosition()
 	{
 		if (spawnPositions.ContainsKey(myPlayerNumber))
@@ -1698,9 +1848,7 @@ public class WebSocketClient : MonoBehaviour
 		return Vector3.zero;
 	}
 
-	/// <summary>
-	/// リモートプレイヤー（相手）のTransformを返す
-	/// </summary>
+
 	public Transform GetRemotePlayerTransform()
 	{
 		foreach (var kv in playerObjects)
@@ -1710,6 +1858,13 @@ public class WebSocketClient : MonoBehaviour
 		}
 		return null;
 	}
+
+
+	private void DelayedGameStart()
+	{
+		MissionManager.Instance?.OnGameStart();
+	}
+
 
 	#endregion
 }

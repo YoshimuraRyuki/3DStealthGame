@@ -1,6 +1,6 @@
 /// <summary>
-/// シーンをまたいでデータを受け渡すための静的クラス。
-/// リザルト画面で表示するプレイヤー名・クリアタイム・ミッション数を保持する。
+/// リザルト画面に渡すプレイ結果。
+/// シーンをまたいで使うため、静的クラスとして保持する。
 /// </summary>
 public static class ResultData
 {
@@ -8,4 +8,12 @@ public static class ResultData
 	public static string remotePlayerName = "";
 	public static float elapsedTime = 0f;
 	public static int missionCount = 0;
+
+	public static void Reset()
+	{
+		playerName = "";
+		remotePlayerName = "";
+		elapsedTime = 0f;
+		missionCount = 0;
+	}
 }

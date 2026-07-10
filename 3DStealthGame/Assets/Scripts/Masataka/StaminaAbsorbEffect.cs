@@ -1,69 +1,109 @@
 using UnityEngine;
 using System.Collections;
 
+/// <summary>
+/// スタミナ回復時の吸い込み演出。
+/// 小さな粒を生成し、対象プレイヤーへ向かって移動させる。
+/// </summary>
 public class StaminaAbsorbEffect : MonoBehaviour
 {
+	[Header("粒の設定")]
 	public int particleCount = 5;
 	public float speed = 5f;
 	public Color color = Color.blue;
 
-	private int _aliveCount = 0; // 動いてる粒の数
+	private int _aliveCount = 0;
+	private bool _isPlaying = false;
 
 	public void Play(Vector3 itemPos, Transform target, Color col)
 	{
+		if (_isPlaying) return;
+
+		if (target == null || particleCount <= 0)
+		{
+			Destroy(gameObject);
+			return;
+		}
+
+		_isPlaying = true;
 		color = col;
 		_aliveCount = particleCount;
+
 		for (int i = 0; i < particleCount; i++)
-			StartCoroutine(SpawnParticle(itemPos, target));
+		{
+			StartCoroutine(SpawnParticle(itemPos, target, color));
+		}
 	}
 
-	private IEnumerator SpawnParticle(Vector3 startPos, Transform target)
+	private IEnumerator SpawnParticle(Vector3 startPos, Transform target, Color particleColor)
 	{
-		GameObject p = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-		Destroy(p.GetComponent<Collider>());
-		p.transform.localScale = Vector3.one * 0.08f;
+		GameObject particle = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+		particle.transform.SetParent(transform);
+		particle.transform.localScale = Vector3.one * 0.08f;
+		particle.transform.position = startPos + Random.insideUnitSphere * 0.4f;
 
-		var mat = p.GetComponent<Renderer>().material;
-		mat.color = color;
+		var collider = particle.GetComponent<Collider>();
+		if (collider != null)
+		{
+			Destroy(collider);
+		}
 
-		var trail = p.AddComponent<TrailRenderer>();
+		var renderer = particle.GetComponent<Renderer>();
+		if (renderer != null)
+		{
+			renderer.material.color = particleColor;
+		}
+
+		var trail = particle.AddComponent<TrailRenderer>();
 		trail.time = 0.3f;
 		trail.startWidth = 0.08f;
 		trail.endWidth = 0f;
 		trail.material = new Material(Shader.Find("Sprites/Default"));
-		trail.startColor = color;
-		trail.endColor = new Color(color.r, color.g, color.b, 0f);
+		trail.startColor = particleColor;
+		trail.endColor = new Color(particleColor.r, particleColor.g, particleColor.b, 0f);
 		trail.autodestruct = false;
-
-		p.transform.position = startPos + Random.insideUnitSphere * 0.4f;
 
 		yield return new WaitForSeconds(Random.Range(0f, 0.25f));
 
 		float currentSpeed = speed;
 
-		while (p != null && target != null)
+		while (particle != null && target != null)
 		{
 			currentSpeed += 10f * Time.deltaTime;
 
-			Vector3 targetPos = target.position + Vector3.up * 1.0f;
-			p.transform.position = Vector3.MoveTowards(
-				p.transform.position, targetPos, currentSpeed * Time.deltaTime);
+			Vector3 targetPos = target.position + Vector3.up;
+			particle.transform.position = Vector3.MoveTowards(
+				particle.transform.position,
+				targetPos,
+				currentSpeed * Time.deltaTime
+			);
 
-			Vector3 pFlat = new Vector3(p.transform.position.x, 0, p.transform.position.z);
-			Vector3 tFlat = new Vector3(target.position.x, 0, target.position.z);
-			if (Vector3.Distance(pFlat, tFlat) < 0.5f)
+			Vector3 particleFlat = new Vector3(particle.transform.position.x, 0f, particle.transform.position.z);
+			Vector3 targetFlat = new Vector3(target.position.x, 0f, target.position.z);
+
+			if (Vector3.Distance(particleFlat, targetFlat) < 0.5f)
 			{
-				Destroy(p);
 				break;
 			}
+
 			yield return null;
 		}
 
-		if (p != null) Destroy(p);
+		if (particle != null)
+		{
+			Destroy(particle);
+		}
 
-		// 全粒が消えたら本体を破棄
+		OnParticleFinished();
+	}
+
+	private void OnParticleFinished()
+	{
 		_aliveCount--;
+
 		if (_aliveCount <= 0)
+		{
 			Destroy(gameObject);
+		}
 	}
 }

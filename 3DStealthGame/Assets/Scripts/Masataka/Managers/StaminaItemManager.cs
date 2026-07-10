@@ -2,116 +2,166 @@
 using UnityEngine;
 
 /// <summary>
-/// スタミナ回復アイテムの取得判定を管理するクラス。
-/// 指定したプレイヤーだけが取得できる。
-/// 自分が取れないアイテムは霊体用マテリアルで半透明表示される。
+/// スタミナ回復アイテムの取得処理。
+/// 指定されたプレイヤーだけが取得できる。
 /// </summary>
 public class StaminaItemManager : MonoBehaviour
 {
 	#region インスペクター設定
 
-	[Header("何番のプレイヤーが取れるか（1 or 2）")]
+	[Header("取得できるプレイヤー番号")]
 	public int targetPlayerNumber = 1;
 
-	[Header("取れないときに使う霊体用マテリアル")]
+	[Header("取れないときの表示")]
 	public Material ghostMaterial;
 
 	[Header("吸い込みエフェクト")]
 	public StaminaAbsorbEffect absorbEffectPrefab;
-	public Color effectColor = Color.blue; // BlueはColor.blue、GreenはColor.green
+	public Color effectColor = Color.blue;
 
-	[Header("取れるときに使うアウトライン用マテリアル")]
+	[Header("取れるときのアウトライン")]
 	public Material outlineMaterial;
+
 	#endregion
 
-	#region フィールド
+	#region 内部状態
 
 	private bool _isPicked = false;
 	private bool _initialized = false;
+
+	private WebSocketClient _wsClient;
+	private ElementGenerator _elementGenerator;
+
 	#endregion
 
 	#region Unityイベント
+
+	private void Start()
+	{
+		_wsClient = FindObjectOfType<WebSocketClient>();
+		_elementGenerator = FindObjectOfType<ElementGenerator>();
+	}
 
 	private void Update()
 	{
 		if (_initialized) return;
 
-		var wsClient = FindObjectOfType<WebSocketClient>();
-		if (wsClient == null || wsClient.myPlayerNumber == 0) return;
-
-		_initialized = true;
-
-		if (wsClient.myPlayerNumber != targetPlayerNumber)
-			SetGhostAppearance();
-		else
-			SetOutlineAppearance();
+		TryInitializeAppearance();
 	}
 
 	private void OnTriggerEnter(Collider other)
 	{
 		if (_isPicked) return;
-		if (!other.CompareTag("Player1") && !other.CompareTag("Player2")) return;
-		var wsClient = FindObjectOfType<WebSocketClient>();
-		if (wsClient == null || other.gameObject != wsClient.myPlayer) return;
-		if (wsClient.myPlayerNumber != targetPlayerNumber) return;
+		if (!IsPlayer(other)) return;
 
-		_isPicked = true;
-
-		SoundManager.Instance?.PlayPickup();
-
-		// 回復するのは相手なので、吸い込み先も相手プレイヤー
-		Transform remoteTransform = wsClient.GetRemotePlayerTransform();
-
-
-		Vector3 pickedPosition = transform.position;
-
-		var generator = FindObjectOfType<ElementGenerator>();
-		if (generator != null)
+		if (_wsClient == null)
 		{
-			generator.RemoveItemIcon(pickedPosition);
+			_wsClient = FindObjectOfType<WebSocketClient>();
 		}
 
-		gameObject.SetActive(false);
-		wsClient.SendStaminaItemPicked(transform.position);
+		if (_wsClient == null) return;
+		if (other.gameObject != _wsClient.myPlayer) return;
+		if (_wsClient.myPlayerNumber != targetPlayerNumber) return;
 
-		// エフェクト再生（相手に向かって吸い込まれる）
-		if (absorbEffectPrefab != null && remoteTransform != null)
+		PickItem();
+	}
+
+	#endregion
+
+	#region 初期化
+
+	private void TryInitializeAppearance()
+	{
+		if (_wsClient == null)
 		{
-			var effect = Instantiate(absorbEffectPrefab, transform.position, Quaternion.identity);
-			effect.Play(transform.position, remoteTransform, effectColor);
+			_wsClient = FindObjectOfType<WebSocketClient>();
+		}
+
+		if (_wsClient == null || _wsClient.myPlayerNumber == 0) return;
+
+		_initialized = true;
+
+		if (_wsClient.myPlayerNumber == targetPlayerNumber)
+		{
+			SetOutlineAppearance();
+		}
+		else
+		{
+			SetGhostAppearance();
 		}
 	}
 
 	#endregion
 
-	#region 内部処理
+	#region 取得処理
 
-	/// <summary>
-	/// 全Rendererのマテリアルを霊体用に差し替える
-	/// </summary>
+	private void PickItem()
+	{
+		_isPicked = true;
+
+		SoundManager.Instance?.PlayPickup();
+
+		Vector3 pickedPosition = transform.position;
+		Transform remoteTransform = _wsClient.GetRemotePlayerTransform();
+
+		if (_elementGenerator == null)
+		{
+			_elementGenerator = FindObjectOfType<ElementGenerator>();
+		}
+
+		if (_elementGenerator != null)
+		{
+			_elementGenerator.RemoveItemIcon(pickedPosition);
+		}
+
+		_wsClient.SendStaminaItemPicked(pickedPosition);
+
+		if (absorbEffectPrefab != null && remoteTransform != null)
+		{
+			var effect = Instantiate(absorbEffectPrefab, pickedPosition, Quaternion.identity);
+			effect.Play(pickedPosition, remoteTransform, effectColor);
+		}
+
+		gameObject.SetActive(false);
+	}
+
+	#endregion
+
+	#region 見た目
+
 	private void SetGhostAppearance()
 	{
 		if (ghostMaterial == null) return;
 
-		foreach (var r in GetComponentsInChildren<Renderer>())
+		foreach (var renderer in GetComponentsInChildren<Renderer>())
 		{
-			r.material = ghostMaterial;
+			renderer.material = ghostMaterial;
 		}
 	}
 
-	/// <summary>
-	/// 全Rendererにアウトライン用マテリアルを追加する
-	/// </summary>
 	private void SetOutlineAppearance()
 	{
 		if (outlineMaterial == null) return;
-		foreach (var r in GetComponentsInChildren<Renderer>())
+
+		foreach (var renderer in GetComponentsInChildren<Renderer>())
 		{
-			// 既存マテリアルの後ろにアウトラインを追加する（元の見た目は維持）
-			var mats = new List<Material>(r.sharedMaterials);
-			mats.Add(outlineMaterial);
-			r.materials = mats.ToArray();
+			var materials = new List<Material>(renderer.sharedMaterials);
+
+			if (!materials.Contains(outlineMaterial))
+			{
+				materials.Add(outlineMaterial);
+				renderer.materials = materials.ToArray();
+			}
 		}
+	}
+
+	#endregion
+
+	#region 判定
+
+	private bool IsPlayer(Collider other)
+	{
+		return other.CompareTag("Player1") || other.CompareTag("Player2");
 	}
 
 	#endregion

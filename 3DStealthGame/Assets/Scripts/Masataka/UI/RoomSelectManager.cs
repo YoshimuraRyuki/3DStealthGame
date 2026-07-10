@@ -1,14 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine.Networking;
 using UnityEngine.EventSystems;
 
 /// <summary>
-/// ルーム選択画面を管理するクラス。
-/// サーバーからルーム一覧を定期取得してボタンに反映し、
-/// 選択したルームへ接続する。
+/// ルーム選択画面を管理する。
+/// サーバーからルーム一覧を取得し、選択したルームへ接続する。
 /// </summary>
 public class RoomSelectManager : MonoBehaviour
 {
@@ -31,200 +29,300 @@ public class RoomSelectManager : MonoBehaviour
 
 	#endregion
 
-
 	#region インスペクター設定
 
+	[Header("サーバー")]
 	public string serverBaseUrl = "https://stealth-game-server.onrender.com";
 
+	[Header("ルーム一覧")]
 	public Button[] roomButtons;
-	public Text[] roomLabels;          // 各ボタンのテキスト
+	public Text[] roomLabels;
 
-	public GameObject roomSelectPanel; // ルーム選択パネル
-	public GameObject readyPanel;      // 準備待ちパネル
+	[Header("パネル")]
+	public GameObject roomSelectPanel;
+	public GameObject readyPanel;
 	public GameObject titlePanel;
 
+	[Header("メンバー表示")]
 	public RoomMemberPanel roomMemberPanel;
 
-	[SerializeField] private GameObject roomButton;       // ルーム選択時の初期フォーカス対象
-	[SerializeField] private GameObject readyPanelButton; // 準備パネルの初期フォーカス対象
+	[Header("初期フォーカス")]
+	[SerializeField] private GameObject roomButton;
+	[SerializeField] private GameObject readyPanelButton;
 
+	[Header("準備ボタン")]
 	[SerializeField] private Button readyButton;
 
 	#endregion
 
 	#region 内部状態
 
-	private WebSocketClient wsClient;
-	private string selectedRoomId;
+	private WebSocketClient _wsClient;
+	private string _selectedRoomId;
 
 	#endregion
 
 	#region Unityイベント
 
-	void Awake()
+	private void Start()
 	{
-		/*if (FindObjectsOfType<RoomSelectManager>().Length > 1)
+		_wsClient = FindObjectOfType<WebSocketClient>();
+
+		if (_wsClient == null)
 		{
-			Destroy(gameObject);
+			Debug.LogWarning("WebSocketClient が見つかりません");
 			return;
-		}*/
+		}
+
+		SetupReadyButton();
+		ApplyServerUrl();
+
+		InvokeRepeating(nameof(FetchRoomList), 0f, 3f);
 	}
 
-	void Start()
+	private void OnDestroy()
 	{
-		wsClient = FindObjectOfType<WebSocketClient>();
+		CancelInvoke(nameof(FetchRoomList));
 
-		// 準備完了ボタンをコードで登録
 		if (readyButton != null)
 		{
-			readyButton.onClick.RemoveAllListeners();
-			readyButton.onClick.AddListener(() => wsClient.OnReadyButtonClicked());
+			readyButton.onClick.RemoveListener(OnReadyButtonClicked);
 		}
-		// 接続先の設定に応じてURLを切り替える
-		switch (wsClient.serverMode)
-		{
-			case WebSocketClient.ServerMode.VirtualBox:
-				serverBaseUrl = "http://192.168.56.102:8080"; break;
-			case WebSocketClient.ServerMode.LocalHost:
-				serverBaseUrl = "http://localhost:8080"; break;
-			case WebSocketClient.ServerMode.Ngrok:
-				serverBaseUrl = wsClient.ngrokUrl; break;
-			case WebSocketClient.ServerMode.Render:
-				serverBaseUrl = "https://stealth-game-server.onrender.com"; break;
-			case WebSocketClient.ServerMode.FlyIO:
-				serverBaseUrl = "https://stealth-game-server.fly.dev"; break;
-		}
-
-		// 3秒ごとにルーム一覧を自動更新する
-		InvokeRepeating("FetchRoomList", 0f, 3f);
-	}
-
-	void OnDestroy()
-	{
-		CancelInvoke("FetchRoomList");
 	}
 
 	#endregion
 
 	#region 公開メソッド
 
-	/// <summary>
-	/// 名前入力後にこのパネルを表示する。
-	/// 名前が未入力の場合は表示しない。
-	/// </summary>
 	public void ShowRoomSelect()
 	{
-		if (wsClient == null) wsClient = FindObjectOfType<WebSocketClient>();
-		if (string.IsNullOrEmpty(wsClient.GetPlayerName()))
+		if (_wsClient == null)
+		{
+			_wsClient = FindObjectOfType<WebSocketClient>();
+		}
+
+		if (_wsClient == null) return;
+
+		if (string.IsNullOrEmpty(_wsClient.GetPlayerName()))
 		{
 			Debug.LogWarning("名前が入力されていません");
 			return;
 		}
 
+		if (roomSelectPanel != null)
+		{
+			roomSelectPanel.SetActive(true);
+		}
+
 		StartCoroutine(SelectRoomButton());
-		roomSelectPanel.SetActive(true);
 		FetchRoomList();
 	}
 
-	/// <summary>退出ボタン押下時に接続を切断して選択画面に戻る</summary>
 	public void OnQuitButtonClicked()
 	{
-		if (wsClient == null) wsClient = FindObjectOfType<WebSocketClient>();
-		wsClient.OnQuitButtonClicked();
+		if (_wsClient == null)
+		{
+			_wsClient = FindObjectOfType<WebSocketClient>();
+		}
 
-		readyPanel.SetActive(false);
-		roomSelectPanel.SetActive(true);
+		if (_wsClient != null)
+		{
+			_wsClient.OnQuitButtonClicked();
+		}
+
+		if (readyPanel != null)
+		{
+			readyPanel.SetActive(false);
+		}
+
+		if (roomSelectPanel != null)
+		{
+			roomSelectPanel.SetActive(true);
+		}
+
 		StartCoroutine(SelectRoomButton());
-
 		FetchRoomList();
 	}
 
 	#endregion
 
-	#region 内部処理
+	#region 初期化
 
-	/// <summary>ルーム選択ボタンにフォーカスを当てる</summary>
-	private IEnumerator SelectRoomButton()
+	private void SetupReadyButton()
 	{
-		yield return new WaitForEndOfFrame();
-		EventSystem.current.SetSelectedGameObject(roomButton);
+		if (readyButton == null) return;
+
+		readyButton.onClick.RemoveAllListeners();
+		readyButton.onClick.AddListener(OnReadyButtonClicked);
 	}
 
-	/// <summary>準備パネルのボタンにフォーカスを当てる</summary>
-	private IEnumerator ReadyPanel()
+	private void ApplyServerUrl()
 	{
-		yield return new WaitForEndOfFrame();
+		if (_wsClient == null) return;
 
-		EventSystem.current.SetSelectedGameObject(readyPanelButton);
+		switch (_wsClient.serverMode)
+		{
+			case WebSocketClient.ServerMode.VirtualBox:
+				serverBaseUrl = "http://192.168.56.102:8080";
+				break;
+
+			case WebSocketClient.ServerMode.LocalHost:
+				serverBaseUrl = "http://localhost:8080";
+				break;
+
+			case WebSocketClient.ServerMode.Ngrok:
+				serverBaseUrl = _wsClient.ngrokUrl;
+				break;
+
+			case WebSocketClient.ServerMode.Render:
+				serverBaseUrl = "https://stealth-game-server.onrender.com";
+				break;
+
+			case WebSocketClient.ServerMode.FlyIO:
+				serverBaseUrl = "https://stealth-game-server.fly.dev";
+				break;
+		}
 	}
+
+	#endregion
+
+	#region ボタン処理
+
+	private void OnReadyButtonClicked()
+	{
+		if (_wsClient == null)
+		{
+			_wsClient = FindObjectOfType<WebSocketClient>();
+		}
+
+		if (_wsClient == null) return;
+
+		_wsClient.OnReadyButtonClicked();
+	}
+
+	private void OnRoomButtonClicked(string roomId)
+	{
+		if (_wsClient == null)
+		{
+			_wsClient = FindObjectOfType<WebSocketClient>();
+		}
+
+		if (_wsClient == null) return;
+		if (string.IsNullOrEmpty(_wsClient.GetPlayerName())) return;
+
+		_selectedRoomId = roomId;
+
+		_wsClient.ConnectToRoom(roomId);
+
+		if (roomMemberPanel != null)
+		{
+			roomMemberPanel.ClearAll();
+
+			string myName = _wsClient.GetPlayerName();
+			roomMemberPanel.AddOrUpdateMember("self", myName, false);
+		}
+
+		if (roomSelectPanel != null)
+		{
+			roomSelectPanel.SetActive(false);
+		}
+
+		if (readyPanel != null)
+		{
+			readyPanel.SetActive(true);
+		}
+
+		StartCoroutine(SelectReadyButton());
+	}
+
+	#endregion
+
+	#region ルーム一覧取得
 
 	private void FetchRoomList()
 	{
 		if (!gameObject.activeInHierarchy) return;
+		if (string.IsNullOrEmpty(serverBaseUrl)) return;
+
 		StartCoroutine(FetchRoomListCoroutine());
 	}
 
-	/// <summary>サーバーからルーム一覧を取得してボタンに反映する</summary>
 	private IEnumerator FetchRoomListCoroutine()
 	{
 		using (UnityWebRequest req = UnityWebRequest.Get($"{serverBaseUrl}/rooms"))
 		{
 			req.SetRequestHeader("ngrok-skip-browser-warning", "true");
+
 			yield return req.SendWebRequest();
 
-			if (req.result == UnityWebRequest.Result.Success)
-			{
-				string json = "{\"rooms\":" + req.downloadHandler.text + "}";
-				RoomListWrapper wrapper = JsonUtility.FromJson<RoomListWrapper>(json);
-
-				for (int i = 0; i < roomButtons.Length && i < wrapper.rooms.Length; i++)
-				{
-					RoomInfo room = wrapper.rooms[i];
-					bool isFull = room.current >= room.max;
-
-					roomLabels[i].text = $"{room.name}: {room.current}/{room.max}人";
-					roomButtons[i].interactable = !isFull;
-
-					// クロージャ対策でローカル変数に退避
-					string roomId = room.id;
-					roomButtons[i].onClick.RemoveAllListeners();
-					roomButtons[i].onClick.AddListener(() => OnRoomButtonClicked(roomId));
-				}
-			}
-			else
+			if (req.result != UnityWebRequest.Result.Success)
 			{
 				Debug.LogWarning("ルーム一覧取得失敗: " + req.error);
+				yield break;
 			}
+
+			string json = "{\"rooms\":" + req.downloadHandler.text + "}";
+			RoomListWrapper wrapper = JsonUtility.FromJson<RoomListWrapper>(json);
+
+			UpdateRoomButtons(wrapper);
 		}
 	}
 
-	/// <summary>
-	/// ルームボタンが押されたとき。
-	/// 接続してメンバーパネルを初期化し、準備待ち画面へ切り替える。
-	/// </summary>
-	private void OnRoomButtonClicked(string roomId)
+	private void UpdateRoomButtons(RoomListWrapper wrapper)
 	{
-		if (string.IsNullOrEmpty(wsClient.GetPlayerName()))
+		if (roomButtons == null || roomLabels == null) return;
+
+		int roomCount = wrapper != null && wrapper.rooms != null ? wrapper.rooms.Length : 0;
+
+		for (int i = 0; i < roomButtons.Length; i++)
 		{
-			return;
+			if (roomButtons[i] == null) continue;
+
+			if (i >= roomCount || i >= roomLabels.Length || roomLabels[i] == null)
+			{
+				roomButtons[i].interactable = false;
+
+				if (i < roomLabels.Length && roomLabels[i] != null)
+				{
+					roomLabels[i].text = "---";
+				}
+
+				continue;
+			}
+
+			RoomInfo room = wrapper.rooms[i];
+			bool isFull = room.current >= room.max;
+
+			roomLabels[i].text = $"{room.name}: {room.current}/{room.max}人";
+			roomButtons[i].interactable = !isFull;
+
+			string roomId = room.id;
+
+			roomButtons[i].onClick.RemoveAllListeners();
+			roomButtons[i].onClick.AddListener(() => OnRoomButtonClicked(roomId));
 		}
+	}
 
-		selectedRoomId = roomId;
-		wsClient.ConnectToRoom(roomId);
+	#endregion
 
-		if (roomMemberPanel != null)
-		{
-			roomMemberPanel.ClearAll();
-			string myName = wsClient.GetPlayerName();
-			roomMemberPanel.AddOrUpdateMember("self", myName, false);
-		}
-		/*string myName = FindObjectOfType<WebSocketClient>().GetPlayerName();
-        if (roomMemberPanel != null)
-            roomMemberPanel.AddOrUpdateMember("self", myName, false);*/
+	#region フォーカス
 
-		roomSelectPanel.SetActive(false);
-		readyPanel.SetActive(true);
-		StartCoroutine(ReadyPanel());
+	private IEnumerator SelectRoomButton()
+	{
+		yield return new WaitForEndOfFrame();
+
+		if (EventSystem.current == null || roomButton == null) yield break;
+
+		EventSystem.current.SetSelectedGameObject(roomButton);
+	}
+
+	private IEnumerator SelectReadyButton()
+	{
+		yield return new WaitForEndOfFrame();
+
+		if (EventSystem.current == null || readyPanelButton == null) yield break;
+
+		EventSystem.current.SetSelectedGameObject(readyPanelButton);
 	}
 
 	#endregion
