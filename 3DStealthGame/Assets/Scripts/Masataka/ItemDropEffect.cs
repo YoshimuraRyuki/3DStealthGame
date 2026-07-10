@@ -2,44 +2,59 @@ using UnityEngine;
 
 /// <summary>
 /// ドロップアイテムの放物線演出。
-/// 物理演算を使わず座標を直接動かすため、両クライアントで着地点が一致する
+/// 物理演算を使わず、指定した着地点へ移動させる。
 /// </summary>
 public class ItemDropEffect : MonoBehaviour
 {
-	Vector3 startPos;   // 発射位置
-	Vector3 endPos;     // 着地位置
-	float duration = 0.6f;  // 飛んでいる時間
-	float arcHeight = 1.2f; // 放物線の高さ（頂点の盛り上がり）
-	float elapsed = 0f;
+	[SerializeField] private float duration = 0.6f;
+	[SerializeField] private float arcHeight = 1.2f;
 
-	/// <summary>
-	/// 発射位置と着地位置を設定する
-	/// </summary>
+	private Vector3 _startPos;
+	private Vector3 _endPos;
+	private float _elapsed = 0f;
+	private bool _initialized = false;
+
 	public void Init(Vector3 start, Vector3 end)
 	{
-		startPos = start;
-		endPos = end;
+		_startPos = start;
+		_endPos = end;
+		_elapsed = 0f;
+		_initialized = true;
+
 		transform.position = start;
 	}
 
-	void Update()
+	private void Update()
 	{
-		elapsed += Time.deltaTime;
-		float t = Mathf.Clamp01(elapsed / duration);
+		if (!_initialized) return;
+		if (duration <= 0f)
+		{
+			Finish();
+			return;
+		}
 
-		// 水平方向は等速で移動
-		Vector3 pos = Vector3.Lerp(startPos, endPos, t);
+		_elapsed += Time.deltaTime;
 
-		// 高さは放物線を上乗せする（t=0.5で最大
+		float t = Mathf.Clamp01(_elapsed / duration);
+
+		Vector3 pos = Vector3.Lerp(_startPos, _endPos, t);
+
+		// t=0.5で一番高くなる
 		pos.y += arcHeight * 4f * t * (1f - t);
 
 		transform.position = pos;
 
-		// 着地したら演出終了
 		if (t >= 1f)
 		{
-			transform.position = endPos;
-			Destroy(this); 
+			Finish();
 		}
+	}
+
+	private void Finish()
+	{
+		transform.position = _endPos;
+
+		// アイテム本体は残して、演出用コンポーネントだけ外す
+		Destroy(this);
 	}
 }

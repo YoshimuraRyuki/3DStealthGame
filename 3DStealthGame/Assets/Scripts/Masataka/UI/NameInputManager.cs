@@ -2,8 +2,8 @@
 using UnityEngine.UI;
 
 /// <summary>
-/// タイトル画面での名前入力を管理するクラス。
-/// 入力内容を確認してからルーム選択画面へ切り替える。
+/// タイトル画面の名前入力を扱う。
+/// 名前を確認してからルーム選択へ進める。
 /// </summary>
 public class NameInputManager : MonoBehaviour
 {
@@ -13,7 +13,6 @@ public class NameInputManager : MonoBehaviour
 	public InputField nameInputField;
 	public Button confirmButton;
 	public GameObject titlePanel;
-	public GameObject roomSelectPanel;
 	public Text warningText;
 
 	#endregion
@@ -21,89 +20,96 @@ public class NameInputManager : MonoBehaviour
 	#region 内部状態
 
 	private WebSocketClient _wsClient;
-	private Text _placeholder;
-	private string _defaultPlaceholderText;
-	private Color _defaultPlaceholderColor;
+	private RoomSelectManager _roomSelectManager;
 
 	#endregion
 
 	#region Unityイベント
 
-	void Start()
+	private void Start()
 	{
 		SoundManager.Instance?.PlayBGM();
-		_placeholder = nameInputField.placeholder.GetComponent<Text>();
-		if (_placeholder != null)
-		{
-			_defaultPlaceholderText = _placeholder.text;
-			_defaultPlaceholderColor = _placeholder.color;
-		}
 
-		// サーバー通信クラスを取得
 		_wsClient = FindObjectOfType<WebSocketClient>();
-		if (_wsClient == null)
-		{
-			Debug.LogError("WebSocketClientがない");
-		}
+		_roomSelectManager = FindObjectOfType<RoomSelectManager>();
 
-		// ボタンの紐付け
 		if (confirmButton != null)
 		{
 			confirmButton.onClick.RemoveAllListeners();
 			confirmButton.onClick.AddListener(OnConfirmName);
 		}
-		else
-		{
-			Debug.LogError("ConfirmButtonない");
-		}
 
-		if (warningText != null) warningText.gameObject.SetActive(false);
+		HideWarning();
 	}
 
 	#endregion
 
-	#region 内部処理
+	#region 入力処理
 
-	/// <summary>
-	/// 名前確定ボタンが押されたときの処理。
-	/// 空欄なら警告を表示し、入力があればルーム選択画面へ切り替える。
-	/// </summary>
 	private void OnConfirmName()
 	{
+		if (nameInputField == null) return;
+
 		string inputName = nameInputField.text.Trim();
 
 		if (string.IsNullOrEmpty(inputName))
 		{
-			if (warningText != null)
-			{
-				warningText.gameObject.SetActive(true);
-				warningText.text = "※ユーザーネームを入力してください";
-				warningText.color = Color.red;
-			}
+			ShowWarning("※ユーザーネームを入力してください");
 			return;
 		}
 
 		if (inputName.Length > 10)
 		{
-			if (warningText != null)
-			{
-				warningText.gameObject.SetActive(true);
-				warningText.text = "※10文字以内で入力してください";
-				warningText.color = Color.red;
-			}
+			ShowWarning("※10文字以内で入力してください");
 			return;
 		}
 
-		if (warningText != null) warningText.gameObject.SetActive(false);
+		HideWarning();
+
+		if (_wsClient == null)
+		{
+			_wsClient = FindObjectOfType<WebSocketClient>();
+		}
 
 		if (_wsClient != null)
 		{
 			_wsClient.SetPlayerName(inputName);
 		}
 
-		if (titlePanel != null) titlePanel.SetActive(false);
-		var roomSelectManager = FindObjectOfType<RoomSelectManager>();
-		if (roomSelectManager != null) roomSelectManager.ShowRoomSelect();
+		if (titlePanel != null)
+		{
+			titlePanel.SetActive(false);
+		}
+
+		if (_roomSelectManager == null)
+		{
+			_roomSelectManager = FindObjectOfType<RoomSelectManager>();
+		}
+
+		if (_roomSelectManager != null)
+		{
+			_roomSelectManager.ShowRoomSelect();
+		}
+	}
+
+	#endregion
+
+	#region 警告表示
+
+	private void ShowWarning(string message)
+	{
+		if (warningText == null) return;
+
+		warningText.gameObject.SetActive(true);
+		warningText.text = message;
+		warningText.color = Color.red;
+	}
+
+	private void HideWarning()
+	{
+		if (warningText == null) return;
+
+		warningText.gameObject.SetActive(false);
 	}
 
 	#endregion

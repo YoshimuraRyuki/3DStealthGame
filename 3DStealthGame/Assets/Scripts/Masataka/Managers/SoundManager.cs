@@ -1,8 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// ゲーム内のBGM・SEを一元管理するクラス。
-/// シーンをまたいでも1つだけ残る。
+/// BGMとSEをまとめて扱う。
+/// シーンをまたいでも1つだけ残す。
 /// </summary>
 public class SoundManager : MonoBehaviour
 {
@@ -25,13 +25,13 @@ public class SoundManager : MonoBehaviour
 	public AudioClip seNotification;
 	public AudioClip seLostSight;
 
-	[Header("音量設定")]
+	[Header("音量")]
 	[Range(0f, 1f)] public float bgmVolume = 0.5f;
 	[Range(0f, 1f)] public float seVolume = 1.0f;
 
 	#endregion
 
-	#region フィールド
+	#region 内部状態
 
 	private AudioSource _bgmSource;
 	private AudioSource _seSource;
@@ -43,7 +43,6 @@ public class SoundManager : MonoBehaviour
 
 	private void Awake()
 	{
-		// すでにSoundManagerが存在する場合、後から生成されたものは破棄する
 		if (Instance != null && Instance != this)
 		{
 			Destroy(gameObject);
@@ -93,7 +92,6 @@ public class SoundManager : MonoBehaviour
 	{
 		if (bgm == null || _bgmSource == null) return;
 
-		// 同じBGMがすでに再生中なら何もしない
 		if (_bgmSource.clip == bgm && _bgmSource.isPlaying)
 		{
 			return;
@@ -108,6 +106,7 @@ public class SoundManager : MonoBehaviour
 	public void StopBGM()
 	{
 		if (_bgmSource == null) return;
+
 		_bgmSource.Stop();
 	}
 
@@ -157,6 +156,7 @@ public class SoundManager : MonoBehaviour
 	private void PlaySE(AudioClip clip)
 	{
 		if (clip == null || _seSource == null) return;
+
 		_seSource.PlayOneShot(clip, seVolume);
 	}
 

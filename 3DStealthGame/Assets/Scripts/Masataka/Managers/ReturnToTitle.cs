@@ -3,15 +3,23 @@ using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// リザルト画面からタイトルへ戻るクラス。
-/// コントローラーのAボタン、またはキーボードのAキーで遷移する。
+/// リザルト画面からタイトルへ戻る。
+/// Aボタン、またはAキーで操作する。
 /// </summary>
 public class ReturnToTitle : MonoBehaviour
 {
+	#region 内部状態
+
+	private bool _isReturning = false;
+
+	#endregion
+
 	#region Unityイベント
 
-	void Update()
+	private void Update()
 	{
+		if (_isReturning) return;
+
 		bool pad = Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame;
 		bool key = Keyboard.current != null && Keyboard.current.aKey.wasPressedThisFrame;
 
@@ -25,16 +33,18 @@ public class ReturnToTitle : MonoBehaviour
 
 	#region タイトル復帰
 
-	/// <summary>
-	/// WebSocket切断・各種状態をリセットしてタイトルへ遷移する。
-	/// </summary>
 	private async void ReturnTitle()
 	{
+		if (_isReturning) return;
+		_isReturning = true;
+
 		WebSocketClient wsClient = FindObjectOfType<WebSocketClient>();
 		if (wsClient != null)
 		{
 			await wsClient.DisconnectAndReset();
 		}
+
+		ResultData.Reset();
 
 		SceneManager.LoadScene("Title");
 	}

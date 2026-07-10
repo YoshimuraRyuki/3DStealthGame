@@ -1,63 +1,64 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Networking;
 
 /// <summary>
-/// アイテム取得判定を管理するクラス。
-/// 自分のプレイヤーがアイテムに触れたらサーバーに通知する。
-/// ミッション管理への通知はサーバーからの一斉配信で行う。
+/// 通常アイテムの取得処理。
+/// 自分のプレイヤーが触れたときだけ、サーバーへ取得通知を送る。
 /// </summary>
 public class ItemManager : MonoBehaviour
 {
 	#region フィールド
 
-	private bool isPicked = false; // 取得済みフラグ
+	private bool _isPicked = false;
+	private WebSocketClient _wsClient;
+	private ElementGenerator _elementGenerator;
 
 	#endregion
 
 	#region Unityイベント
 
+	private void Start()
+	{
+		_wsClient = FindObjectOfType<WebSocketClient>();
+		_elementGenerator = FindObjectOfType<ElementGenerator>();
+	}
+
 	private void OnTriggerEnter(Collider other)
 	{
-		if (isPicked) return;
-		if (other.CompareTag("Player1") || other.CompareTag("Player2"))
-		{
-			var wsClient = FindObjectOfType<WebSocketClient>();
-			if (wsClient != null && other.gameObject == wsClient.myPlayer)
-			{
-				isPicked = true;
-				SoundManager.Instance?.PlayPickup();
-				wsClient.SendItemPicked(transform.position);
-				ElementGenerator generator = FindObjectOfType<ElementGenerator>();
-				if (generator != null)
-                {
-                    // Destroyする前に、自分の位置を伝えてミニマップアイコンを消してもらう
-                    generator.RemoveItemIcon(this.transform.position);
-                }
+		if (_isPicked) return;
+		if (!IsPlayer(other)) return;
 
-                Destroy(gameObject);
-			}
+		if (_wsClient == null)
+		{
+			_wsClient = FindObjectOfType<WebSocketClient>();
 		}
+
+		if (_wsClient == null || other.gameObject != _wsClient.myPlayer) return;
+
+		_isPicked = true;
+
+		SoundManager.Instance?.PlayPickup();
+		_wsClient.SendItemPicked(transform.position);
+
+		if (_elementGenerator == null)
+		{
+			_elementGenerator = FindObjectOfType<ElementGenerator>();
+		}
+
+		if (_elementGenerator != null)
+		{
+			_elementGenerator.RemoveItemIcon(transform.position);
+		}
+
+		Destroy(gameObject);
 	}
 
 	#endregion
 
-	#region 旧HTTP送信（現在未使用）
+	#region 判定
 
-	// 現在の通信方式に変更する前に使用していたHTTP送信処理（現在は未使用）
-	private void SendItemPickedToServer(WebSocketClient wsClient)
+	private bool IsPlayer(Collider other)
 	{
-		StartCoroutine(SendRequest(wsClient));
-	}
-
-	private IEnumerator SendRequest(WebSocketClient wsClient)
-	{
-		string url = $"http://localhost:8080/item_picked";
-		using (UnityWebRequest req = UnityWebRequest.PostWwwForm(url, ""))
-		{
-			yield return req.SendWebRequest();
-		}
+		return other.CompareTag("Player1") || other.CompareTag("Player2");
 	}
 
 	#endregion

@@ -4,9 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 
 /// <summary>
-/// ゲーム中のログを一元管理するクラス。
-/// どこからでも AddLog() を呼ぶだけでログパネルに表示できる。
-/// 最大4件まで表示し、古いものから消える。
+/// ゲーム中のログ表示を管理する。
+/// 通常ログは最大4件まで表示し、待機中ログは点滅表示する。
 /// </summary>
 public class LogManager : MonoBehaviour
 {
@@ -15,36 +14,40 @@ public class LogManager : MonoBehaviour
 	#region インスペクター設定
 
 	[Header("UI")]
-	public Text logText;
+	[SerializeField] private Text logText;
 
 	[Header("1件あたりの表示時間（秒）")]
-	public float displayTime = 4f;
+	[SerializeField] private float displayTime = 4f;
 
 	#endregion
 
 	#region 内部状態
 
-	private Queue<string> _logs = new Queue<string>();
 	private const int MaxLogs = 4;
+
+	private readonly Queue<string> _logs = new Queue<string>();
+	private Coroutine _waitingLogCoroutine;
+	private string _waitingLog = "";
 
 	#endregion
 
 	#region Unityイベント
 
-	void Awake()
+	private void Awake()
 	{
-		if (Instance == null) Instance = this;
-		else { Destroy(gameObject); return; }
+		if (Instance != null && Instance != this)
+		{
+			Destroy(gameObject);
+			return;
+		}
+
+		Instance = this;
 	}
 
 	#endregion
 
 	#region 公開メソッド
 
-	/// <summary>
-	/// ログを追加して表示する。
-	/// color は UnityのRichText形式（例: #ffffff, red, #ff6666）
-	/// </summary>
 	public void AddLog(string message, string color = "#c0a0ff")
 	{
 		string line = $"<color={color}>{message}</color>";
@@ -52,8 +55,29 @@ public class LogManager : MonoBehaviour
 		_logs.Enqueue(line);
 
 		if (_logs.Count > MaxLogs)
+		{
 			_logs.Dequeue();
+		}
 
+		RefreshUI();
+	}
+
+	public void AddWaitingLog(string message, string color = "#aadd44")
+	{
+		StopWaitingLog();
+
+		_waitingLogCoroutine = StartCoroutine(WaitingLogCoroutine(message, color));
+	}
+
+	public void StopWaitingLog()
+	{
+		if (_waitingLogCoroutine != null)
+		{
+			StopCoroutine(_waitingLogCoroutine);
+			_waitingLogCoroutine = null;
+		}
+
+		_waitingLog = "";
 		RefreshUI();
 	}
 
@@ -64,41 +88,31 @@ public class LogManager : MonoBehaviour
 	private void RefreshUI()
 	{
 		if (logText == null) return;
+
 		var lines = new List<string>(_logs);
+
 		if (!string.IsNullOrEmpty(_waitingLog))
+		{
 			lines.Add(_waitingLog);
+		}
+
 		logText.text = string.Join("\n", lines);
 	}
-
-	/// <summary>
-	/// 「...」が点滅し続けるログを表示する
-	/// </summary>
-	public void AddWaitingLog(string message, string color = "#aadd44")
-	{
-		StopAllCoroutines();
-		StartCoroutine(WaitingLogCoroutine(message, color));
-	}
-
-	private string _waitingLog = "";
 
 	private IEnumerator WaitingLogCoroutine(string message, string color)
 	{
 		string[] dots = { ".", "..", "..." };
-		int i = 0;
+		int index = 0;
+
 		while (true)
 		{
-			_waitingLog = $"<color={color}>{message}{dots[i % 3]}</color>";
+			_waitingLog = $"<color={color}>{message}{dots[index % dots.Length]}</color>";
 			RefreshUI();
-			i++;
+
+			index++;
 			yield return new WaitForSeconds(0.5f);
 		}
 	}
 
-	public void StopWaitingLog()
-	{
-		StopAllCoroutines();
-		_waitingLog = "";
-		RefreshUI();
-	}
 	#endregion
 }

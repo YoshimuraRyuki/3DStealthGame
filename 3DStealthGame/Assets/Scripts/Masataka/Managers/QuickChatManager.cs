@@ -3,9 +3,10 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using System.Collections;
+
 /// <summary>
-/// 定型文チャットの送受信と表示を管理するクラス。
-/// Yボタンでパネルを開閉し、ボタンを選択して相手に定型文を送る。
+/// 定型文チャットを送受信する。
+/// Yキー / Yボタンで開き、選んだメッセージを相手に送る。
 /// </summary>
 public class QuickChatManager : MonoBehaviour
 {
@@ -14,11 +15,18 @@ public class QuickChatManager : MonoBehaviour
 	#region インスペクター設定
 
 	[Header("UI")]
-	public GameObject chatFrame;
-	public GameObject chatButtonParent; // ChatButtonオブジェクト
+	[SerializeField] private GameObject chatFrame;
+	[SerializeField] private GameObject chatButtonParent;
 
-	[Header("定型文リスト（ボタンの順番通りに）")]
-	public string[] messages = new string[]
+	[Header("最初に選択するボタン")]
+	[SerializeField] private GameObject chatButton;
+
+	[Header("選択中の表示")]
+	[SerializeField] private GameObject chatImage;
+
+	[Header("定型文")]
+	[SerializeField]
+	private string[] messages = new string[]
 	{
 		"ギミック解こう",
 		"アイテム探そう",
@@ -30,14 +38,11 @@ public class QuickChatManager : MonoBehaviour
 		"ゴールに向かおう"
 	};
 
-    [SerializeField] private GameObject chatButton;
-    [SerializeField] private GameObject chatImage;
+	#endregion
 
-    #endregion
+	#region 内部状態
 
-    #region 内部状態
-
-    private Button[] _buttons;
+	private Button[] _buttons;
 	private WebSocketClient _wsClient;
 	private bool _isOpen = false;
 
@@ -45,32 +50,26 @@ public class QuickChatManager : MonoBehaviour
 
 	#region Unityイベント
 
-	void Awake()
+	private void Awake()
 	{
-		if (Instance == null) Instance = this;
-		else { Destroy(gameObject); return; }
+		if (Instance != null && Instance != this)
+		{
+			Destroy(gameObject);
+			return;
+		}
+
+		Instance = this;
 	}
 
-	void Start()
+	private void Start()
 	{
 		_wsClient = FindObjectOfType<WebSocketClient>();
 
-		// ChatButtonの子からボタンを全取得
-		_buttons = chatButtonParent.GetComponentsInChildren<Button>();
-
-		// 各ボタンに定型文を割り当て
-		for (int i = 0; i < _buttons.Length && i < messages.Length; i++)
-		{
-			int index = i;
-			_buttons[i].GetComponentInChildren<Text>().text = messages[i];
-			_buttons[i].onClick.AddListener(() => OnChatButtonClicked(index));
-		}
-
-		// 最初は閉じておく
-		if (chatFrame != null) chatFrame.SetActive(false);
+		SetupButtons();
+		CloseChat();
 	}
 
-	void Update()
+	private void Update()
 	{
 		bool gamepadY = Gamepad.current != null && Gamepad.current.buttonNorth.wasPressedThisFrame;
 		bool keyboardY = Keyboard.current != null && Keyboard.current.yKey.wasPressedThisFrame;
@@ -85,43 +84,124 @@ public class QuickChatManager : MonoBehaviour
 
 	#region 公開メソッド
 
-	/// <summary>
-	/// チャットメッセージを受信したときに呼ぶ（WebSocketClientから）
-	/// </summary>
 	public void OnChatReceived(string message, string senderName)
 	{
 		SoundManager.Instance?.PlayNotification();
-		LogManager.Instance?.AddLog($"{senderName}：{message}", "#c0a0ff");
+
+		string name = string.IsNullOrEmpty(senderName) ? "相手" : senderName;
+		LogManager.Instance?.AddLog($"{name}：{message}", "#c0a0ff");
 	}
 
 	#endregion
 
-	#region 内部処理
+	#region 初期化
+
+	private void SetupButtons()
+	{
+		if (chatButtonParent == null) return;
+
+		_buttons = chatButtonParent.GetComponentsInChildren<Button>();
+
+		for (int i = 0; i < _buttons.Length && i < messages.Length; i++)
+		{
+			int index = i;
+
+			var text = _buttons[i].GetComponentInChildren<Text>();
+			if (text != null)
+			{
+				text.text = messages[i];
+			}
+
+			_buttons[i].onClick.AddListener(() => OnChatButtonClicked(index));
+		}
+	}
+
+	#endregion
+
+	#region チャット開閉
 
 	private void ToggleChat()
 	{
-		_isOpen = !_isOpen;
-		if (chatFrame != null) chatFrame.SetActive(_isOpen);
-        StartCoroutine(SelectChatButton());
-    }
+		if (_isOpen)
+		{
+			CloseChat();
+		}
+		else
+		{
+			OpenChat();
+		}
+	}
 
-    private IEnumerator SelectChatButton()
-    {
-        yield return new WaitForEndOfFrame();
-        EventSystem.current.SetSelectedGameObject(chatButton);
-        chatImage.SetActive(true);
-    }
-
-    /// <summary>
-    /// ボタンが押されたとき定型文を送信してパネルを閉じる
-    /// </summary>
-    private void OnChatButtonClicked(int index)
+	private void OpenChat()
 	{
+		_isOpen = true;
+
+		if (chatFrame != null)
+		{
+			chatFrame.SetActive(true);
+		}
+
+		if (chatImage != null)
+		{
+			chatImage.SetActive(true);
+		}
+
+		StartCoroutine(SelectChatButton());
+	}
+
+	private void CloseChat()
+	{
+		_isOpen = false;
+
+		if (chatFrame != null)
+		{
+			chatFrame.SetActive(false);
+		}
+
+		if (chatImage != null)
+		{
+			chatImage.SetActive(false);
+		}
+
+		if (EventSystem.current != null)
+		{
+			EventSystem.current.SetSelectedGameObject(null);
+		}
+	}
+
+	private IEnumerator SelectChatButton()
+	{
+		yield return new WaitForEndOfFrame();
+
+		if (!_isOpen) yield break;
+		if (EventSystem.current == null || chatButton == null) yield break;
+
+		EventSystem.current.SetSelectedGameObject(chatButton);
+	}
+
+	#endregion
+
+	#region 送信
+
+	private void OnChatButtonClicked(int index)
+	{
+		if (index < 0 || index >= messages.Length) return;
+
 		SoundManager.Instance?.PlayButton();
+
+		if (_wsClient == null)
+		{
+			_wsClient = FindObjectOfType<WebSocketClient>();
+		}
+
 		if (_wsClient == null) return;
-		_wsClient.SendChatMessage(messages[index]);
-		LogManager.Instance?.AddLog($"{_wsClient.GetPlayerName()}：{messages[index]}", "#ffffff");
-		ToggleChat();
+
+		string message = messages[index];
+
+		_wsClient.SendChatMessage(message);
+		LogManager.Instance?.AddLog($"{_wsClient.GetPlayerName()}：{message}", "#ffffff");
+
+		CloseChat();
 	}
 
 	#endregion

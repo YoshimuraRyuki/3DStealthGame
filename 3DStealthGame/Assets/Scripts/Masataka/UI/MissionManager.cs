@@ -1,13 +1,11 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
 using System.Collections;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// ミッションの進捗管理とUI表示を担当するクラス。
-/// タイマー・アイテム取得・ゴール判定・敵発見フラグを管理し、
-/// リザルト画面へのフェード遷移も行う。
+/// ミッション進捗とゲーム中のタイマーを管理する。
+/// アイテム取得、ゴール、敵に見つかったかどうかを記録してUIに反映する。
 /// </summary>
 public class MissionManager : MonoBehaviour
 {
@@ -16,14 +14,14 @@ public class MissionManager : MonoBehaviour
 	#region インスペクター設定
 
 	[Header("UI")]
-	public Text missionText;        // ミッション一覧テキスト
-	//public Text missionClearText;   // 全達成時の演出テキスト
-	public Text ClearText;          // ゴール時のCLEAR表示
+	public Text missionText;
+	public Text ClearText;
 
-	[Header("制限時間ミッションの秒数")]
+	[Header("制限時間")]
 	public int timeLimitSeconds = 180;
 
-	public UnityEngine.UI.Image fadePanel;
+	[Header("フェード")]
+	public Image fadePanel;
 
 	#endregion
 
@@ -38,42 +36,60 @@ public class MissionManager : MonoBehaviour
 	private bool _isTimeUp = false;
 
 	private bool _timerRunning = false;
-	private float _elapsedSeconds = 0f; // ゲーム開始からの経過秒数
+	private bool _hasGameStarted = false;
+	private bool _isTransitioningToResult = false;
+
+	private float _elapsedSeconds = 0f;
 
 	#endregion
 
 	#region Unityイベント
 
-	void Awake()
+	private void Awake()
 	{
-		if (Instance == null) Instance = this;
-		else { Destroy(gameObject); return; }
+		if (Instance != null && Instance != this)
+		{
+			Destroy(gameObject);
+			return;
+		}
 
-	//	if (missionClearText != null) missionClearText.gameObject.SetActive(false);
-		if (fadePanel != null) fadePanel.gameObject.SetActive(false);
+		Instance = this;
+
+		if (fadePanel != null)
+		{
+			fadePanel.gameObject.SetActive(false);
+		}
+
+		if (ClearText != null)
+		{
+			ClearText.gameObject.SetActive(false);
+		}
 	}
 
-	void Start()
+	private void Start()
 	{
 		RefreshUI();
 	}
 
-	void Update()
+	private void Update()
 	{
 		if (!_timerRunning) return;
 
 		_elapsedSeconds += Time.deltaTime;
 
-		// 制限時間を超えたらタイムアップ
 		if (!_isTimeUp && _elapsedSeconds >= timeLimitSeconds)
 		{
 			_isTimeUp = true;
-			RefreshUI();
 		}
-		else
+
+		RefreshUI();
+	}
+
+	private void OnDestroy()
+	{
+		if (Instance == this)
 		{
-			// 経過時間をリアルタイムに更新
-			RefreshUI();
+			Instance = null;
 		}
 	}
 
@@ -81,120 +97,107 @@ public class MissionManager : MonoBehaviour
 
 	#region 公開メソッド
 
-	/// <summary>ゲーム開始通知を受けてタイマーを開始する</summary>
 	public void OnGameStart()
 	{
-		SoundManager.Instance?.PlayBGM();
+		if (_hasGameStarted) return;
+
+		_hasGameStarted = true;
 		_elapsedSeconds = 0f;
 		_timerRunning = true;
 		_isTimeUp = false;
+
+		SoundManager.Instance?.PlayBGM();
 		RefreshUI();
 	}
 
-	/// <summary>アイテム取得通知を受けてフラグを立てる</summary>
 	public void OnItemPicked()
 	{
 		if (_hasPickedItem) return;
+
 		_hasPickedItem = true;
 		RefreshUI();
 	}
 
-	/// <summary>自分がゴールしたときに呼ぶ</summary>
 	public void OnGoal()
 	{
 		if (_isGoalReached) return;
+
 		_isGoalReached = true;
 
-		// ミッション1：アイテム取得してゴール
 		_mission1Done = _hasPickedItem;
-
-		// ミッション2：制限時間内にゴール
 		_mission2Done = !_isTimeUp;
-
-		// ミッション3：敵に見つからずゴール
 		_mission3Done = !_mission3Failed;
 
-
 		RefreshUI();
-		//CheckAllClear();
 	}
 
-	/// <summary>
-	/// 敵に発見されたときに呼ぶ。
-	/// 1回でも見つかったら、ミッション3は失敗扱いにする。
-	/// </summary>
 	public void OnEnemyFound()
 	{
 		if (_mission3Failed) return;
 
 		_mission3Failed = true;
-
-		// すでにゴール済みの場合でも、後から失敗扱いにできるようにする
 		_mission3Done = false;
 
 		RefreshUI();
 	}
 
-	/// <summary>達成したミッション数を返す</summary>
 	public int GetClearedMissionCount()
 	{
 		if (!_isGoalReached) return 0;
+
 		int count = 0;
+
 		if (_mission1Done) count++;
 		if (_mission2Done) count++;
 		if (_mission3Done) count++;
+
 		return count;
 	}
 
-	/// <summary>経過秒数を返す（ランキング送信用）</summary>
-	public float GetElapsedSeconds() => _elapsedSeconds;
+	public float GetElapsedSeconds()
+	{
+		return _elapsedSeconds;
+	}
 
 	public bool Mission1Done => _mission1Done;
 	public bool Mission2Done => _mission2Done;
 	public bool Mission3Done => _mission3Done;
 
-	/// <summary>タイマーを止める</summary>
 	public void StopTimer()
 	{
 		_timerRunning = false;
 	}
 
-	/// <summary>CLEAR!テキストを表示する</summary>
 	public void ShowClearMessage()
 	{
-		if (ClearText != null)
-		{
-			ClearText.gameObject.SetActive(true);
-			ClearText.text = "CLEAR！";
-		}
+		if (ClearText == null) return;
+
+		ClearText.gameObject.SetActive(true);
+		ClearText.text = "CLEAR！";
 	}
 
-	/// <summary>画面中央に任意のメッセージを表示する（相手待ち中など）</summary>
-	public void ShowWaitingMessage(string message)
-	{
-		/*if (missionClearText != null)
-		{
-			missionClearText.gameObject.SetActive(true);
-			missionClearText.text = message;
-		}*/
-	}
-
-	/// <summary>画面を暗転させてリザルト画面へ遷移するコルーチン</summary>
 	public IEnumerator FadeToResult()
 	{
+		if (_isTransitioningToResult) yield break;
+		_isTransitioningToResult = true;
+
 		yield return new WaitForSeconds(2f);
 
 		if (fadePanel != null)
 		{
 			fadePanel.gameObject.SetActive(true);
+
 			float elapsed = 0f;
 			float duration = 0.5f;
+
 			while (elapsed < duration)
 			{
 				elapsed += Time.deltaTime;
-				var c = fadePanel.color;
-				c.a = Mathf.Lerp(0, 1, elapsed / duration);
-				fadePanel.color = c;
+
+				var color = fadePanel.color;
+				color.a = Mathf.Lerp(0, 1, elapsed / duration);
+				fadePanel.color = color;
+
 				yield return null;
 			}
 		}
@@ -208,68 +211,74 @@ public class MissionManager : MonoBehaviour
 
 	private void RefreshUI()
 	{
-		// ミッション1
-		string item1Line;
-		if (_hasPickedItem)
-			item1Line = "✔ アイテムを取ってクリア";
-		else if (_isGoalReached)
-			item1Line = "✘ アイテムを取ってクリア";
-		else
-			item1Line = "　アイテムを取ってクリア";
+		if (missionText == null) return;
 
-		// ミッション2
-		string mission2Line;
 		int elapsed = Mathf.FloorToInt(_elapsedSeconds);
+
+		string mission1Line = GetMission1Text();
+		string mission2Line = GetMission2Text(elapsed);
+		string mission3Line = GetMission3Text();
+
+		missionText.text =
+			$"・{mission1Line}\n" +
+			$"・{mission2Line}\n" +
+			$"・{mission3Line}";
+	}
+
+	private string GetMission1Text()
+	{
+		if (_hasPickedItem)
+		{
+			return "✔ アイテムを取ってクリア";
+		}
+
+		if (_isGoalReached)
+		{
+			return "✘ アイテムを取ってクリア";
+		}
+
+		return "　アイテムを取ってクリア";
+	}
+
+	private string GetMission2Text(int elapsed)
+	{
 		if (_isGoalReached)
 		{
 			if (_mission2Done)
-				mission2Line = $"✔ {timeLimitSeconds}秒以内にクリア（{elapsed}秒）";
-			else
-				mission2Line = $"<color=#ffffff88>✘ {timeLimitSeconds}秒以内にクリア（{elapsed}秒）</color>";
+			{
+				return $"✔ {timeLimitSeconds}秒以内にクリア（{elapsed}秒）";
+			}
+
+			return $"<color=#ffffff88>✘ {timeLimitSeconds}秒以内にクリア（{elapsed}秒）</color>";
 		}
-		else if (_timerRunning)
+
+		if (_timerRunning)
 		{
 			if (_isTimeUp)
-				mission2Line = $"<color=#ffffff88>✘ {timeLimitSeconds}秒以内にクリア（{elapsed}秒）</color>";
-			else
-				mission2Line = $"　{timeLimitSeconds}秒以内にクリア（{elapsed}秒）";
-		}
-		else
-		{
-			mission2Line = $"　{timeLimitSeconds}秒以内にクリア";
+			{
+				return $"<color=#ffffff88>✘ {timeLimitSeconds}秒以内にクリア（{elapsed}秒）</color>";
+			}
+
+			return $"　{timeLimitSeconds}秒以内にクリア（{elapsed}秒）";
 		}
 
-		// ミッション3
-		string item3Line;
-		if (_isGoalReached)
-			item3Line = $"{(_mission3Done ? "✔" : "✘")} 敵に見つからずクリア";
-		else if (_mission3Failed)
-			item3Line = "✘ 敵に見つからずクリア";
-		else
-			item3Line = "　敵に見つからずクリア";
-
-		missionText.text =
-			$"・{item1Line}\n" +
-			$"・{mission2Line}\n" +
-			$"・{item3Line}";
+		return $"　{timeLimitSeconds}秒以内にクリア";
 	}
 
-	/*private void CheckAllClear()
+	private string GetMission3Text()
 	{
-		if (!(_mission1Done && _mission2Done && _mission3Done)) return;
-		if (missionClearText != null)
+		if (_isGoalReached)
 		{
-			missionClearText.gameObject.SetActive(true);
-			missionClearText.text = "ミッションコンプリート！";
-			Invoke(nameof(HideClearText), 3f);
+			return $"{(_mission3Done ? "✔" : "✘")} 敵に見つからずクリア";
 		}
-	}*/
 
-    /*
-	private void HideClearText()
-	{
-		if (missionClearText != null) missionClearText.gameObject.SetActive(false);
-	}*/
+		if (_mission3Failed)
+		{
+			return "✘ 敵に見つからずクリア";
+		}
+
+		return "　敵に見つからずクリア";
+	}
 
 	#endregion
 }
