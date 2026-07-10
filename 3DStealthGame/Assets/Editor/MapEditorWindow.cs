@@ -23,11 +23,14 @@ public class MapEditorWindow : EditorWindow
         PatrolPoint = 9,     // 巡回ポイント
         Player1 = 10,        // プレイヤー1
         Player2 = 11,        // プレイヤー2
-        InvisibleWall = 12,  // 透明壁
+        GimickWall = 12,     // ギミック用壁
         powerItemBlue = 13,  // 青アイテム
         powerItemGreen = 14, // 緑アイテム
         switchBlue = 15,     // 青スイッチ
-        switchGreen = 16     // 緑スイッチ
+        switchGreen = 16,    // 緑スイッチ
+        GimickWallBlue = 17, // 青ギミック用壁
+        GimickWallGreen = 18 // 緑ギミック用壁
+
     }
 
     #endregion
@@ -163,6 +166,8 @@ public class MapEditorWindow : EditorWindow
                 else if (typeStr == "14") chipColor = new Color(0.4f, 1.0f, 0.4f, 1.0f); // 緑用アイテム：ライム緑
                 else if (typeStr == "15") chipColor = new Color(0.0f, 0.0f, 1.0f, 1.0f); // 青用スイッチ：青
                 else if (typeStr == "16") chipColor = new Color(0.4f, 1.0f, 0.4f, 1.0f); // 緑用スイッチ：ライム緑
+                else if (typeStr == "17") chipColor = new Color(0.0f, 0.0f, 1.0f, 1.0f); // 青用壁：青
+                else if (typeStr == "18") chipColor = new Color(0.4f, 1.0f, 0.4f, 1.0f); // 緑用壁：ライム緑
                 else if (int.TryParse(typeStr, out int tNum) && tNum > 1) chipColor = new Color(1.0f, 0.0f, 1.0f, 1.0f); // その他：紫
                 
                 Rect cellRect = GUILayoutUtility.GetRect(cellSize, cellSize, GUILayout.Width(cellSize), GUILayout.Height(cellSize));
@@ -197,6 +202,14 @@ public class MapEditorWindow : EditorWindow
                 else if (typeStr == "16")
                 {
                     GUI.Label(drawRect, "S", centerLabelStyle);
+                }
+                else if (typeStr == "17")
+                {
+                    GUI.Label(drawRect, "W", centerLabelStyle);
+                }
+                else if (typeStr == "18")
+                {
+                    GUI.Label(drawRect, "w", centerLabelStyle);
                 }
                 else if (data.Length > 1)
                 {
@@ -246,6 +259,8 @@ public class MapEditorWindow : EditorWindow
         if (typeStr == "14") return new Color(0.4f, 1.0f, 0.4f, 1.0f); // 緑用アイテム：ライム緑
         if (typeStr == "15") return new Color(0.0f, 0.0f, 1.0f, 1.0f); // 青用スイッチ：青
         if (typeStr == "16") return new Color(0.4f, 1.0f, 0.4f, 1.0f); // 緑用スイッチ：ライム緑
+        if (typeStr == "17") return new Color(0.0f, 0.0f, 1.0f, 1.0f); // 青用壁：青
+        if (typeStr == "18") return new Color(0.4f, 1.0f, 0.4f, 1.0f); // 緑用壁：ライム緑
 
         if (int.TryParse(typeStr, out int tNum) && tNum > 1) return new Color(1.0f, 0.0f, 1.0f, 1.0f); // その他：紫
         return Color.white;

@@ -6,6 +6,6 @@ public class WallCollision : MonoBehaviour
 {
     private void OnCollisionEnter(Collision collision)
     {
-        LogManager.Instance?.AddLog("強い敵がいて先に進めない", "#ff4444");
+        LogManager.Instance?.AddLog("スイッチを作動すれば開きそうだ", "#ff4444");
     }
 }
