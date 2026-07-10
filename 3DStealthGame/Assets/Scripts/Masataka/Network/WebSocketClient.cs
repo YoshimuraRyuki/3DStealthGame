@@ -381,7 +381,7 @@ public class WebSocketClient : MonoBehaviour
 		Application.targetFrameRate = 60;
 		DontDestroyOnLoad(this.gameObject);
 		SceneManager.sceneLoaded += OnSceneLoaded;
-		isGameSceneLoaded = SceneManager.GetActiveScene().name == "MapTest";
+		isGameSceneLoaded = SceneManager.GetActiveScene().name == "GameScene";
 	}
 
 	async void Start()
@@ -454,7 +454,7 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	void OnSceneLoaded(Scene scene, LoadSceneMode mode)
 	{
-		isGameSceneLoaded = scene.name == "MapTest";
+		isGameSceneLoaded = scene.name == "GameScene";
 
 		if (scene.name == "Title")
 		{
@@ -462,7 +462,7 @@ public class WebSocketClient : MonoBehaviour
 			roomMemberPanel = FindObjectOfType<RoomMemberPanel>();
 		}
 
-		if (scene.name != "MapTest")
+		if (scene.name != "GameScene")
 		{
 			ClearRemotePlayers();
 		}
@@ -792,14 +792,14 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void HandleStartGameMessage()
 	{
-		if (SceneManager.GetActiveScene().name == "MapTest")
+		if (SceneManager.GetActiveScene().name == "GameScene")
 		{
 			ProcessPendingMessages();
 			MissionManager.Instance?.OnGameStart();
 		}
 		else
 		{
-			SceneManager.LoadScene("MapTest");
+			SceneManager.LoadScene("GameScene");
 		}
 	}
 
@@ -820,7 +820,7 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void HandleInitMessage(string json)
 	{
-		if (SceneManager.GetActiveScene().name != "MapTest") return;
+		if (SceneManager.GetActiveScene().name != "GameScene") return;
 		if (myPlayer != null) return;
 		InitMessage init = JsonUtility.FromJson<InitMessage>(json);
 		myId = init.id;
@@ -902,7 +902,7 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void HandleExistingPlayersMessage(string json)
 	{
-		if (SceneManager.GetActiveScene().name != "MapTest") return;
+		if (SceneManager.GetActiveScene().name != "GameScene") return;
 		ExistingPlayersMessage msg = JsonUtility.FromJson<ExistingPlayersMessage>(json);
 		if (msg != null && msg.players != null)
 		{
@@ -922,7 +922,7 @@ public class WebSocketClient : MonoBehaviour
 	/// </summary>
 	private void HandlePlayerJoinedMessage(string json)
 	{
-		if (SceneManager.GetActiveScene().name != "MapTest") return;
+		if (SceneManager.GetActiveScene().name != "GameScene") return;
 		var msg = JsonUtility.FromJson<PlayerJoinedMessage>(json);
 		if (string.IsNullOrEmpty(myId) || msg.id == myId) return;
 		if (playerObjects.ContainsKey(msg.id)) return;

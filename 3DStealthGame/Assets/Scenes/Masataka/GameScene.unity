@@ -5090,6 +5090,9 @@ MonoBehaviour:
   - {fileID: 0}
   powerItemGreen:
   - {fileID: 0}
+  transparentRedMaterial: {fileID: 2100000, guid: 8e74d870ba7780b43a94b73d4e9b69c5, type: 2}
+  transparentBlueMaterial: {fileID: 2100000, guid: 9ef35e2ec4a707046ae2031092c492d6, type: 2}
+  transparentGreenMaterial: {fileID: 2100000, guid: 0ebb9856df730cb46b54f37bdd65b16d, type: 2}
   miniMapMaskRect: {fileID: 1070339475}
   map2DRect: {fileID: 1655844094}
   enemyViewPrefab: {fileID: 5600239884965558956, guid: cb5b4d906db438946befd9dabf1bee9d, type: 3}

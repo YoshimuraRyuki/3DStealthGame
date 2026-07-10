@@ -497,6 +497,14 @@ public class EnemyManager : MonoBehaviour
     /// </summary>
     void AlertFunction()
     {
+        // 誰も目視しておらず、かつ音での警戒状態でもない（完全な通常巡回中）なら、警戒度計算もリスポーン判定も一切行わない
+        if (!isFoundPlayer && !isAlerted)
+        {
+            currentAlertCount = alertCount; // 常に最大値で安定させる
+            if (Sl != null) Sl.color = new Color(0.827f, 0.851f, 0.439f); // 通常時のライト色
+            return;
+        }
+
         // 警戒時間
         if (isFoundPlayer)
         {
@@ -556,6 +564,11 @@ public class EnemyManager : MonoBehaviour
         {
             _isRespawning = true;
             MissionManager.Instance?.OnEnemyFound();
+            var wsClient = FindObjectOfType<WebSocketClient>();
+            if (wsClient != null)
+            {
+                wsClient.SendEnemyFound();
+            }
             SoundManager.Instance?.PlayDetected();
 			Debug.Log($"捕まった: _alertTarget={_alertTarget?.name} isLocalPlayer={_alertTarget?.GetComponent<PlayerController>()?.isLocalPlayer}");
             if (_alertTarget != null)
@@ -567,10 +580,9 @@ public class EnemyManager : MonoBehaviour
                 }
                 else
                 {
-                    var wsClient = FindObjectOfType<WebSocketClient>();
                     if (wsClient != null) wsClient.SendRemoteRespawn();
                     currentAlertCount = alertCount; // 警戒度リセット
-                                                    _isRespawning = false; // ここでリセット
+                    _isRespawning = false; // ここでリセット
                 }
             }
         }
@@ -957,6 +969,7 @@ public class EnemyManager : MonoBehaviour
     {
         currentTime = 0f;
         targetPlayer = null;
+        _alertTarget = null;
         isStopMove = false;
 
         // 次のポイントを再設定

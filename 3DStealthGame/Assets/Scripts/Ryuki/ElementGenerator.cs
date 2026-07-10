@@ -65,14 +65,20 @@ public class ElementGenerator : MonoBehaviour
         PatrolPoint = 9,
         Player1 = 10,
         Player2 = 11,
-        InvisibleWall = 12,
+        GimickWall = 12,
         powerItemBlue = 13,
         powerItemGreen = 14,
         switchBlue = 15,
-        switchGreen = 16
+        switchGreen = 16,
+        GimickWallBlue = 17, 
+        GimickWallGreen = 18
+
     }
     // メンバ変数として追加
     public Dictionary<int, List<GameObject>> gimmickWallDic = new Dictionary<int, List<GameObject>>();
+    [SerializeField] private Material transparentRedMaterial;   // 半透明な壁マテリアル
+    [SerializeField] private Material transparentBlueMaterial;  // 半透明な壁マテリアル
+    [SerializeField] private Material transparentGreenMaterial; // 半透明な壁マテリアル
     #endregion
 
     #region プレイヤー位置管理
@@ -153,6 +159,7 @@ public class ElementGenerator : MonoBehaviour
     List<SwitchManager> switchList = new List<SwitchManager>();
 
     public List<SwitchManager> GetSwitchList() => switchList;
+
     #endregion
 
     #region ミニマップ更新管理
@@ -287,7 +294,7 @@ public class ElementGenerator : MonoBehaviour
                 string type = data[0];
                 int id = data.Length > 1 ? int.Parse(data[1]) : -1;
 
-                bool isWall = (type == "0" || type == "12");
+                bool isWall = (type == "0" || type == "12" || type == "17" || type == "18");
 
                 if (isWall)
                 {
@@ -343,12 +350,14 @@ public class ElementGenerator : MonoBehaviour
         float centerX = startX + (length / 2f) - 0.5f;
         cube.transform.position = new Vector3(centerX, 2f, y);
 
-        if (wallType == "12")
+        if (wallType == "12" || wallType == "17" || wallType == "18")
         {
             MeshRenderer renderer = cube.GetComponent<MeshRenderer>();
             if (renderer != null)
             {
-                renderer.enabled = false;
+                if(wallType == "12") renderer.material = transparentRedMaterial;
+                if(wallType == "17") renderer.material = transparentBlueMaterial;
+                if(wallType == "18") renderer.material = transparentGreenMaterial;
             }
             // 透明壁の通知用スクリプト
             cube.AddComponent<WallCollision>();
@@ -796,6 +805,7 @@ public class ElementGenerator : MonoBehaviour
 		}
 	}
 	#endregion
+
 	#region Update処理
 
 	void Update()
