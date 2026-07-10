@@ -9102,7 +9102,6 @@ MonoBehaviour:
   nameInputField: {fileID: 1881446474}
   confirmButton: {fileID: 1953859468}
   titlePanel: {fileID: 404316194}
-  roomSelectPanel: {fileID: 255484351}
   warningText: {fileID: 2146010604}
 --- !u!4 &2107163003
 Transform:
