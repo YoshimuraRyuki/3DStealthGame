@@ -577,6 +577,8 @@ public class EnemyManager : MonoBehaviour
                 if (pc != null && pc.isLocalPlayer)
                 {
                     pc.Respawn();
+                    currentAlertCount = alertCount;
+                    _isRespawning = false;
                 }
                 else
                 {
@@ -971,6 +973,9 @@ public class EnemyManager : MonoBehaviour
         targetPlayer = null;
         _alertTarget = null;
         isStopMove = false;
+        isFoundPlayer = false;
+        isAlerted = false;
+        currentAlertCount = alertCount;
 
         // Ÿ‚Ìƒ|ƒCƒ“ƒg‚ğÄİ’è
         targetPoint = GetNearPoint(StartPoint());
