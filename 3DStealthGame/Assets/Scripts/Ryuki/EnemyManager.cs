@@ -104,6 +104,8 @@ public class EnemyManager : MonoBehaviour
     public float lostPlayerTime = 2f;
     float lostTimer = 0f;
     private Transform _alertTarget; // 警戒度を上げたプレイヤー
+    [Header("貫通例キャスト"), SerializeField]
+    private LayerMask visionMask;
 
     #endregion
 
@@ -476,7 +478,7 @@ public class EnemyManager : MonoBehaviour
             if (angleToTarget < viewAngle / 2f)
             {
                 RaycastHit hit;
-                if (Physics.Raycast(transform.position, dirToTarget, out hit, dstToTarget))
+                if (Physics.Raycast(transform.position, dirToTarget, out hit, dstToTarget, visionMask))
                 {
                     if (hit.transform == playerTransform || hit.transform.IsChildOf(playerTransform))
                     {
