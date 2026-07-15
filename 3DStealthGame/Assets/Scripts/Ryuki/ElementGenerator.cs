@@ -847,7 +847,7 @@ public class ElementGenerator : MonoBehaviour
         ResetEnemyMiniMap();
         UpdateEnemyMap(objEnemys);
         UpdateEnemyMap(objEnemyStrongs);
-        UpdateEnemyView(objEnemys, viewList, 20f, false);
+        UpdateEnemyView(objEnemys, viewList, 20f, true);
         UpdateEnemyView(objEnemyStrongs, viewStrongList, 45f, true);
 
     }
