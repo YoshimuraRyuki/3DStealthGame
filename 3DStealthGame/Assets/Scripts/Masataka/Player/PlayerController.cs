@@ -367,6 +367,8 @@ public class PlayerController : MonoBehaviour
 
 		if (sendToServer)
 		{
+			PlayMetrics.AddDeath();
+
 			var wsClient = FindObjectOfType<WebSocketClient>();
 			if (wsClient != null) wsClient.SendRespawn(transform.position);
 		}

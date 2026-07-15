@@ -115,6 +115,7 @@ public class StaminaItemManager : MonoBehaviour
 		}
 
 		_wsClient.SendStaminaItemPicked(pickedPosition);
+		PlayMetrics.AddStaminaItem();
 
 		if (absorbEffectPrefab != null && remoteTransform != null)
 		{

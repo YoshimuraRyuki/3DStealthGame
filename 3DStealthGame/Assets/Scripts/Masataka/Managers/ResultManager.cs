@@ -34,6 +34,8 @@ public class ResultManager : MonoBehaviour
 
 	void Start()
 	{
+
+		PlayMetrics.LogCurrent();
 		WebSocketClient wsClient = FindObjectOfType<WebSocketClient>();
 
 		if (wsClient != null)

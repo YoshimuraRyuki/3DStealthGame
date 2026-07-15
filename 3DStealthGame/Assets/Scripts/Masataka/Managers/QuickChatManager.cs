@@ -199,6 +199,7 @@ public class QuickChatManager : MonoBehaviour
 		string message = messages[index];
 
 		_wsClient.SendChatMessage(message);
+		PlayMetrics.AddChat();
 		LogManager.Instance?.AddLog($"{_wsClient.GetPlayerName()}ÅF{message}", "#ffffff");
 
 		CloseChat();
