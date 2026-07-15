@@ -158,29 +158,19 @@ public class RoomSelectManager : MonoBehaviour
 
 	private void ApplyServerUrl()
 	{
-		if (_wsClient == null) return;
-
-		switch (_wsClient.serverMode)
+		if (_wsClient == null)
 		{
-			case WebSocketClient.ServerMode.VirtualBox:
-				serverBaseUrl = "http://192.168.56.102:8080";
-				break;
+			_wsClient = FindObjectOfType<WebSocketClient>();
+		}
 
-			case WebSocketClient.ServerMode.LocalHost:
-				serverBaseUrl = "http://localhost:8080";
-				break;
-
-			case WebSocketClient.ServerMode.Ngrok:
-				serverBaseUrl = _wsClient.ngrokUrl;
-				break;
-
-			case WebSocketClient.ServerMode.Render:
-				serverBaseUrl = "https://stealth-game-server.onrender.com";
-				break;
-
-			case WebSocketClient.ServerMode.FlyIO:
-				serverBaseUrl = "https://stealth-game-server.fly.dev";
-				break;
+		if (_wsClient != null)
+		{
+			serverBaseUrl = _wsClient.GetHttpBaseUrl();
+			Debug.Log($"[RoomSelectManager] serverBaseUrl = {serverBaseUrl}");
+		}
+		else
+		{
+			Debug.LogWarning("[RoomSelectManager] WebSocketClient が見つかりません。Inspector の serverBaseUrl を使用します。");
 		}
 	}
 

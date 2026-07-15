@@ -61,11 +61,21 @@ public class StaminaManager : MonoBehaviour
 
 	public bool UseStamina(int amount)
 	{
-		if (amount <= 0) return true;
-		if (currentStamina < amount) return false;
+		if (currentStamina < amount)
+		{
+			Debug.Log($"[Stamina] スタミナ不足: current={currentStamina}, need={amount}");
+
+			LogManager.Instance?.AddLog("スタミナが足りない", "#ffcc44");
+
+			return false;
+		}
 
 		currentStamina = Mathf.Max(0, currentStamina - amount);
-		NotifyStaminaChanged();
+		OnStaminaChanged?.Invoke(currentStamina, maxStamina);
+
+		Debug.Log($"[Stamina] スタミナ消費: cost={amount}, remain={currentStamina}/{maxStamina}");
+
+		LogManager.Instance?.AddLog($"スタミナを{amount}消費した", "#88ccff");
 
 		return true;
 	}

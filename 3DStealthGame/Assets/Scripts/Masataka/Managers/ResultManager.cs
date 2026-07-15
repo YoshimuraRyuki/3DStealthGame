@@ -34,30 +34,24 @@ public class ResultManager : MonoBehaviour
 
 	void Start()
 	{
-		string displayName = GetRankingDisplayName();
+		WebSocketClient wsClient = FindObjectOfType<WebSocketClient>();
 
-		// ResultDataの内容を画面に反映
-		if (playerNameText != null)
+		if (wsClient != null)
 		{
-			playerNameText.text = displayName;
+			serverBaseUrl = wsClient.GetHttpBaseUrl();
+			Debug.Log($"[ResultManager] serverBaseUrl = {serverBaseUrl}");
+		}
+		else
+		{
+			Debug.LogWarning("[ResultManager] WebSocketClient が見つかりません。Inspector の serverBaseUrl を使用します。");
 		}
 
-		if (clearTimeText != null)
-		{
-			clearTimeText.text = $"{(int)ResultData.elapsedTime}秒";
-		}
-
-		if (missionCountText != null)
-		{
-			missionCountText.text = $"{ResultData.missionCount} / 3";
-		}
+		playerNameText.text = $"{ResultData.playerName} & {ResultData.remotePlayerName}";
+		clearTimeText.text = $"{(int)ResultData.elapsedTime}秒";
+		missionCountText.text = $"{ResultData.missionCount} / 3";
 
 		string grade = CalcGrade(ResultData.missionCount, ResultData.elapsedTime);
-
-		if (gradeText != null)
-		{
-			gradeText.text = grade;
-		}
+		gradeText.text = grade;
 
 		StartCoroutine(PostAndFetchRanking());
 	}

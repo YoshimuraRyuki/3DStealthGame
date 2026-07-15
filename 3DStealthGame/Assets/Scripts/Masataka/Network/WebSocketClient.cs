@@ -685,6 +685,29 @@ public class WebSocketClient : MonoBehaviour
 		}
 	}
 
+	public string GetHttpBaseUrl()
+	{
+		switch (serverMode)
+		{
+			case ServerMode.VirtualBox:
+				return "http://192.168.56.102:8080";
+
+			case ServerMode.LocalHost:
+				return "http://localhost:8080";
+
+			case ServerMode.Ngrok:
+				return ngrokUrl.TrimEnd('/');
+
+			case ServerMode.Render:
+				return "https://stealth-game-server.onrender.com";
+
+			case ServerMode.FlyIO:
+				return "https://stealth-game-server.fly.dev";
+
+			default:
+				return "http://192.168.56.102:8080";
+		}
+	}
 
 	public async void ConnectToRoom(string roomId)
 	{

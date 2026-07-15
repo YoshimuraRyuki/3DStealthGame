@@ -219,7 +219,7 @@ public class PlayerController : MonoBehaviour
 	public void PunchEnemy()
 	{
 		if (isAction) return;
-		isAction = true;
+		//isAction = true;
 		Am.SetTrigger("PunchEnemy");
 		lastTrigger = "PunchEnemy";
 	}
