@@ -64,17 +64,14 @@ public class StaminaManager : MonoBehaviour
 		if (currentStamina < amount)
 		{
 			Debug.Log($"[Stamina] スタミナ不足: current={currentStamina}, need={amount}");
-
 			LogManager.Instance?.AddLog("スタミナが足りない", "#ffcc44");
-
 			return false;
 		}
 
 		currentStamina = Mathf.Max(0, currentStamina - amount);
-		OnStaminaChanged?.Invoke(currentStamina, maxStamina);
+		NotifyStaminaChanged();
 
 		Debug.Log($"[Stamina] スタミナ消費: cost={amount}, remain={currentStamina}/{maxStamina}");
-
 		LogManager.Instance?.AddLog($"スタミナを{amount}消費した", "#88ccff");
 
 		return true;
@@ -82,9 +79,12 @@ public class StaminaManager : MonoBehaviour
 
 	public void RecoverStamina(int amount = -1)
 	{
-		int recover = amount < 0 ? recoverAmount : amount;
-		if (recover <= 0) return;
+		if (currentStamina >= maxStamina)
+		{
+			return;
+		}
 
+		int recover = amount < 0 ? recoverAmount : amount;
 		currentStamina = Mathf.Min(maxStamina, currentStamina + recover);
 		NotifyStaminaChanged();
 	}
@@ -94,6 +94,17 @@ public class StaminaManager : MonoBehaviour
 		if (amount <= 0) return true;
 
 		return currentStamina >= amount;
+	}
+
+	public bool CanRecoverStamina()
+	{
+		return currentStamina < maxStamina;
+	}
+
+	public void SetStamina(int value)
+	{
+		currentStamina = Mathf.Clamp(value, 0, maxStamina);
+		NotifyStaminaChanged();
 	}
 
 	public int GetCurrentStamina()
@@ -114,6 +125,12 @@ public class StaminaManager : MonoBehaviour
 	private void NotifyStaminaChanged()
 	{
 		OnStaminaChanged?.Invoke(currentStamina, maxStamina);
+
+		var wsClient = FindObjectOfType<WebSocketClient>();
+		if (wsClient != null)
+		{
+			wsClient.SendStaminaState(currentStamina, maxStamina);
+		}
 	}
 
 	#endregion

@@ -63,6 +63,14 @@ public class StaminaItemManager : MonoBehaviour
 		if (other.gameObject != _wsClient.myPlayer) return;
 		if (_wsClient.myPlayerNumber != targetPlayerNumber) return;
 
+		// このアイテムは「拾った人」ではなく「味方」を回復するため、
+		// 味方のスタミナが満タンなら拾えない
+		if (!_wsClient.CanRemoteRecoverStamina())
+		{
+			LogManager.Instance?.AddLog("味方のスタミナが満タンなので取れない", "#ffcc44");
+			return;
+		}
+
 		PickItem();
 	}
 

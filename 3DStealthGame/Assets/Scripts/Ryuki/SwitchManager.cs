@@ -81,22 +81,6 @@ public class SwitchManager : MonoBehaviour
 		if(!Pc.isAnimationStart) return;
 		if (_stunSent) return; // 二重送信防止
 
-		if (StaminaManager.Instance == null)
-		{
-			Debug.LogWarning("[Stamina] StaminaManager が見つかりません");
-			LogManager.Instance?.AddLog("スタミナ管理が見つかりません", "#ff4444");
-			return;
-		}
-
-		if (!StaminaManager.Instance.UseStamina(5))
-		{
-			Pc.isAnimationStart = false;
-			isActionEnemy = false;
-			isEndAction = false;
-			Pc.isPlayerMoveStop = false;
-
-			return;
-		}
 
 		SoundManager.Instance?.PlayPunch();
 		Debug.Log("ドロップ処理到達");
@@ -205,6 +189,18 @@ public class SwitchManager : MonoBehaviour
 		{
 			if (enemy.reactionText.text == "!") return;
 
+
+			if (StaminaManager.Instance == null)
+			{
+				Debug.LogWarning("[Stamina] StaminaManager が見つかりません");
+				LogManager.Instance?.AddLog("スタミナ管理が見つかりません", "#ff4444");
+				return;
+			}
+
+			if (!StaminaManager.Instance.UseStamina(5))
+			{
+				return;
+			}
 			isActionEnemy = true;
 			Pc.isPlayerMoveStop = true;
 			enemy.TextCancel();

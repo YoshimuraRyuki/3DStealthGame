@@ -269,6 +269,7 @@ public class PlayerController : MonoBehaviour
 	public void EndMove()
 	{
 		isPlayerMoveStop = false;
+		Am.SetTrigger("Idle");
     }
 
 	#endregion
@@ -330,8 +331,16 @@ public class PlayerController : MonoBehaviour
 		Am.SetBool("Sneak", false);
 		//Am.SetTrigger("Idle");
 
+		if (sendToServer && StaminaManager.Instance != null)
+		{
+			if (StaminaManager.Instance.GetCurrentStamina() <= 4)
+			{
+				StaminaManager.Instance.SetStamina(5);
+			}
+		}
+
 		// スイッチのアクション状態もリセット
-	foreach (var sw in FindObjectsOfType<SwitchManager>())
+		foreach (var sw in FindObjectsOfType<SwitchManager>())
 			sw.ResetActionState();
 
 		// 発見時のテキストを表示
