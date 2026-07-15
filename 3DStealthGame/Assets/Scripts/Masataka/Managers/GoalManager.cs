@@ -1,8 +1,9 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 /// <summary>
-/// 自分のプレイヤーがゴールに入ったら、サーバーへ通知する。
-/// 全員ゴールしたかどうかはサーバー側で判定する。
+/// 自分と相手の両方がゴール内にいる場合のみ、サーバーへゴール通知する。
+/// 全員ゴールしたかどうかはサーバー側で最終判定する。
 /// </summary>
 public class GoalScript : MonoBehaviour
 {
@@ -10,6 +11,8 @@ public class GoalScript : MonoBehaviour
 
 	private WebSocketClient _wsClient;
 	private bool _hasSentGoal = false;
+
+	private readonly HashSet<GameObject> _playersInGoal = new HashSet<GameObject>();
 
 	#endregion
 
@@ -22,29 +25,92 @@ public class GoalScript : MonoBehaviour
 
 	private void OnTriggerEnter(Collider other)
 	{
+		GameObject player = GetPlayerObject(other);
+		if (player == null) return;
+
+		_playersInGoal.Add(player);
+
+		TrySendGoal();
+	}
+
+	private void OnTriggerStay(Collider other)
+	{
+		GameObject player = GetPlayerObject(other);
+		if (player == null) return;
+
+		_playersInGoal.Add(player);
+
+		TrySendGoal();
+	}
+
+	private void OnTriggerExit(Collider other)
+	{
+		GameObject player = GetPlayerObject(other);
+		if (player == null) return;
+
+		_playersInGoal.Remove(player);
+	}
+
+	#endregion
+
+	#region ゴール判定
+
+	private void TrySendGoal()
+	{
 		if (_hasSentGoal) return;
-		if (!IsPlayer(other)) return;
 
 		if (_wsClient == null)
 		{
 			_wsClient = FindObjectOfType<WebSocketClient>();
 		}
 
-		if (_wsClient == null || other.gameObject != _wsClient.myPlayer) return;
+		if (_wsClient == null || _wsClient.myPlayer == null) return;
+
+		if (!_playersInGoal.Contains(_wsClient.myPlayer)) return;
+
+		bool hasPlayer1 = false;
+		bool hasPlayer2 = false;
+
+		foreach (GameObject player in _playersInGoal)
+		{
+			if (player == null) continue;
+
+			if (player.CompareTag("Player1"))
+			{
+				hasPlayer1 = true;
+			}
+			else if (player.CompareTag("Player2"))
+			{
+				hasPlayer2 = true;
+			}
+		}
+
+		if (!hasPlayer1 || !hasPlayer2) return;
 
 		_hasSentGoal = true;
 
 		MissionManager.Instance?.OnGoal();
 		_wsClient.SendGoal();
+
 	}
 
-	#endregion
-
-	#region 判定
-
-	private bool IsPlayer(Collider other)
+	private GameObject GetPlayerObject(Collider other)
 	{
-		return other.CompareTag("Player1") || other.CompareTag("Player2");
+		if (other == null) return null;
+
+		Transform current = other.transform;
+
+		while (current != null)
+		{
+			if (current.CompareTag("Player1") || current.CompareTag("Player2"))
+			{
+				return current.gameObject;
+			}
+
+			current = current.parent;
+		}
+
+		return null;
 	}
 
 	#endregion

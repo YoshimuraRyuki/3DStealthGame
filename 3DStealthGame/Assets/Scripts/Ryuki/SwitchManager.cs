@@ -68,6 +68,7 @@ public class SwitchManager : MonoBehaviour
 			isActionEnemy = false;
 			isEndAction = false;
 
+			
 
 			_stunSent = false; // リセット
 			enemy.StunCancel();
@@ -77,8 +78,25 @@ public class SwitchManager : MonoBehaviour
 			return;
 		}
 
-		if (!Pc.isAnimationStart) return;
+		if(!Pc.isAnimationStart) return;
 		if (_stunSent) return; // 二重送信防止
+
+		if (StaminaManager.Instance == null)
+		{
+			Debug.LogWarning("[Stamina] StaminaManager が見つかりません");
+			LogManager.Instance?.AddLog("スタミナ管理が見つかりません", "#ff4444");
+			return;
+		}
+
+		if (!StaminaManager.Instance.UseStamina(5))
+		{
+			Pc.isAnimationStart = false;
+			isActionEnemy = false;
+			isEndAction = false;
+			Pc.isPlayerMoveStop = false;
+
+			return;
+		}
 
 		SoundManager.Instance?.PlayPunch();
 		Debug.Log("ドロップ処理到達");
@@ -94,6 +112,7 @@ public class SwitchManager : MonoBehaviour
 			{
 				if (dropType == 1) SpawnGreenItem(dropPos);
 				else SpawnBlueItem(dropPos);
+				
 				wsClient3.SendStaminaItemDrop(dropType, dropPos);
 			}
 			else
@@ -195,18 +214,29 @@ public class SwitchManager : MonoBehaviour
 
 		if (CompareTag("Switch"))
 		{
-			if (!StaminaManager.Instance.CanUseStamina(2)) return; // 足りなければ押せない
-			StaminaManager.Instance.UseStamina(2);
+			if (StaminaManager.Instance == null)
+			{
+				Debug.LogWarning("[Stamina] StaminaManager が見つかりません");
+				LogManager.Instance?.AddLog("スタミナ管理が見つかりません", "#ff4444");
+				return;
+			}
+
+			if (!StaminaManager.Instance.UseStamina(5))
+			{
+				return;
+			}
+
 			isActionSwitch = true;
 			Pc.isAction = true;
 			Pc.isPlayerMoveStop = true;
-			// 1回だけ実行
+
 			if (em != null)
 			{
 				em.SwitchCountValue(1);
 				em.PlayAnimationWall();
 				OpenGimmickWall(targetEnemyID);
 			}
+
 			actionText.gameObject.SetActive(false);
 			Pc.PunchSwitch();
 		}

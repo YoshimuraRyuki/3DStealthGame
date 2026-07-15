@@ -761,6 +761,8 @@ MonoBehaviour:
   reactionText: {fileID: 0}
   movePoints: []
   speed: 3
+  stoppingDistance: 3
+  chaseSpeed: 1.5
   rotateSpeed: 30
   stoprotateSpeed: 50
   stopMoveCooldownMin: 5
@@ -796,7 +798,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isPressed: 0
   isEnemyMoveStop: 0
-  stanTime: 3
+  stanTime: 5
   targetEnemyID: 0
 --- !u!1 &3071219106759320695
 GameObject:
