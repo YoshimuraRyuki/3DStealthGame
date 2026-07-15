@@ -36,6 +36,19 @@ public class ResultManager : MonoBehaviour
 	{
 
 		PlayMetrics.LogCurrent();
+		Debug.Log(
+	$"[ResultData] player={ResultData.playerName}, " +
+	$"room={ResultData.roomId}, " +
+	$"time={ResultData.elapsedTime:F2}, " +
+	$"missions={ResultData.missionCount}, " +
+	$"m1={ResultData.mission1Done}, " +
+	$"m2={ResultData.mission2Done}, " +
+	$"m3={ResultData.mission3Done}, " +
+	$"death={ResultData.deathCount}, " +
+	$"punch={ResultData.punchCount}, " +
+	$"chat={ResultData.chatCount}, " +
+	$"stamina={ResultData.staminaItemCount}"
+);
 		WebSocketClient wsClient = FindObjectOfType<WebSocketClient>();
 
 		if (wsClient != null)

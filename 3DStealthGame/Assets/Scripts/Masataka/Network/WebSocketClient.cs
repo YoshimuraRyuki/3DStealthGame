@@ -539,6 +539,8 @@ public class WebSocketClient : MonoBehaviour
 	private float timer = 0f;
 	private string playerName;
 
+	private string currentRoomId = "";
+
 	// 以前のスポーン調整用。今は保持のみ。
 	private Vector3 pendingSpawnPos = Vector3.zero;
 	private bool hasSpawnPos = false;
@@ -711,6 +713,7 @@ public class WebSocketClient : MonoBehaviour
 
 	public async void ConnectToRoom(string roomId)
 	{
+		currentRoomId = roomId;
 		if (websocket != null)
 		{
 			websocket.OnMessage -= OnMessageReceived;
@@ -1274,10 +1277,29 @@ public class WebSocketClient : MonoBehaviour
 
 		if (MissionManager.Instance != null)
 		{
-			ResultData.elapsedTime = MissionManager.Instance.GetElapsedSeconds();
-			ResultData.missionCount = MissionManager.Instance.GetClearedMissionCount();
+			ResultData.elapsedTime =
+				MissionManager.Instance.GetElapsedSeconds();
+
+			ResultData.missionCount =
+				MissionManager.Instance.GetClearedMissionCount();
+
+			ResultData.mission1Done =
+				MissionManager.Instance.Mission1Done;
+
+			ResultData.mission2Done =
+				MissionManager.Instance.Mission2Done;
+
+			ResultData.mission3Done =
+				MissionManager.Instance.Mission3Done;
 		}
+
 		ResultData.playerName = playerName;
+		ResultData.roomId = currentRoomId;
+
+		ResultData.deathCount = PlayMetrics.DeathCount;
+		ResultData.punchCount = PlayMetrics.PunchCount;
+		ResultData.chatCount = PlayMetrics.ChatCount;
+		ResultData.staminaItemCount = PlayMetrics.StaminaItemCount;
 		foreach (var obj in playerObjects.Values)
 		{
 			var nameTag = obj.GetComponentInChildren<NameTag>();
@@ -1296,10 +1318,29 @@ public class WebSocketClient : MonoBehaviour
 		var msg_dummy = new GoalMessage();
 		if (MissionManager.Instance != null)
 		{
-			ResultData.elapsedTime = MissionManager.Instance.GetElapsedSeconds();
-			ResultData.missionCount = MissionManager.Instance.GetClearedMissionCount();
+			ResultData.elapsedTime =
+				MissionManager.Instance.GetElapsedSeconds();
+
+			ResultData.missionCount =
+				MissionManager.Instance.GetClearedMissionCount();
+
+			ResultData.mission1Done =
+				MissionManager.Instance.Mission1Done;
+
+			ResultData.mission2Done =
+				MissionManager.Instance.Mission2Done;
+
+			ResultData.mission3Done =
+				MissionManager.Instance.Mission3Done;
 		}
+
 		ResultData.playerName = playerName;
+		ResultData.roomId = currentRoomId;
+
+		ResultData.deathCount = PlayMetrics.DeathCount;
+		ResultData.punchCount = PlayMetrics.PunchCount;
+		ResultData.chatCount = PlayMetrics.ChatCount;
+		ResultData.staminaItemCount = PlayMetrics.StaminaItemCount;
 		foreach (var obj in playerObjects.Values)
 		{
 			var nameTag = obj.GetComponentInChildren<NameTag>();
