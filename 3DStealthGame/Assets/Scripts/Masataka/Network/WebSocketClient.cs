@@ -271,6 +271,15 @@ public class ReadySendMessage
 	public string type = "ready";
 	public PositionData position;
 }
+
+[System.Serializable]
+public class StaminaStateMessage
+{
+	public string type;
+	public string sender_id;
+	public int current;
+	public int max;
+}
 #endregion
 
 /// <summary>
@@ -489,6 +498,17 @@ public static class SendMessageBuilder
 
 		return JsonUtility.ToJson(data);
 	}
+
+	public static string StaminaState(string senderId, int current, int max)
+	{
+		return JsonUtility.ToJson(new StaminaStateMessage
+		{
+			type = "stamina_state",
+			sender_id = senderId,
+			current = current,
+			max = max
+		});
+	}
 }
 
 /// <summary>
@@ -557,6 +577,14 @@ public class WebSocketClient : MonoBehaviour
 	private int _connectGeneration = 0;
 
 	private bool _remoteRespawnSent = false;
+
+	private int _remoteCurrentStamina = 10;
+	private int _remoteMaxStamina = 10;
+
+	public bool CanRemoteRecoverStamina()
+	{
+		return _remoteCurrentStamina < _remoteMaxStamina;
+	}
 
 	#endregion
 
@@ -985,6 +1013,10 @@ public class WebSocketClient : MonoBehaviour
 				HandleEnemyFoundMessage(json);
 				break;
 
+			case "stamina_state":
+				HandleStaminaStateMessage(json);
+				break;
+
 			default:
 				Debug.LogWarning($"未対応のメッセージtype: {type}\njson: {json}");
 				break;
@@ -1048,6 +1080,17 @@ public class WebSocketClient : MonoBehaviour
 		{
 			roomMemberPanel.SetReady(msg.id, true);
 		}
+	}
+
+	private void HandleStaminaStateMessage(string json)
+	{
+		var msg = JsonUtility.FromJson<StaminaStateMessage>(json);
+		if (msg.sender_id == myId) return;
+
+		_remoteCurrentStamina = msg.current;
+		_remoteMaxStamina = msg.max;
+
+		Debug.Log($"[RemoteStamina] current={_remoteCurrentStamina}/{_remoteMaxStamina}");
 	}
 
 
@@ -1724,6 +1767,12 @@ public class WebSocketClient : MonoBehaviour
 		StartCoroutine(ResetRemoteRespawnFlagAfterDelay());
 	}
 
+	public async void SendStaminaState(int current, int max)
+	{
+		if (websocket == null || websocket.State != WebSocketState.Open) return;
+
+		await websocket.SendText(SendMessageBuilder.StaminaState(myId, current, max));
+	}
 
 	private IEnumerator ResetRemoteRespawnFlagAfterDelay()
 	{
