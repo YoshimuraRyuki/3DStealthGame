@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 /// <summary>
 /// 自分と相手の両方がゴール内にいる場合のみ、サーバーへゴール通知する。
-/// 全員ゴールしたかどうかはサーバー側で最終判定する。
+/// 1人だけゴール内にいる場合は待機ログを表示する。
 /// </summary>
 public class GoalScript : MonoBehaviour
 {
@@ -11,6 +11,7 @@ public class GoalScript : MonoBehaviour
 
 	private WebSocketClient _wsClient;
 	private bool _hasSentGoal = false;
+	private bool _isShowingWaitingLog = false;
 
 	private readonly HashSet<GameObject> _playersInGoal = new HashSet<GameObject>();
 
@@ -30,6 +31,7 @@ public class GoalScript : MonoBehaviour
 
 		_playersInGoal.Add(player);
 
+		UpdateWaitingLog();
 		TrySendGoal();
 	}
 
@@ -40,6 +42,7 @@ public class GoalScript : MonoBehaviour
 
 		_playersInGoal.Add(player);
 
+		UpdateWaitingLog();
 		TrySendGoal();
 	}
 
@@ -49,6 +52,8 @@ public class GoalScript : MonoBehaviour
 		if (player == null) return;
 
 		_playersInGoal.Remove(player);
+
+		UpdateWaitingLog();
 	}
 
 	#endregion
@@ -89,9 +94,63 @@ public class GoalScript : MonoBehaviour
 
 		_hasSentGoal = true;
 
+		LogManager.Instance?.StopWaitingLog();
+
 		MissionManager.Instance?.OnGoal();
 		_wsClient.SendGoal();
 
+		Debug.Log("[GoalScript] 2人がゴール内にいるため、ゴール通知を送信しました");
+	}
+
+	private void UpdateWaitingLog()
+	{
+		if (_hasSentGoal) return;
+
+		if (_wsClient == null)
+		{
+			_wsClient = FindObjectOfType<WebSocketClient>();
+		}
+
+		if (_wsClient == null || _wsClient.myPlayer == null) return;
+
+		bool myPlayerInGoal = _playersInGoal.Contains(_wsClient.myPlayer);
+		bool someoneInGoal = false;
+
+		foreach (GameObject player in _playersInGoal)
+		{
+			if (player == null) continue;
+
+			if (player != _wsClient.myPlayer)
+			{
+				someoneInGoal = true;
+				break;
+			}
+		}
+
+		if (myPlayerInGoal && !someoneInGoal)
+		{
+			if (!_isShowingWaitingLog)
+			{
+				LogManager.Instance?.AddWaitingLog("ゴール地点で味方を待っています", "#aadd44");
+				_isShowingWaitingLog = true;
+			}
+		}
+		else if (!myPlayerInGoal && someoneInGoal)
+		{
+			if (!_isShowingWaitingLog)
+			{
+				LogManager.Instance?.AddWaitingLog("味方がゴール地点で待っています", "#aadd44");
+				_isShowingWaitingLog = true;
+			}
+		}
+		else
+		{
+			if (_isShowingWaitingLog)
+			{
+				LogManager.Instance?.StopWaitingLog();
+				_isShowingWaitingLog = false;
+			}
+		}
 	}
 
 	private GameObject GetPlayerObject(Collider other)
