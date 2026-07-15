@@ -269,7 +269,6 @@ public class PlayerController : MonoBehaviour
 	public void EndMove()
 	{
 		isPlayerMoveStop = false;
-        Am.SetTrigger("Idle");
     }
 
 	#endregion

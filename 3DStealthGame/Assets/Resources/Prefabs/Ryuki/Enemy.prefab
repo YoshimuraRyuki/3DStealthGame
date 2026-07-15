@@ -774,6 +774,9 @@ MonoBehaviour:
   alertCount: 3
   currentAlertCount: 0
   lostPlayerTime: 2
+  visionMask:
+    serializedVersion: 2
+    m_Bits: 520
   player: {fileID: 2072795091767466297, guid: da99b9dbceb22af41884bfc73e3a87a0, type: 3}
   hearingRange: 10
   alertDuration: 2
