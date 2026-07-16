@@ -113,6 +113,7 @@ public class SwitchManager : MonoBehaviour
 		isEndAction = true;
 		if (actionText != null) actionText.gameObject.SetActive(false);
 		_stunSent = true; // ƒtƒ‰ƒO‚ð—§‚Ä‚é
+		PlayMetrics.AddPunch();
 		currentStanTime = 0f;
 
 		var wsClient2 = FindObjectOfType<WebSocketClient>();

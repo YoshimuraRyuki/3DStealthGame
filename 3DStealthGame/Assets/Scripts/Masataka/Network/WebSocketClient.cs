@@ -280,6 +280,14 @@ public class StaminaStateMessage
 	public int current;
 	public int max;
 }
+
+[System.Serializable]
+public class StartGameMessage
+{
+	public string type;
+	public string session_id;
+}
+
 #endregion
 
 /// <summary>
@@ -559,6 +567,8 @@ public class WebSocketClient : MonoBehaviour
 	private float timer = 0f;
 	private string playerName;
 
+	private string currentRoomId = "";
+
 	// 以前のスポーン調整用。今は保持のみ。
 	private Vector3 pendingSpawnPos = Vector3.zero;
 	private bool hasSpawnPos = false;
@@ -578,7 +588,7 @@ public class WebSocketClient : MonoBehaviour
 
 	private bool _remoteRespawnSent = false;
 
-	private int _remoteCurrentStamina = 10;
+private int _remoteCurrentStamina = 10;
 	private int _remoteMaxStamina = 10;
 
 	public bool CanRemoteRecoverStamina()
@@ -586,7 +596,9 @@ public class WebSocketClient : MonoBehaviour
 		return _remoteCurrentStamina < _remoteMaxStamina;
 	}
 
-	#endregion
+	private string currentSessionId = "";
+
+#endregion
 
 	#region プレイヤー番号
 
@@ -739,6 +751,7 @@ public class WebSocketClient : MonoBehaviour
 
 	public async void ConnectToRoom(string roomId)
 	{
+		currentRoomId = roomId;
 		if (websocket != null)
 		{
 			websocket.OnMessage -= OnMessageReceived;
@@ -845,7 +858,7 @@ public class WebSocketClient : MonoBehaviour
 			switch (type)
 			{
 				case "start_game":
-					HandleStartGameMessage();
+					HandleStartGameMessage(json);
 					return;
 
 				case "init":
@@ -1002,7 +1015,7 @@ public class WebSocketClient : MonoBehaviour
 				break;
 
 			case "start_game":
-				HandleStartGameMessage();
+				HandleStartGameMessage(json);
 				break;
 
 			case "player_ready":
@@ -1098,8 +1111,19 @@ public class WebSocketClient : MonoBehaviour
 
 	#region ゲーム開始・プレイヤー同期
 
-	private void HandleStartGameMessage()
+	private void HandleStartGameMessage(string json)
 	{
+		Debug.Log($"[StartGame Raw] {json}");
+
+		StartGameMessage msg =
+			JsonUtility.FromJson<StartGameMessage>(json);
+
+		currentSessionId = msg.session_id;
+
+		Debug.Log(
+			$"[Session] session_id = {currentSessionId}"
+		);
+
 		if (SceneManager.GetActiveScene().name == "GameScene")
 		{
 			ProcessPendingMessages();
@@ -1298,11 +1322,11 @@ public class WebSocketClient : MonoBehaviour
 		if (msg.id == myId)
 		{
 			MissionManager.Instance?.OnGoal();
-			LogManager.Instance?.AddWaitingLog("ゴールした！相手を待っています", "#aadd44");
+		//	LogManager.Instance?.AddWaitingLog("ゴールした！相手を待っています", "#aadd44");
 		}
 		else
 		{
-			LogManager.Instance?.AddLog("味方がゴールした！早くゴールへ向かおう！", "#aadd44");
+		//	LogManager.Instance?.AddLog("味方がゴールした！早くゴールへ向かおう！", "#aadd44");
 		}
 	}
 
@@ -1310,6 +1334,7 @@ public class WebSocketClient : MonoBehaviour
 	private void HandleAllGoalMessage(string json)
 	{
 		SoundManager.Instance?.PlayClear();
+		var msg = JsonUtility.FromJson<GoalMessage>(json);
 		SoundManager.Instance?.StopBGM();
 		MissionManager.Instance?.StopTimer();
 		MissionManager.Instance?.ShowClearMessage();
@@ -1317,10 +1342,30 @@ public class WebSocketClient : MonoBehaviour
 
 		if (MissionManager.Instance != null)
 		{
-			ResultData.elapsedTime = MissionManager.Instance.GetElapsedSeconds();
-			ResultData.missionCount = MissionManager.Instance.GetClearedMissionCount();
+			ResultData.elapsedTime = msg.elapsed;
+
+			ResultData.missionCount =
+				MissionManager.Instance.GetClearedMissionCount();
+
+			ResultData.mission1Done =
+				MissionManager.Instance.Mission1Done;
+
+			ResultData.mission2Done =
+				MissionManager.Instance.Mission2Done;
+
+			ResultData.mission3Done =
+				MissionManager.Instance.Mission3Done;
 		}
+
 		ResultData.playerName = playerName;
+		ResultData.roomId = currentRoomId;
+		ResultData.sessionId = currentSessionId;
+
+		ResultData.deathCount = PlayMetrics.DeathCount;
+		ResultData.punchCount = PlayMetrics.PunchCount;
+		ResultData.chatCount = PlayMetrics.ChatCount;
+		ResultData.sneakTime = PlayMetrics.SneakTime;
+		ResultData.staminaItemCount = PlayMetrics.StaminaItemCount;
 		foreach (var obj in playerObjects.Values)
 		{
 			var nameTag = obj.GetComponentInChildren<NameTag>();
@@ -1339,10 +1384,29 @@ public class WebSocketClient : MonoBehaviour
 		var msg_dummy = new GoalMessage();
 		if (MissionManager.Instance != null)
 		{
-			ResultData.elapsedTime = MissionManager.Instance.GetElapsedSeconds();
-			ResultData.missionCount = MissionManager.Instance.GetClearedMissionCount();
+			ResultData.elapsedTime =
+				MissionManager.Instance.GetElapsedSeconds();
+
+			ResultData.missionCount =
+				MissionManager.Instance.GetClearedMissionCount();
+
+			ResultData.mission1Done =
+				MissionManager.Instance.Mission1Done;
+
+			ResultData.mission2Done =
+				MissionManager.Instance.Mission2Done;
+
+			ResultData.mission3Done =
+				MissionManager.Instance.Mission3Done;
 		}
+
 		ResultData.playerName = playerName;
+		ResultData.roomId = currentRoomId;
+
+		ResultData.deathCount = PlayMetrics.DeathCount;
+		ResultData.punchCount = PlayMetrics.PunchCount;
+		ResultData.chatCount = PlayMetrics.ChatCount;
+		ResultData.staminaItemCount = PlayMetrics.StaminaItemCount;
 		foreach (var obj in playerObjects.Values)
 		{
 			var nameTag = obj.GetComponentInChildren<NameTag>();

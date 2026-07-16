@@ -87,6 +87,7 @@
     <Compile Include="Assets\Scripts\Masataka\UI\NameInputManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\MissionManager.cs" />
     <Compile Include="Assets\Scripts\Ryuki\PowerItem.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Managers\PlayMetrics.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\SoundManager.cs" />
     <Compile Include="Assets\Scripts\Ryuki\EnemyManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\GoalManager.cs" />

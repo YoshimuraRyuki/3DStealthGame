@@ -106,6 +106,8 @@ public class MissionManager : MonoBehaviour
 		_timerRunning = true;
 		_isTimeUp = false;
 
+		PlayMetrics.Reset();
+
 		SoundManager.Instance?.PlayBGM();
 		RefreshUI();
 	}
