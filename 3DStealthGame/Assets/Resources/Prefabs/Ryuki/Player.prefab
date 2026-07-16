@@ -29,6 +29,18 @@ PrefabInstance:
       value: 9
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a8daa53897c0d4941b0ead0a083d5eb5, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.25
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a8daa53897c0d4941b0ead0a083d5eb5, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.25
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a8daa53897c0d4941b0ead0a083d5eb5, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.25
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a8daa53897c0d4941b0ead0a083d5eb5, type: 3}
       propertyPath: m_LocalPosition.x
       value: 3.181
       objectReference: {fileID: 0}
@@ -369,10 +381,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.3492942
-  m_Height: 1.8198377
+  m_Radius: 0.17549343
+  m_Height: 1.8198378
   m_Direction: 1
-  m_Center: {x: -0.027987003, y: 0.84922796, z: 0}
+  m_Center: {x: -0.029964065, y: 0.849228, z: 0.024547387}
 --- !u!54 &5465022859189727381
 Rigidbody:
   m_ObjectHideFlags: 0
