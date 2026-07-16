@@ -10,6 +10,7 @@ public static class PlayMetrics
 	public static int PunchCount { get; private set; }
 	public static int ChatCount { get; private set; }
 	public static int StaminaItemCount { get; private set; }
+	public static float SneakTime { get; private set; }
 
 	public static void Reset()
 	{
@@ -17,6 +18,7 @@ public static class PlayMetrics
 		PunchCount = 0;
 		ChatCount = 0;
 		StaminaItemCount = 0;
+		SneakTime = 0f;
 
 		Debug.Log("[PlayMetrics] 計測値をリセットしました");
 	}
@@ -45,13 +47,19 @@ public static class PlayMetrics
 		Debug.Log($"[PlayMetrics] stamina_item_count = {StaminaItemCount}");
 	}
 
+	public static void AddSneakTime(float deltaTime)
+	{
+		SneakTime += deltaTime;
+	}
+
 	public static void LogCurrent()
 	{
 		Debug.Log(
 			$"[PlayMetrics] death={DeathCount}, " +
 			$"punch={PunchCount}, " +
 			$"chat={ChatCount}, " +
-			$"stamina={StaminaItemCount}"
+			$"stamina={StaminaItemCount}, " +
+			$"sneak_time={SneakTime:F2}"
 		);
 	}
 }

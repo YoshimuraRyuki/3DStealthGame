@@ -37,18 +37,20 @@ public class ResultManager : MonoBehaviour
 
 		PlayMetrics.LogCurrent();
 		Debug.Log(
-	$"[ResultData] player={ResultData.playerName}, " +
-	$"room={ResultData.roomId}, " +
-	$"time={ResultData.elapsedTime:F2}, " +
-	$"missions={ResultData.missionCount}, " +
-	$"m1={ResultData.mission1Done}, " +
-	$"m2={ResultData.mission2Done}, " +
-	$"m3={ResultData.mission3Done}, " +
-	$"death={ResultData.deathCount}, " +
-	$"punch={ResultData.punchCount}, " +
-	$"chat={ResultData.chatCount}, " +
-	$"stamina={ResultData.staminaItemCount}"
-);
+		$"[ResultData] session={ResultData.sessionId}, " +
+		$"player={ResultData.playerName}, " +
+		$"room={ResultData.roomId}, " +
+		$"time={ResultData.elapsedTime:F2}, " +
+		$"missions={ResultData.missionCount}, " +
+		$"m1={ResultData.mission1Done}, " +
+		$"m2={ResultData.mission2Done}, " +
+		$"m3={ResultData.mission3Done}, " +
+		$"death={ResultData.deathCount}, " +
+		$"punch={ResultData.punchCount}, " +
+		$"chat={ResultData.chatCount}, " +
+		$"stamina={ResultData.staminaItemCount}, " +
+		$"sneak={ResultData.sneakTime:F2}"
+	);
 		WebSocketClient wsClient = FindObjectOfType<WebSocketClient>();
 
 		if (wsClient != null)
@@ -69,6 +71,7 @@ public class ResultManager : MonoBehaviour
 		gradeText.text = grade;
 
 		StartCoroutine(PostAndFetchRanking());
+		StartCoroutine(PostPlayResult());
 	}
 
 	#endregion
@@ -176,6 +179,78 @@ public class ResultManager : MonoBehaviour
 		}
 	}
 
+	IEnumerator PostPlayResult()
+	{
+		if (string.IsNullOrEmpty(ResultData.sessionId))
+		{
+			Debug.LogWarning("[PlayResult] session_id が空のため送信を中止しました");
+			yield break;
+		}
+
+		var data = new PlayResultRequest
+		{
+			session_id = ResultData.sessionId,
+			name = ResultData.playerName,
+			clear_time = ResultData.elapsedTime,
+			mission_count = ResultData.missionCount,
+
+			mission1_done = ResultData.mission1Done,
+			mission2_done = ResultData.mission2Done,
+			mission3_done = ResultData.mission3Done,
+
+			death_count = ResultData.deathCount,
+			punch_count = ResultData.punchCount,
+			chat_count = ResultData.chatCount,
+			stamina_item_count = ResultData.staminaItemCount,
+			sneak_time = ResultData.sneakTime,
+
+			room_id = ResultData.roomId
+		};
+
+		string json = JsonUtility.ToJson(data);
+
+		Debug.Log($"[PlayResult送信] {json}");
+
+		using (UnityWebRequest req =
+			new UnityWebRequest($"{serverBaseUrl}/play-result", "POST"))
+		{
+			byte[] bodyRaw =
+				System.Text.Encoding.UTF8.GetBytes(json);
+
+			req.uploadHandler =
+				new UploadHandlerRaw(bodyRaw);
+
+			req.downloadHandler =
+				new DownloadHandlerBuffer();
+
+			req.SetRequestHeader(
+				"Content-Type",
+				"application/json"
+			);
+
+			req.SetRequestHeader(
+				"ngrok-skip-browser-warning",
+				"true"
+			);
+
+			yield return req.SendWebRequest();
+
+			if (req.result == UnityWebRequest.Result.Success)
+			{
+				Debug.Log(
+					$"[PlayResult送信成功] {req.downloadHandler.text}"
+				);
+			}
+			else
+			{
+				Debug.LogError(
+					$"[PlayResult送信失敗] {req.responseCode} {req.error}\n" +
+					req.downloadHandler.text
+				);
+			}
+		}
+	}
+
 	/// <summary>
 	/// 取得したランキングデータをUIに反映する。
 	/// 順位番号はUI側で表示しているため、ここでは名前・ミッション数・秒数・評価だけ表示する。
@@ -256,4 +331,25 @@ public class RankingItem
 public class RankingResponse
 {
 	public RankingItem[] rankings;
+}
+
+[System.Serializable]
+public class PlayResultRequest
+{
+	public string session_id;
+	public string name;
+	public float clear_time;
+	public int mission_count;
+
+	public bool mission1_done;
+	public bool mission2_done;
+	public bool mission3_done;
+
+	public int death_count;
+	public int punch_count;
+	public int chat_count;
+	public int stamina_item_count;
+	public float sneak_time;
+
+	public string room_id;
 }
