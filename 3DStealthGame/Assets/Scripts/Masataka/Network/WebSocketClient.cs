@@ -534,6 +534,10 @@ public class WebSocketClient : MonoBehaviour
 	public Material localPlayerMaterial;  // Player1
 	public Material remotePlayerMaterial; // Player2
 
+	[Header("プレイヤーアウトライン")]
+	[SerializeField] private Material localPlayerOutlineMaterial;
+	[SerializeField] private Material remotePlayerOutlineMaterial;
+
 	public RoomMemberPanel roomMemberPanel;
 
 	public string ngrokUrl = "https://rice-washer-suitcase.ngrok-free.dev";
@@ -1169,9 +1173,15 @@ private int _remoteCurrentStamina = 10;
 		}
 
 		if (IsHostPlayer())
+		{
 			myPlayer.GetComponentInChildren<Renderer>().material = localPlayerMaterial;
+			AddOutlineMaterial(myPlayer, localPlayerOutlineMaterial);
+		}
 		else
+		{
 			myPlayer.GetComponentInChildren<Renderer>().material = remotePlayerMaterial;
+			AddOutlineMaterial(myPlayer, remotePlayerOutlineMaterial);
+		}
 
 		var elementGenerator = FindObjectOfType<ElementGenerator>();
 		if (elementGenerator != null) elementGenerator.SetRemotePlayerTransform(myPlayer.transform);
@@ -1916,6 +1926,24 @@ private int _remoteCurrentStamina = 10;
 
 	#region プレイヤー生成・削除
 
+	private void AddOutlineMaterial(GameObject playerObj, Material outlineMaterial)
+	{
+		if (playerObj == null || outlineMaterial == null) return;
+
+		var renderers = playerObj.GetComponentsInChildren<Renderer>();
+
+		foreach (var renderer in renderers)
+		{
+			var materials = new List<Material>(renderer.materials);
+
+			if (!materials.Contains(outlineMaterial))
+			{
+				materials.Add(outlineMaterial);
+				renderer.materials = materials.ToArray();
+			}
+		}
+	}
+
 	private void SpawnRemotePlayer(PlayerData player)
 	{
 		//Debug.Log($"SpawnRemotePlayer: id={player.id}, player_number={player.player_number}");
@@ -1923,10 +1951,17 @@ private int _remoteCurrentStamina = 10;
 
 		GameObject newPlayer = Instantiate(playerPrefab);
 		newPlayer.tag = "Player" + player.player_number;
+
 		if (player.player_number == 1)
+		{
 			newPlayer.GetComponentInChildren<Renderer>().material = localPlayerMaterial;
+			AddOutlineMaterial(newPlayer, localPlayerOutlineMaterial);
+		}
 		else
+		{
 			newPlayer.GetComponentInChildren<Renderer>().material = remotePlayerMaterial;
+			AddOutlineMaterial(newPlayer, remotePlayerOutlineMaterial);
+		}
 
 		AudioListener remoteListener = newPlayer.GetComponent<AudioListener>();
 		if (remoteListener != null) Destroy(remoteListener);

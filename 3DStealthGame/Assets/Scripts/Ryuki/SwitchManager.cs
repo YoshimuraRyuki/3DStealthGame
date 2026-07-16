@@ -369,11 +369,40 @@ public class SwitchManager : MonoBehaviour
 		isPressed = true;
 	}
 
+
+	private void ForceCancelEnemyStun()
+	{
+		if (!CompareTag("Enemy")) return;
+
+		if (!_stunSent && !isEnemyMoveStop) return;
+
+		isEnemyMoveStop = false;
+		currentStanTime = 0f;
+		isActionEnemy = false;
+		isEndAction = false;
+		_stunSent = false;
+
+		if (enemy != null)
+		{
+			enemy.StunCancel();
+		}
+
+		var wsClient = FindObjectOfType<WebSocketClient>();
+		if (wsClient != null)
+		{
+			wsClient.SendEnemyStunCancel(targetEnemyID);
+		}
+
+		Debug.Log($"[SwitchManager] リスポーンにより敵スタンを強制解除 enemyID={targetEnemyID}");
+	}
+
 	/// <summary>
 	/// リスポーン時にアクション状態をリセットする
 	/// </summary>
 	public void ResetActionState()
 	{
+		ForceCancelEnemyStun();
+
 		isActionSwitch = false;
 		isActionEnemy = false;
 
