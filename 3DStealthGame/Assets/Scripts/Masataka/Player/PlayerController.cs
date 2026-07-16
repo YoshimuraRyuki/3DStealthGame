@@ -95,7 +95,14 @@ public class PlayerController : MonoBehaviour
 	void Update()
 	{
 		if (!isLocalPlayer) return;
+
 		CaptureInput();
+
+		// スニークしながら実際に移動している時間を計測
+		if (isSneaking && _moveInput.sqrMagnitude > 0.01f)
+		{
+			PlayMetrics.AddSneakTime(Time.deltaTime);
+		}
 
 		if (_rb.velocity.magnitude > 0.1f && !isSneaking)
 			SoundManager.Instance?.StartWalk();
@@ -375,6 +382,8 @@ public class PlayerController : MonoBehaviour
 
 		if (sendToServer)
 		{
+			PlayMetrics.AddDeath();
+
 			var wsClient = FindObjectOfType<WebSocketClient>();
 			if (wsClient != null) wsClient.SendRespawn(transform.position);
 		}

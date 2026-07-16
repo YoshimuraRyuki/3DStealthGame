@@ -986,7 +986,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c6eb42831ef65f4498e7b656b9dfa99, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  offset: {x: 0, y: 15, z: -5}
+  offset: {x: 0, y: 12.5, z: -4.5}
 --- !u!81 &474341062
 AudioListener:
   m_ObjectHideFlags: 0
@@ -1538,6 +1538,8 @@ MonoBehaviour:
   serverUrl: ws://192.168.56.102:8080/ws?room_id=test&name=Player1
   localPlayerMaterial: {fileID: 2100000, guid: ee888926889adaa4099cc5a20cc33687, type: 2}
   remotePlayerMaterial: {fileID: 2100000, guid: 683caeb4f88236c4d99b770c365b7bc5, type: 2}
+  localPlayerOutlineMaterial: {fileID: 2100000, guid: 73cd42c02c66f754a88112904fdc2f87, type: 2}
+  remotePlayerOutlineMaterial: {fileID: 2100000, guid: 6fa3189ede2e371429750ead9a709886, type: 2}
   roomMemberPanel: {fileID: 1019032279}
   ngrokUrl: https://rice-washer-suitcase.ngrok-free.dev
   serverMode: 1
