@@ -257,15 +257,19 @@ public class SwitchManager : MonoBehaviour
 	public void OpenGimmickWall(int targetID)
 	{
 		// 指定されたIDの壁が存在するかチェック
-		if (Eg.gimmickWallDic.ContainsKey(targetID))
+		if (Eg.gimmickWallPosDic.ContainsKey(targetID))
 		{
+		
+            foreach (Vector2Int pos in Eg.gimmickWallPosDic[targetID])
+            {
+                Eg.ChangeRoadColor(pos.x, pos.y);
+            }
 			foreach (GameObject wall in Eg.gimmickWallDic[targetID])
 			{
-				// オブジェクトごと破壊する場合
 				Destroy(wall);
 			}
-			Eg.gimmickWallDic.Remove(targetID);
-		}
+			Eg.gimmickWallPosDic.Remove(targetID);
+        }
 	}
 
 	#endregion
