@@ -18,7 +18,9 @@ public class ElementGenerator : MonoBehaviour
     readonly Color PLAYER1_COLOR = new Color(0, 0.5f, 1, 1);        // 青（ホスト）
     readonly Color PLAYER2_COLOR = new Color(0, 1, 0.3f, 1);        // 緑（ゲスト）
     readonly Color ENEMY_COLOR = new Color(1, 0, 0, 0.5f);          // 敵の色
-    
+    readonly Color WALLBLUE_COLOR = new Color(0, 0.5f, 1, 1);       // 青用壁
+    readonly Color WALLGREEN_COLOR = new Color(0, 1, 0.3f, 1);      // 緑用壁
+
     #endregion
 
     #region リソース格納用
@@ -43,6 +45,8 @@ public class ElementGenerator : MonoBehaviour
     Sprite itemIcon;                                                // アイテムアイコン
     Sprite greenItemIcon;                                           // 緑用アイテムアイコン
     Sprite blueItemIcon;                                            // 青用アイテムアイコン
+    Sprite wallBlueIcon;                                            // 青用壁アイコン
+    Sprite wallGreenIcon;                                           // 青用壁アイコン
 
     #endregion
 
@@ -76,6 +80,7 @@ public class ElementGenerator : MonoBehaviour
     }
     // メンバ変数として追加
     public Dictionary<int, List<GameObject>> gimmickWallDic = new Dictionary<int, List<GameObject>>();
+    public Dictionary<int, List<Vector2Int>> gimmickWallPosDic = new Dictionary<int, List<Vector2Int>>();
     [SerializeField] private Material transparentRedMaterial;   // 半透明な壁マテリアル
     [SerializeField] private Material transparentBlueMaterial;  // 半透明な壁マテリアル
     [SerializeField] private Material transparentGreenMaterial; // 半透明な壁マテリアル
@@ -150,6 +155,8 @@ public class ElementGenerator : MonoBehaviour
     List<GameObject> activeSwitches = new List<GameObject>();             // スイッチ
     public List<GameObject> activeGreenItems = new List<GameObject>();    // 緑用アイテム
     public List<GameObject> activeBlueItems = new List<GameObject>();     // 青用アイテム
+    public List<GameObject> activeGreenWalls = new List<GameObject>();    // 緑壁
+    public List<GameObject> activeBlueWalls = new List<GameObject>();     // 青壁
 
     #endregion
 
@@ -222,6 +229,8 @@ public class ElementGenerator : MonoBehaviour
         itemIcon = Resources.Load<Sprite>("Images/Ryuki/IconItem");
         greenItemIcon = Resources.Load<Sprite>("Images/Ryuki/GreenItem");
         blueItemIcon = Resources.Load<Sprite>("Images/Ryuki/BlueItem");
+        wallBlueIcon = Resources.Load<Sprite>("Images/Ryuki/青壁");
+        wallGreenIcon = Resources.Load<Sprite>("Images/Ryuki/緑壁");
         
         // スイッチ
         switchesList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Switch");
@@ -340,27 +349,74 @@ public class ElementGenerator : MonoBehaviour
     /// <param name="parent"></param>
     void CreateWallBlock(int startX, int endX, int y, GameObject parent, string wallType, int wallID)
     {
+        // 青壁・緑壁だけ1マスずつ生成
+        if (wallType == "17" || wallType == "18")
+        {
+            for (int x = startX; x <= endX; x++)
+            {
+                GameObject cube = Instantiate(wallObjects);
+
+                cube.transform.parent = parent.transform;
+                cube.transform.localScale = new Vector3(3f, 4f, 1);
+                cube.transform.position = new Vector3(x, 2f, y);
+
+                MeshRenderer renderer = cube.GetComponent<MeshRenderer>();
+                if (renderer != null)
+                {
+                    if (wallType == "17")
+                    {
+                        renderer.material = transparentBlueMaterial;
+                        activeBlueWalls.Add(cube);
+                    }
+                    else if (wallType == "18")
+                    {
+                        renderer.material = transparentGreenMaterial;
+                        activeGreenWalls.Add(cube);
+
+                    }
+                }
+
+                cube.AddComponent<WallCollision>();
+
+                if (wallID != -1)
+                {
+                    if (!gimmickWallDic.ContainsKey(wallID))
+                        gimmickWallDic[wallID] = new List<GameObject>();
+
+                    if (!gimmickWallPosDic.ContainsKey(wallID))
+                        gimmickWallPosDic[wallID] = new List<Vector2Int>();
+
+                    gimmickWallDic[wallID].Add(cube);
+                    gimmickWallPosDic[wallID].Add(new Vector2Int(x, y));
+                }
+
+                var col = cube.GetComponent<Collider>();
+                if (col != null)
+                    col.enabled = enableWallCollider;
+            }
+
+            return;
+        }
+
         int length = endX - startX + 1;
 
-        GameObject cube = Instantiate(wallObjects);
+        GameObject cube2 = Instantiate(wallObjects);
 
-        cube.transform.parent = parent.transform;
-        cube.transform.localScale = new Vector3(length, 4f, 1);
+        cube2.transform.parent = parent.transform;
+        cube2.transform.localScale = new Vector3(length, 4f, 1);
 
         float centerX = startX + (length / 2f) - 0.5f;
-        cube.transform.position = new Vector3(centerX, 2f, y);
+        cube2.transform.position = new Vector3(centerX, 2f, y);
 
-        if (wallType == "12" || wallType == "17" || wallType == "18")
+        if (wallType == "12")
         {
-            MeshRenderer renderer = cube.GetComponent<MeshRenderer>();
+            MeshRenderer renderer = cube2.GetComponent<MeshRenderer>();
             if (renderer != null)
             {
-                if(wallType == "12") renderer.material = transparentRedMaterial;
-                if(wallType == "17") renderer.material = transparentBlueMaterial;
-                if(wallType == "18") renderer.material = transparentGreenMaterial;
+               renderer.material = transparentRedMaterial;
             }
             // 透明壁の通知用スクリプト
-            cube.AddComponent<WallCollision>();
+            cube2.AddComponent<WallCollision>();
 
             // IDが設定されている場合のみ辞書に登録
             if (wallID != -1)
@@ -369,15 +425,26 @@ public class ElementGenerator : MonoBehaviour
                 {
                     gimmickWallDic[wallID] = new List<GameObject>();
                 }
-                gimmickWallDic[wallID].Add(cube);
+
+                if (!gimmickWallPosDic.ContainsKey(wallID))
+                {
+                    gimmickWallPosDic[wallID] = new List<Vector2Int>();
+                }
+
+                gimmickWallDic[wallID].Add(cube2);
+
+                for (int x = startX; x <= endX; x++)
+                {
+                    gimmickWallPosDic[wallID].Add(new Vector2Int(x, y));
+                }
             }
         }
 
         // デバック用：コライダーON/OFF切り替え
-        var col = cube.GetComponent<Collider>();
-        if (col != null)
+        var col2 = cube2.GetComponent<Collider>();
+        if (col2 != null)
         {
-            col.enabled = enableWallCollider;
+            col2.enabled = enableWallCollider;
         }
     }
 
@@ -611,8 +678,9 @@ public class ElementGenerator : MonoBehaviour
                 if (cellType == "0") index = 0;
                 else if (cellType == "1") index = 1;
                 else if (cellType == "2" || cellType == "12") index = 2;
+                else if (cellType == "17" || cellType == "18") index = 1;
 
-                objMapExist[i, j] = Instantiate(mapTilesList[index]);
+                    objMapExist[i, j] = Instantiate(mapTilesList[index]);
 
                 // Map2D直下に階層を移動
                 objMapExist[i, j].transform.SetParent(objMap2D.transform, false);
@@ -635,6 +703,14 @@ public class ElementGenerator : MonoBehaviour
                     objMapExist[i, j].GetComponent<Image>().color = ENEMY_COLOR;
                 }
                 else if (cellType == "12")
+                {
+                    objMapExist[i, j].GetComponent<Image>().color = AISLE_COLOR;
+                }
+                else if (cellType == "17")
+                {
+                    objMapExist[i, j].GetComponent<Image>().color = AISLE_COLOR;
+                }
+                else if (cellType == "18")
                 {
                     objMapExist[i, j].GetComponent<Image>().color = AISLE_COLOR;
                 }
@@ -686,7 +762,7 @@ public class ElementGenerator : MonoBehaviour
      GameObject[,] mapExist,
      RectTransform targetRect,
      RectTransform maskRect,
-     Color playerColor) // ←追加
+     Color playerColor)
     {
         if (mapExist == null || target == null) return;
 
@@ -701,7 +777,7 @@ public class ElementGenerator : MonoBehaviour
                 string cellData = map[oldX, oldY];
                 string tileType = string.IsNullOrEmpty(cellData) ? "" : cellData.Split('_')[0];
                 if (tileType == "1") oldImg.color = ROOM_COLOR;
-                else if (tileType == "2" || tileType == "12") oldImg.color = AISLE_COLOR;
+                else if (tileType == "2" || tileType == "12" ) oldImg.color = AISLE_COLOR;
                 else oldImg.color = ROOM_COLOR;
             }
 
@@ -825,6 +901,8 @@ public class ElementGenerator : MonoBehaviour
 		UpdateItemMiniMap();                                                     // アイテム
         UpdateGoalMiniMap();                                                     // ゴール
         UpdateSwitchMiniMap();                                                   // スイッチ
+        UpdateGreenWallMiniMap();
+        UpdateBlueWallMiniMap();
 
         // 色別でプレイヤーのアイテムを表示
         var wsClient = FindObjectOfType<WebSocketClient>();
@@ -987,6 +1065,76 @@ public class ElementGenerator : MonoBehaviour
                 print("削除実行");
             }
         }
+    }
+
+
+    void UpdateGreenWallMiniMap()
+    {
+        if (activeGreenWalls == null) return;
+
+        // 全アイテム更新
+        foreach (GameObject Obj in activeGreenWalls)
+        {
+            if (Obj == null) continue;
+
+            Vector3 pos = Obj.transform.position;
+
+            int objX = Mathf.RoundToInt(pos.x);
+            int objY = Mathf.RoundToInt(pos.z);
+
+            if (IsInsideMap(objX, objY, objMapExist))
+            {
+                SetMiniMapIcon(objMapExist[objX, objY], wallGreenIcon, ROOM_COLOR);
+            }
+        }
+    }
+
+    void UpdateBlueWallMiniMap()
+    {
+        if (activeBlueWalls == null) return;
+
+        // 全アイテム更新
+        foreach (GameObject Obj in activeBlueWalls)
+        {
+            if (Obj == null) continue;
+
+            Vector3 pos = Obj.transform.position;
+
+            int objX = Mathf.RoundToInt(pos.x);
+            int objY = Mathf.RoundToInt(pos.z);
+
+            if (IsInsideMap(objX, objY, objMapExist))
+            {
+                SetMiniMapIcon(objMapExist[objX, objY], wallBlueIcon, ROOM_COLOR);
+            }
+        }
+    }
+
+    public void ChangeRoadColor(int x, int y)
+    {
+        Debug.Log($"ChangeRoadColor : {x},{y}");
+        Debug.Log(map[x, y]);
+        //map[x, y] = "2";
+
+        Transform icon = objMapExist[x, y].transform.Find("MiniMapIcon");
+        if (icon != null)
+        {
+            Destroy(icon.gameObject);
+            print("削除します。");
+        }
+        //else
+        //{
+        //    print("nullです");
+        //}
+
+        //if (objMapExist[x, y] != null)
+        //{
+        //    Image img = objMapExist[x, y].GetComponent<Image>();
+        //    img.sprite = null;
+        //    img.color = AISLE_COLOR;
+        //    print("色を変えます");
+        //}
+
     }
 
     void UpdateGoalMiniMap()
@@ -1346,7 +1494,6 @@ public class ElementGenerator : MonoBehaviour
             case "2":
                 img.color = AISLE_COLOR;
                 break;
-
             case "3":
                 img.color = PLAYER1_COLOR;
                 break;
@@ -1354,6 +1501,12 @@ public class ElementGenerator : MonoBehaviour
                 img.color = PLAYER2_COLOR;
                 break;
             case "12":
+                img.color = AISLE_COLOR;
+                break;
+            case "17":
+                img.color = AISLE_COLOR;
+                break;
+            case "18":
                 img.color = AISLE_COLOR;
                 break;
         }
