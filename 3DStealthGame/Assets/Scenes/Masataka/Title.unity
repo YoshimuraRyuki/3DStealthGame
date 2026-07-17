@@ -988,6 +988,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   offset: {x: 0, y: 12.5, z: -4.5}
   actionOffset: {x: 0, y: 10, z: -3}
+  moveSpeed: 8
 --- !u!81 &474341062
 AudioListener:
   m_ObjectHideFlags: 0
@@ -1543,7 +1544,7 @@ MonoBehaviour:
   remotePlayerOutlineMaterial: {fileID: 2100000, guid: 6fa3189ede2e371429750ead9a709886, type: 2}
   roomMemberPanel: {fileID: 1019032279}
   ngrokUrl: https://rice-washer-suitcase.ngrok-free.dev
-  serverMode: 2
+  serverMode: 1
   myId: 
   myPlayerNumber: 0
 --- !u!1 &777864025

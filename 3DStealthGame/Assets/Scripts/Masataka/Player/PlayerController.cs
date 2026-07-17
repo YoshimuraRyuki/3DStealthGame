@@ -228,7 +228,7 @@ public class PlayerController : MonoBehaviour
 	{
 		if (isAction) return;
 		//isAction = true;
-		Ca.ActionCameraTrue();
+		//Ca.ActionCameraTrue();
 		Am.SetTrigger("PunchEnemy");
 		lastTrigger = "PunchEnemy";
 	}
@@ -342,11 +342,12 @@ public class PlayerController : MonoBehaviour
 		Am.SetBool("Sneak", false);
 		//Am.SetTrigger("Idle");
 
-		if (sendToServer && StaminaManager.Instance != null)
-		{
+		if(isLocalPlayer && StaminaManager.Instance != null)
+{
 			if (StaminaManager.Instance.GetCurrentStamina() <= 4)
 			{
 				StaminaManager.Instance.SetStamina(5);
+				LogManager.Instance?.AddLog("スタミナが5に戻った", "#88ccff");
 			}
 		}
 

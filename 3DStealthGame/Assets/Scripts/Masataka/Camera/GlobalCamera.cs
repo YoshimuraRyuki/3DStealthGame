@@ -1,87 +1,76 @@
 ﻿using UnityEngine;
-using UnityEngine.UIElements;
 
 /// <summary>
-/// プレイヤーを追いかけるカメラ。
-/// プレイヤーは後から生成されるため、外部から追従対象を設定できるようにしている。
+/// GameScene専用カメラ。
+/// プレイヤーをなめらかに追従する。
 /// </summary>
 public class GlobalCamera : MonoBehaviour
 {
-	#region フィールド
-
 	public static GlobalCamera Instance;
 
-	[SerializeField] private Vector3 offset = new Vector3(0, 15, -5);
-	[SerializeField] private Vector3 actionOffset = new Vector3(0, 10, -5);
+	[SerializeField] private Vector3 offset = new Vector3(0, 10, -3.5f);
+	[SerializeField] private Vector3 actionOffset = new Vector3(0, 8.5f, -3f);
+
+	[SerializeField] private float smoothTime = 0.08f;
+	[SerializeField] private float offsetChangeSpeed = 8f;
 
 	private Transform _target;
+	private Vector3 _velocity;
+	private Vector3 _currentOffset;
 
-	[SerializeField] float moveSpeed = 8f;
-	bool isActionCamera = false;
+	private bool isActionCamera = false;
 
-    #endregion
-
-    #region カメラ移動処理
-
-    /// <summary>
-    /// プレイヤーの行動に合わせてカメラをズームインする処理
-    /// </summary>
-    public void ActionCameraTrue()
+	private void Awake()
 	{
-		isActionCamera = true;
-    }
-
-    public void ActionCameraFalse()
-    {
-        isActionCamera = false;
-    }
-
-    #endregion
-
-    #region Unityイベント
-
-    private void Awake()
-	{
-		if (Instance != null && Instance != this)
-		{
-			Destroy(gameObject);
-			return;
-		}
-
 		Instance = this;
-		DontDestroyOnLoad(gameObject);
+		_currentOffset = offset;
 	}
 
 	private void Start()
 	{
 		transform.rotation = Quaternion.Euler(75, 0, 0);
-
-		if (_target == null)
-		{
-			var player = GameObject.FindWithTag("Player1");
-			if (player != null)
-			{
-				SetTarget(player.transform);
-			}
-		}
 	}
 
 	private void LateUpdate()
 	{
 		if (_target == null) return;
 
-        Vector3 targetPos = _target.position + (isActionCamera ? actionOffset : offset);
-        transform.position = Vector3.Lerp(transform.position, targetPos, moveSpeed * Time.deltaTime);
-    }
+		Vector3 targetOffset = isActionCamera ? actionOffset : offset;
 
-	#endregion
+		_currentOffset = Vector3.Lerp(
+			_currentOffset,
+			targetOffset,
+			offsetChangeSpeed * Time.deltaTime
+		);
 
-	#region 公開メソッド
+		Vector3 targetPos = _target.position + _currentOffset;
+
+		transform.position = Vector3.SmoothDamp(
+			transform.position,
+			targetPos,
+			ref _velocity,
+			smoothTime
+		);
+	}
 
 	public void SetTarget(Transform target)
 	{
 		_target = target;
+
+		if (_target != null)
+		{
+			_currentOffset = offset;
+			transform.position = _target.position + offset;
+		}
 	}
 
-	#endregion
+	public void ActionCameraTrue()
+	{
+		isActionCamera = true;
+	}
+
+	public void ActionCameraFalse()
+	{
+		isActionCamera = false;
+	}
 }
