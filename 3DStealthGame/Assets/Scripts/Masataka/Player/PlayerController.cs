@@ -44,6 +44,7 @@ public class PlayerController : MonoBehaviour
 	public System.Action OnPunchInput;
 
 	Animator Am;
+	GlobalCamera Ca;
 	public bool isAnimationStart = false;
 
 	public bool isAction = false;
@@ -67,7 +68,7 @@ public class PlayerController : MonoBehaviour
 		if (_rb != null)
 			_rb.constraints = RigidbodyConstraints.FreezeRotation;
 		Am = GetComponent<Animator>();
-
+		Ca = GameObject.Find("Main Camera").GetComponent<GlobalCamera>();
 		// 入力管理の初期化
 		playerInput = GetComponent<PlayerInput>();
 		moveAction = playerInput.actions["Move"];
@@ -227,6 +228,7 @@ public class PlayerController : MonoBehaviour
 	{
 		if (isAction) return;
 		//isAction = true;
+		Ca.ActionCameraTrue();
 		Am.SetTrigger("PunchEnemy");
 		lastTrigger = "PunchEnemy";
 	}
@@ -246,9 +248,10 @@ public class PlayerController : MonoBehaviour
 	{
 		//if (isAction) return;
 		print("スイッチアニメーション起動");
-		//Am.SetBool("Run", false);
-		//Am.SetBool("Sneak", false);
-		Am.SetTrigger("PunchSwitch");
+        //Am.SetBool("Run", false);
+        //Am.SetBool("Sneak", false);
+        Ca.ActionCameraTrue();
+        Am.SetTrigger("PunchSwitch");
 		lastTrigger = "PunchSwitch";
 	}
 
@@ -277,6 +280,7 @@ public class PlayerController : MonoBehaviour
 	{
 		isPlayerMoveStop = false;
 		Am.SetTrigger("Idle");
+        Ca.ActionCameraFalse();
     }
 
 	#endregion
