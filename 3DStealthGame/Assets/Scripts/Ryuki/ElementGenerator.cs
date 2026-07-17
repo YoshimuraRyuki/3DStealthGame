@@ -777,7 +777,7 @@ public class ElementGenerator : MonoBehaviour
                 string cellData = map[oldX, oldY];
                 string tileType = string.IsNullOrEmpty(cellData) ? "" : cellData.Split('_')[0];
                 if (tileType == "1") oldImg.color = ROOM_COLOR;
-                else if (tileType == "2" || tileType == "12" ) oldImg.color = AISLE_COLOR;
+                else if (tileType == "2" || tileType == "12" || tileType == "17" || tileType == "18") oldImg.color = AISLE_COLOR;
                 else oldImg.color = ROOM_COLOR;
             }
 
@@ -1490,7 +1490,6 @@ public class ElementGenerator : MonoBehaviour
             case "1":
                 img.color = ROOM_COLOR;
                 break;
-
             case "2":
                 img.color = AISLE_COLOR;
                 break;
