@@ -90,6 +90,7 @@
     <Compile Include="Assets\Scripts\Masataka\Managers\PlayMetrics.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\SoundManager.cs" />
     <Compile Include="Assets\Scripts\Ryuki\EnemyManager.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Managers\GameUIVisibilityController.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\GoalManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\ResultData.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\RoomSelectManager.cs" />
