@@ -221,14 +221,31 @@ public class PlayerController : MonoBehaviour
 
 	#region アクション処理
 
+	private void StopMovementForAction()
+	{
+		_moveInput = Vector2.zero;
+		isPlayerMoveStop = true;
+
+		if (_rb != null)
+		{
+			_rb.velocity = new Vector3(0f, _rb.velocity.y, 0f);
+			_rb.angularVelocity = Vector3.zero;
+		}
+
+		Am.SetBool("Run", false);
+		Am.SetBool("Sneak", false);
+	}
+
 	/// <summary>
 	/// 敵を攻撃するアニメーションを再生する
 	/// </summary>
 	public void PunchEnemy()
 	{
 		if (isAction) return;
-		//isAction = true;
-		//Ca.ActionCameraTrue();
+
+		isAction = true;
+		StopMovementForAction();
+
 		Am.SetTrigger("PunchEnemy");
 		lastTrigger = "PunchEnemy";
 	}
@@ -247,11 +264,18 @@ public class PlayerController : MonoBehaviour
 	public void PunchSwitch()
 	{
 		//if (isAction) return;
+
+		isAction = true;
+		StopMovementForAction();
+
 		print("スイッチアニメーション起動");
-        //Am.SetBool("Run", false);
-        //Am.SetBool("Sneak", false);
-        Ca.ActionCameraTrue();
-        Am.SetTrigger("PunchSwitch");
+
+		if (Ca != null)
+		{
+			Ca.ActionCameraTrue();
+		}
+
+		Am.SetTrigger("PunchSwitch");
 		lastTrigger = "PunchSwitch";
 	}
 
@@ -271,6 +295,10 @@ public class PlayerController : MonoBehaviour
 	public void EndAction()
 	{
 		isAction = false;
+		isPlayerMoveStop = false;
+
+		Am.SetBool("Run", false);
+		Am.SetBool("Sneak", false);
 	}
 
 	/// <summary>
@@ -278,10 +306,18 @@ public class PlayerController : MonoBehaviour
 	/// </summary>
 	public void EndMove()
 	{
+		isAction = false;
 		isPlayerMoveStop = false;
+
+		Am.SetBool("Run", false);
+		Am.SetBool("Sneak", false);
 		Am.SetTrigger("Idle");
-        Ca.ActionCameraFalse();
-    }
+
+		if (Ca != null)
+		{
+			Ca.ActionCameraFalse();
+		}
+	}
 
 	#endregion
 
@@ -342,12 +378,11 @@ public class PlayerController : MonoBehaviour
 		Am.SetBool("Sneak", false);
 		//Am.SetTrigger("Idle");
 
-		if(isLocalPlayer && StaminaManager.Instance != null)
-{
+		if (sendToServer && StaminaManager.Instance != null)
+		{
 			if (StaminaManager.Instance.GetCurrentStamina() <= 4)
 			{
 				StaminaManager.Instance.SetStamina(5);
-				LogManager.Instance?.AddLog("スタミナが5に戻った", "#88ccff");
 			}
 		}
 

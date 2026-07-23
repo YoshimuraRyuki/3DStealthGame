@@ -3319,7 +3319,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   missionText: {fileID: 1168130458}
   ClearText: {fileID: 923476135}
-  timeLimitSeconds: 180
+  timeLimitSeconds: 300
   fadePanel: {fileID: 240611271}
 --- !u!4 &1069601983
 Transform:

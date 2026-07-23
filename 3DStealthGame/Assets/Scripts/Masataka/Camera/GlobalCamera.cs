@@ -1,76 +1,112 @@
 ﻿using UnityEngine;
+using UnityEngine.UIElements;
 
 /// <summary>
-/// GameScene専用カメラ。
-/// プレイヤーをなめらかに追従する。
+/// プレイヤーを追いかけるカメラ。
+/// プレイヤーは後から生成されるため、外部から追従対象を設定できるようにしている。
 /// </summary>
 public class GlobalCamera : MonoBehaviour
 {
+	#region フィールド
+
 	public static GlobalCamera Instance;
 
-	[SerializeField] private Vector3 offset = new Vector3(0, 10, -3.5f);
-	[SerializeField] private Vector3 actionOffset = new Vector3(0, 8.5f, -3f);
-
-	[SerializeField] private float smoothTime = 0.08f;
-	[SerializeField] private float offsetChangeSpeed = 8f;
+	[SerializeField] private Vector3 offset = new Vector3(0, 15, -5);
+	[SerializeField] private Vector3 actionOffset = new Vector3(0, 10, -5);
 
 	private Transform _target;
-	private Vector3 _velocity;
-	private Vector3 _currentOffset;
 
-	private bool isActionCamera = false;
+	[SerializeField] float moveSpeed = 8f;
+	bool isActionCamera = false;
+	bool isZoomOut = false;
 
-	private void Awake()
-	{
-		Instance = this;
-		_currentOffset = offset;
-	}
+	#endregion
 
-	private void Start()
-	{
-		transform.rotation = Quaternion.Euler(75, 0, 0);
-	}
+	#region カメラ移動処理
 
-	private void LateUpdate()
-	{
-		if (_target == null) return;
-
-		Vector3 targetOffset = isActionCamera ? actionOffset : offset;
-
-		_currentOffset = Vector3.Lerp(
-			_currentOffset,
-			targetOffset,
-			offsetChangeSpeed * Time.deltaTime
-		);
-
-		Vector3 targetPos = _target.position + _currentOffset;
-
-		transform.position = Vector3.SmoothDamp(
-			transform.position,
-			targetPos,
-			ref _velocity,
-			smoothTime
-		);
-	}
-
-	public void SetTarget(Transform target)
-	{
-		_target = target;
-
-		if (_target != null)
-		{
-			_currentOffset = offset;
-			transform.position = _target.position + offset;
-		}
-	}
-
+	/// <summary>
+	/// プレイヤーの行動に合わせてカメラをズームインする処理
+	/// </summary>
 	public void ActionCameraTrue()
 	{
 		isActionCamera = true;
+		isZoomOut = true;
 	}
 
 	public void ActionCameraFalse()
 	{
 		isActionCamera = false;
 	}
+
+	#endregion
+
+	#region Unityイベント
+
+	private void Awake()
+	{
+		if (Instance != null && Instance != this)
+		{
+			Destroy(gameObject);
+			return;
+		}
+
+		Instance = this;
+		DontDestroyOnLoad(gameObject);
+	}
+
+	private void Start()
+	{
+		transform.rotation = Quaternion.Euler(75, 0, 0);
+
+		if (_target == null)
+		{
+			var player = GameObject.FindWithTag("Player1");
+			if (player != null)
+			{
+				SetTarget(player.transform);
+			}
+		}
+	}
+
+	private void LateUpdate()
+	{
+		if (_target == null) return;
+
+		// ズームイン
+		if (isActionCamera)
+		{
+			Vector3 targetPos = _target.position + actionOffset;
+
+			transform.position = Vector3.Lerp(transform.position, targetPos, moveSpeed * Time.deltaTime);
+
+			return;
+		}
+		if (isZoomOut)
+		{
+			Vector3 targetPos = _target.position + offset;
+
+			transform.position = Vector3.Lerp(transform.position, targetPos, moveSpeed * Time.deltaTime);
+
+			if (Vector3.Distance(transform.position, targetPos) < 0.05f)
+			{
+				transform.position = targetPos;
+				isZoomOut = false;
+			}
+
+			return;
+		}
+		// 通常時は完全固定
+		transform.position = _target.position + offset;
+	}
+
+	#endregion
+
+	#region 公開メソッド
+
+	public void SetTarget(Transform target)
+	{
+		_target = target;
+	}
+
+	#endregion
 }

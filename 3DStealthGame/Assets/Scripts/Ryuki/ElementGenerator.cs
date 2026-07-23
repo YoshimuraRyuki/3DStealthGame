@@ -771,17 +771,12 @@ public class ElementGenerator : MonoBehaviour
 
         if (oldX != curX || oldY != curY)
         {
-            if (IsInsideMap(oldX, oldY, mapExist))
-            {
-                Image oldImg = mapExist[oldX, oldY].GetComponent<Image>();
-                string cellData = map[oldX, oldY];
-                string tileType = string.IsNullOrEmpty(cellData) ? "" : cellData.Split('_')[0];
-                if (tileType == "1") oldImg.color = ROOM_COLOR;
-                else if (tileType == "2" || tileType == "12" || tileType == "17" || tileType == "18") oldImg.color = AISLE_COLOR;
-                else oldImg.color = ROOM_COLOR;
-            }
+			if (IsInsideMap(oldX, oldY, mapExist))
+			{
+				ResetTileColor(mapExist, oldX, oldY);
+			}
 
-            if (IsInsideMap(curX, curY, mapExist))
+			if (IsInsideMap(curX, curY, mapExist))
             {
                 mapExist[curX, curY].GetComponent<Image>().color = playerColor; // ←変更
             }
@@ -1469,55 +1464,57 @@ public class ElementGenerator : MonoBehaviour
         }
     }
 
-    #endregion
+	#endregion
 
-    #region ミニマップ共通処理
+	#region ミニマップ共通処理
 
-    /// <summary>
-    /// 元の色に戻す
-    /// </summary>
-    /// <param name="x"></param>
-    /// <param name="y"></param>
-    void ResetTileColor(int x, int y)
-    {
-        Image img = objMapExist[x, y].GetComponent<Image>();
+	/// <summary>
+	/// 元の色に戻す
+	/// </summary>
+	/// <param name="x"></param>
+	/// <param name="y"></param>
+	void ResetTileColor(int x, int y)
+	{
+		ResetTileColor(objMapExist, x, y);
+	}
 
-        string cellData = map[x, y];
-        string tileType = string.IsNullOrEmpty(cellData) ? "" : cellData.Split('_')[0];
+	void ResetTileColor(GameObject[,] targetMap, int x, int y)
+	{
+		if (targetMap == null) return;
+		if (!IsInsideMap(x, y, targetMap)) return;
+		if (targetMap[x, y] == null) return;
 
-        switch (map[x, y])
-        {
-            case "1":
-                img.color = ROOM_COLOR;
-                break;
-            case "2":
-                img.color = AISLE_COLOR;
-                break;
-            case "3":
-                img.color = PLAYER1_COLOR;
-                break;
-            case "4":
-                img.color = PLAYER2_COLOR;
-                break;
-            case "12":
-                img.color = AISLE_COLOR;
-                break;
-            case "17":
-                img.color = AISLE_COLOR;
-                break;
-            case "18":
-                img.color = AISLE_COLOR;
-                break;
-        }
-    }
+		Image img = targetMap[x, y].GetComponent<Image>();
+		if (img == null) return;
 
-    /// <summary>
-    /// 座標がマップ範囲内かどうか確認
-    /// </summary>
-    /// <param name="x"></param>
-    /// <param name="y"></param>
-    /// <returns></returns>
-    bool IsInsideMap(int x, int y, GameObject[,] mapExist)
+		string cellData = map[x, y];
+		string tileType = string.IsNullOrEmpty(cellData) ? "" : cellData.Split('_')[0];
+
+		switch (tileType)
+		{
+			case "1":
+				img.color = ROOM_COLOR;
+				break;
+
+			case "2":
+			case "12":
+			case "17":
+			case "18":
+				img.color = AISLE_COLOR;
+				break;
+
+			default:
+				img.color = ROOM_COLOR;
+				break;
+		}
+	}
+	/// <summary>
+	/// 座標がマップ範囲内かどうか確認
+	/// </summary>
+	/// <param name="x"></param>
+	/// <param name="y"></param>
+	/// <returns></returns>
+	bool IsInsideMap(int x, int y, GameObject[,] mapExist)
     {
         return x >= 0 &&
                y >= 0 &&
