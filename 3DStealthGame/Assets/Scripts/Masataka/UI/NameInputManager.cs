@@ -19,8 +19,12 @@ public class NameInputManager : MonoBehaviour
 
 	#region 内部状態
 
+	private const int MaxNameLength = 10;
+
 	private WebSocketClient _wsClient;
 	private RoomSelectManager _roomSelectManager;
+
+	private bool _isEditingText = false;
 
 	#endregion
 
@@ -33,6 +37,16 @@ public class NameInputManager : MonoBehaviour
 		_wsClient = FindObjectOfType<WebSocketClient>();
 		_roomSelectManager = FindObjectOfType<RoomSelectManager>();
 
+		if (nameInputField != null)
+		{
+			// 入力欄そのものに10文字制限を付ける
+			nameInputField.characterLimit = MaxNameLength;
+
+			// 念のため、貼り付けなどでも10文字を超えないようにする
+			nameInputField.onValueChanged.RemoveListener(OnNameChanged);
+			nameInputField.onValueChanged.AddListener(OnNameChanged);
+		}
+
 		if (confirmButton != null)
 		{
 			confirmButton.onClick.RemoveAllListeners();
@@ -42,9 +56,43 @@ public class NameInputManager : MonoBehaviour
 		HideWarning();
 	}
 
+	private void OnDestroy()
+	{
+		if (nameInputField != null)
+		{
+			nameInputField.onValueChanged.RemoveListener(OnNameChanged);
+		}
+	}
+
 	#endregion
 
 	#region 入力処理
+
+	private void OnNameChanged(string value)
+	{
+		if (_isEditingText) return;
+		if (nameInputField == null) return;
+
+		string fixedName = value.Trim();
+
+		if (fixedName.Length > MaxNameLength)
+		{
+			fixedName = fixedName.Substring(0, MaxNameLength);
+		}
+
+		if (fixedName != value)
+		{
+			_isEditingText = true;
+			nameInputField.text = fixedName;
+			nameInputField.caretPosition = fixedName.Length;
+			_isEditingText = false;
+		}
+
+		if (fixedName.Length <= MaxNameLength)
+		{
+			HideWarning();
+		}
+	}
 
 	private void OnConfirmName()
 	{
@@ -58,8 +106,12 @@ public class NameInputManager : MonoBehaviour
 			return;
 		}
 
-		if (inputName.Length > 10)
+		if (inputName.Length > MaxNameLength)
 		{
+			inputName = inputName.Substring(0, MaxNameLength);
+			nameInputField.text = inputName;
+			nameInputField.caretPosition = inputName.Length;
+
 			ShowWarning("※10文字以内で入力してください");
 			return;
 		}

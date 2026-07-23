@@ -1014,7 +1014,7 @@ MonoBehaviour:
   rank3Text: {fileID: 502588679}
   serverBaseUrl: http://localhost:8080
   sendToLaravel: 1
-  laravelBaseUrl: http://192.168.56.102:8000
+  laravelBaseUrl: http://160.251.231.139:8000
 --- !u!4 &614209444
 Transform:
   m_ObjectHideFlags: 0
