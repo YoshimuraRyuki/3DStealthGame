@@ -19,24 +19,30 @@ public class GlobalCamera : MonoBehaviour
 	[SerializeField] float moveSpeed = 8f;
 	bool isActionCamera = false;
 	bool isZoomOut = false;
+    public bool IsTransitioning => isActionCamera || isZoomOut;
 
-	#endregion
+    private Vector3 currentVelocity;
 
-	#region カメラ移動処理
+    #endregion
 
-	/// <summary>
-	/// プレイヤーの行動に合わせてカメラをズームインする処理
-	/// </summary>
-	public void ActionCameraTrue()
+    #region カメラ移動処理
+
+    /// <summary>
+    /// プレイヤーの行動に合わせてカメラをズームインする処理
+    /// </summary>
+    public void ActionCameraTrue()
 	{
 		isActionCamera = true;
-		isZoomOut = true;
-	}
+		isZoomOut = false;
+        currentVelocity = Vector3.zero;
+    }
 
 	public void ActionCameraFalse()
 	{
 		isActionCamera = false;
-	}
+        isZoomOut = true;
+		currentVelocity = Vector3.zero;
+    }
 
 	#endregion
 
@@ -72,31 +78,28 @@ public class GlobalCamera : MonoBehaviour
 	{
 		if (_target == null) return;
 
-		// ズームイン
-		if (isActionCamera)
-		{
-			Vector3 targetPos = _target.position + actionOffset;
+        // ズームイン
+        if (isActionCamera)
+        {
+            Vector3 targetPos = _target.position + actionOffset;
+            transform.position = Vector3.SmoothDamp(transform.position, targetPos, ref currentVelocity, 0.15f);
+            return;
+        }
+        if (isZoomOut)
+        {
+            Vector3 targetPos = _target.position + offset;
+            transform.position = Vector3.SmoothDamp(transform.position, targetPos, ref currentVelocity, 0.15f);
 
-			transform.position = Vector3.Lerp(transform.position, targetPos, moveSpeed * Time.deltaTime);
-
-			return;
-		}
-		if (isZoomOut)
-		{
-			Vector3 targetPos = _target.position + offset;
-
-			transform.position = Vector3.Lerp(transform.position, targetPos, moveSpeed * Time.deltaTime);
-
-			if (Vector3.Distance(transform.position, targetPos) < 0.05f)
-			{
-				transform.position = targetPos;
-				isZoomOut = false;
-			}
-
-			return;
-		}
-		// 通常時は完全固定
-		transform.position = _target.position + offset;
+            // 元の位置に十分近づいたらズームアウト完了
+            if (Vector3.Distance(transform.position, targetPos) < 0.05f)
+            {
+                transform.position = targetPos;
+                isZoomOut = false; // これで IsTransitioning が false になり、操作が解禁される！
+            }
+            return;
+        }
+        // 通常時は完全固定
+        transform.position = _target.position + offset;
 	}
 
 	#endregion
