@@ -152,7 +152,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   outlineMaterial: {fileID: 2100000, guid: cfaefb922b78ad8459a5f92db8ac2642, type: 2}
-  targetPlayerNumber: 0
 --- !u!1 &5264887391570042151
 GameObject:
   m_ObjectHideFlags: 0
@@ -341,7 +340,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u653B\u6483"
+  m_text: "\u62BC\u3059"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: d559572691a252b4caf142838500b9fb, type: 2}
   m_sharedMaterial: {fileID: -996570199654432458, guid: d559572691a252b4caf142838500b9fb, type: 2}

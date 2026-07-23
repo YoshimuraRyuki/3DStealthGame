@@ -543,13 +543,21 @@ public class WebSocketClient : MonoBehaviour
 	public string ngrokUrl = "https://rice-washer-suitcase.ngrok-free.dev";
 	public ServerMode serverMode = ServerMode.VirtualBox;
 
+	[Header("ローカルネットワーク設定")]
+	[SerializeField] private string localNetworkIp = "192.168.0.200";
+
+	[Header("VPS設定")]
+	[SerializeField] private string vpsIp = "160.251.231.139";
+
 	public enum ServerMode
 	{
 		VirtualBox,
 		LocalHost,
 		Ngrok,
 		Render,
-		FlyIO
+		FlyIO,
+		LocalNetwork,
+		VPS
 	}
 
 	#endregion
@@ -702,6 +710,7 @@ private int _remoteCurrentStamina = 10;
 
 	#endregion
 
+
 	#region 接続管理
 
 	private void OnWebSocketOpened() { Debug.Log("接続成功"); }
@@ -724,6 +733,10 @@ private int _remoteCurrentStamina = 10;
 				return $"wss://stealth-game-server.onrender.com/ws?room_id={roomId}&name={playerName}";
 			case ServerMode.FlyIO:
 				return $"wss://stealth-game-server.fly.dev/ws?room_id={roomId}&name={playerName}";
+			case ServerMode.LocalNetwork:
+				return $"ws://{localNetworkIp}:8080/ws?room_id={roomId}&name={playerName}";
+			case ServerMode.VPS:
+				return $"ws://{vpsIp}:8080/ws?room_id={roomId}&name={playerName}";
 			default:
 				return $"ws://192.168.56.102:8080/ws?room_id={roomId}&name={playerName}";
 		}
@@ -747,6 +760,12 @@ private int _remoteCurrentStamina = 10;
 
 			case ServerMode.FlyIO:
 				return "https://stealth-game-server.fly.dev";
+
+			case ServerMode.LocalNetwork:
+				return $"http://{localNetworkIp}:8080";
+
+			case ServerMode.VPS:
+				return $"http://{vpsIp}:8080";
 
 			default:
 				return "http://192.168.56.102:8080";
@@ -1432,12 +1451,26 @@ private int _remoteCurrentStamina = 10;
 		var msg = JsonUtility.FromJson<TimerUpdateMessage>(json);
 	}
 
+	private void RestoreStaminaOnRespawn()
+	{
+		if (StaminaManager.Instance == null) return;
+
+		if (StaminaManager.Instance.GetCurrentStamina() <= 4)
+		{
+			StaminaManager.Instance.SetStamina(5);
+			LogManager.Instance?.AddLog("スタミナが5に戻った", "#88ccff");
+			Debug.Log("[Respawn] スタミナを5に戻しました");
+		}
+	}
+
 
 	private void HandleRespawnMessage(string json)
 	{
 		var msg = JsonUtility.FromJson<RespawnMessage>(json);
 		if (msg.id == myId)
 		{
+			RestoreStaminaOnRespawn();
+
 			targetPositions.Remove(myId);
 			LogManager.Instance?.AddLog("リスポーンした", "#ff6666");
 			return;
@@ -1467,6 +1500,7 @@ private int _remoteCurrentStamina = 10;
 			if (pc == null) return;
 
 			pc.RespawnWithEffectPublic();
+			RestoreStaminaOnRespawn();
 			LogManager.Instance?.AddLog("リスポーンした", "#ff6666");
 		}
 		else if (IsHostPlayer())

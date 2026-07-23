@@ -3319,7 +3319,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   missionText: {fileID: 1168130458}
   ClearText: {fileID: 923476135}
-  timeLimitSeconds: 180
+  timeLimitSeconds: 300
   fadePanel: {fileID: 240611271}
 --- !u!4 &1069601983
 Transform:
@@ -6805,7 +6805,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u3010\u79FB\u52D5\u3011\u3000\u3000  \u5DE6\u30B9\u30C6\u30A3\u30C3\u30AF\r\n\u3010\u5FCD\u3073\u6B69\u304D\u3011\u3000\u5DE6\u30B9\u30C6\u30A3\u30C3\u30AF
+  m_Text: "\u3010\u79FB\u52D5\u3011\u3000\u3000  \u5DE6\u30B9\u30C6\u30A3\u30C3\u30AF\r\n\u3010\u30B9\u30CB\u30FC\u30AF\u3011\u3000\u5DE6\u30B9\u30C6\u30A3\u30C3\u30AF
     +\u24B6\u30DC\u30BF\u30F3\r\n\u3010\u653B\u6483\u3011\u3000\u3000\u3000\u24B7\u30DC\u30BF\u30F3\n\u3010UI\u975E\u8868\u793A\u3011\u3000\u24CD\u30DC\u30BF\u30F3"
 --- !u!222 &2040821345
 CanvasRenderer:

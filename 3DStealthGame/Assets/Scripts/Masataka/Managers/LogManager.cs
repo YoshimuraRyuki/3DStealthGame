@@ -89,11 +89,22 @@ public class LogManager : MonoBehaviour
 	{
 		if (logText == null) return;
 
-		var lines = new List<string>(_logs);
+		var lines = new List<string>();
 
 		if (!string.IsNullOrEmpty(_waitingLog))
 		{
 			lines.Add(_waitingLog);
+		}
+
+		int normalLogLimit = MaxLogs - lines.Count;
+
+		var normalLogs = new List<string>(_logs);
+
+		int startIndex = Mathf.Max(0, normalLogs.Count - normalLogLimit);
+
+		for (int i = startIndex; i < normalLogs.Count; i++)
+		{
+			lines.Add(normalLogs[i]);
 		}
 
 		logText.text = string.Join("\n", lines);

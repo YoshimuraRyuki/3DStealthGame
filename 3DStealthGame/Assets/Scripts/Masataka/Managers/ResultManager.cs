@@ -28,6 +28,12 @@ public class ResultManager : MonoBehaviour
 	[Header("サーバーURL")]
 	public string serverBaseUrl = "http://localhost:8080";
 
+	[Header("Laravel ダッシュボード")]
+	[SerializeField] private bool sendToLaravel = true;
+
+	// Laravelを仮想環境で動かすならこれ
+	[SerializeField] private string laravelBaseUrl = "http://192.168.0.200:8000";
+
 	#endregion
 
 	#region Unityイベント
@@ -70,8 +76,23 @@ public class ResultManager : MonoBehaviour
 		string grade = CalcGrade(ResultData.missionCount, ResultData.elapsedTime);
 		gradeText.text = grade;
 
-		StartCoroutine(PostAndFetchRanking());
-		StartCoroutine(PostPlayResult());
+		bool isHost = wsClient != null && wsClient.IsHostPlayer();
+
+		if (isHost)
+		{
+			StartCoroutine(PostAndFetchRanking());
+		}
+		else
+		{
+			StartCoroutine(FetchRankingOnlyDelayed());
+		}
+
+		if (sendToLaravel)
+		{
+			StartCoroutine(PostPlayLogToLaravel());
+		}
+
+
 	}
 
 	#endregion
@@ -175,6 +196,90 @@ public class ResultManager : MonoBehaviour
 			{
 				Debug.LogWarning($"ランキング取得失敗: {req.error}");
 				UpdateRankingUI(null);
+			}
+		}
+	}
+
+	IEnumerator FetchRankingOnly()
+	{
+		using (UnityWebRequest req = UnityWebRequest.Get($"{serverBaseUrl}/ranking"))
+		{
+			req.SetRequestHeader("ngrok-skip-browser-warning", "true");
+
+			yield return req.SendWebRequest();
+
+			if (req.result == UnityWebRequest.Result.Success)
+			{
+				var data = JsonUtility.FromJson<RankingResponse>(req.downloadHandler.text);
+
+				if (data != null && data.rankings != null)
+				{
+					UpdateRankingUI(data.rankings);
+				}
+				else
+				{
+					Debug.LogWarning($"ランキングJSON解析失敗: {req.downloadHandler.text}");
+					UpdateRankingUI(null);
+				}
+			}
+			else
+			{
+				Debug.LogWarning($"ランキング取得失敗: {req.error}");
+				UpdateRankingUI(null);
+			}
+		}
+	}
+
+	IEnumerator FetchRankingOnlyDelayed()
+	{
+		yield return new WaitForSeconds(0.8f);
+		yield return StartCoroutine(FetchRankingOnly());
+	}
+
+	IEnumerator PostPlayLogToLaravel()
+	{
+		var payload = new PlayLogPayload
+		{
+			session_id = string.IsNullOrEmpty(ResultData.sessionId)
+				? System.Guid.NewGuid().ToString()
+				: ResultData.sessionId,
+
+			name = ResultData.playerName,
+			clear_time = ResultData.elapsedTime,
+			mission_count = ResultData.missionCount,
+
+			mission1_done = ResultData.mission1Done,
+			mission2_done = ResultData.mission2Done,
+			mission3_done = ResultData.mission3Done,
+
+			death_count = ResultData.deathCount,
+			punch_count = ResultData.punchCount,
+			chat_count = ResultData.chatCount,
+			stamina_item_count = ResultData.staminaItemCount,
+			sneak_time = ResultData.sneakTime,
+
+			room_id = string.IsNullOrEmpty(ResultData.roomId)
+				? "unknown"
+				: ResultData.roomId
+		};
+
+		string json = JsonUtility.ToJson(payload);
+
+		using (UnityWebRequest req = new UnityWebRequest($"{laravelBaseUrl}/api/plays", "POST"))
+		{
+			req.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(json));
+			req.downloadHandler = new DownloadHandlerBuffer();
+			req.SetRequestHeader("Content-Type", "application/json");
+
+			yield return req.SendWebRequest();
+
+			if (req.result == UnityWebRequest.Result.Success)
+			{
+				Debug.Log("[Laravel] プレイログ送信成功: " + req.downloadHandler.text);
+			}
+			else
+			{
+				Debug.LogWarning("[Laravel] プレイログ送信失敗: " + req.responseCode + " / " + req.error + "\n" + req.downloadHandler.text);
 			}
 		}
 	}
@@ -335,6 +440,27 @@ public class RankingResponse
 
 [System.Serializable]
 public class PlayResultRequest
+{
+	public string session_id;
+	public string name;
+	public float clear_time;
+	public int mission_count;
+
+	public bool mission1_done;
+	public bool mission2_done;
+	public bool mission3_done;
+
+	public int death_count;
+	public int punch_count;
+	public int chat_count;
+	public int stamina_item_count;
+	public float sneak_time;
+
+	public string room_id;
+}
+
+[System.Serializable]
+public class PlayLogPayload
 {
 	public string session_id;
 	public string name;

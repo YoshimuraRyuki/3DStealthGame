@@ -18,29 +18,31 @@ public class GlobalCamera : MonoBehaviour
 
 	[SerializeField] float moveSpeed = 8f;
 	bool isActionCamera = false;
+	bool isZoomOut = false;
 
-    #endregion
+	#endregion
 
-    #region カメラ移動処理
+	#region カメラ移動処理
 
-    /// <summary>
-    /// プレイヤーの行動に合わせてカメラをズームインする処理
-    /// </summary>
-    public void ActionCameraTrue()
+	/// <summary>
+	/// プレイヤーの行動に合わせてカメラをズームインする処理
+	/// </summary>
+	public void ActionCameraTrue()
 	{
 		isActionCamera = true;
-    }
+		isZoomOut = true;
+	}
 
-    public void ActionCameraFalse()
-    {
-        isActionCamera = false;
-    }
+	public void ActionCameraFalse()
+	{
+		isActionCamera = false;
+	}
 
-    #endregion
+	#endregion
 
-    #region Unityイベント
+	#region Unityイベント
 
-    private void Awake()
+	private void Awake()
 	{
 		if (Instance != null && Instance != this)
 		{
@@ -70,9 +72,32 @@ public class GlobalCamera : MonoBehaviour
 	{
 		if (_target == null) return;
 
-        Vector3 targetPos = _target.position + (isActionCamera ? actionOffset : offset);
-        transform.position = Vector3.Lerp(transform.position, targetPos, moveSpeed * Time.deltaTime);
-    }
+		// ズームイン
+		if (isActionCamera)
+		{
+			Vector3 targetPos = _target.position + actionOffset;
+
+			transform.position = Vector3.Lerp(transform.position, targetPos, moveSpeed * Time.deltaTime);
+
+			return;
+		}
+		if (isZoomOut)
+		{
+			Vector3 targetPos = _target.position + offset;
+
+			transform.position = Vector3.Lerp(transform.position, targetPos, moveSpeed * Time.deltaTime);
+
+			if (Vector3.Distance(transform.position, targetPos) < 0.05f)
+			{
+				transform.position = targetPos;
+				isZoomOut = false;
+			}
+
+			return;
+		}
+		// 通常時は完全固定
+		transform.position = _target.position + offset;
+	}
 
 	#endregion
 
