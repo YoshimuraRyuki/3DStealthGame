@@ -715,7 +715,20 @@ private int _remoteCurrentStamina = 10;
 
 	private void OnWebSocketOpened() { Debug.Log("接続成功"); }
 
-	public void SetPlayerName(string name) { playerName = name; }
+	private const int MaxPlayerNameLength = 10;
+
+	public void SetPlayerName(string name)
+	{
+		name = (name ?? "").Trim();
+
+		if (name.Length > MaxPlayerNameLength)
+		{
+			name = name.Substring(0, MaxPlayerNameLength);
+		}
+
+		playerName = name;
+	}
+
 	public string GetPlayerName() => playerName;
 
 
@@ -855,7 +868,7 @@ private int _remoteCurrentStamina = 10;
 		ClearRemotePlayers();
 
 		myId = null;
-		//playerName = "";
+		playerName = "";
 		myPlayerNumber = 0;
 		spawnPositions.Clear();
 		pendingMessages.Clear();
