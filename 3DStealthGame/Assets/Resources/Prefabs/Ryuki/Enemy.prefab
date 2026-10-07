@@ -769,7 +769,7 @@ MonoBehaviour:
   stopMoveCooldownMax: 10
   waitTime: 3
   rotateAngle: 90
-  viewRadius: 10
+  viewRadius: 7
   viewAngle: 45
   alertCount: 3
   currentAlertCount: 0
@@ -778,7 +778,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 520
   player: {fileID: 2072795091767466297, guid: da99b9dbceb22af41884bfc73e3a87a0, type: 3}
-  hearingRange: 10
+  hearingRange: 4
   alertDuration: 2
   isStopMove: 0
   isRemoteControlled: 0
