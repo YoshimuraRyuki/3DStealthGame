@@ -629,13 +629,13 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 0
     m_MaxSize: 140
-    m_Alignment: 0
+    m_Alignment: 1
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: SneakDungeon
+  m_Text: ESCAPE
 --- !u!222 &390625447
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1544,7 +1544,7 @@ MonoBehaviour:
   remotePlayerOutlineMaterial: {fileID: 2100000, guid: 6fa3189ede2e371429750ead9a709886, type: 2}
   roomMemberPanel: {fileID: 1019032279}
   ngrokUrl: https://rice-washer-suitcase.ngrok-free.dev
-  serverMode: 6
+  serverMode: 1
   localNetworkIp: 192.168.0.200
   vpsIp: 160.251.231.139
   myId: 

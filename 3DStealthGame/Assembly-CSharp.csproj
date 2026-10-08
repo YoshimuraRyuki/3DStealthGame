@@ -60,15 +60,22 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\2022.3.22f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\Masataka\Network\NetworkMessages.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Core\CoreCarryDebugInput.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\LogManager.cs" />
     <Compile Include="Assets\Scripts\Ryuki\RespawnPoint.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\PlayerData.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.Connection.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\RankingManager.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.PlayerLifecycle.cs" />
     <Compile Include="Assets\Scripts\Ryuki\CsvMapLoader.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Core\CoreCarryController.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\RoomMemberPanel.cs" />
     <Compile Include="Assets\Scripts\Ryuki\UISelectionEffect.cs" />
     <Compile Include="Assets\Scripts\Masataka\Camera\GlobalCamera.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.GameFlow.cs" />
     <Compile Include="Assets\Scripts\Ryuki\SwitchManager.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.WorldEvents.cs" />
     <Compile Include="Assets\Scripts\Ryuki\ElementGenerator.cs" />
     <Compile Include="Assets\Scripts\Ryuki\TestPlayer.cs" />
     <Compile Include="Assets\Scripts\Ryuki\MenuSelector.cs" />
@@ -84,8 +91,11 @@
     <Compile Include="Assets\Scripts\Masataka\ItemDropEffect.cs" />
     <Compile Include="Assets\Scripts\Ryuki\WallCollision.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\StaminaGaugeUI.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.Lobby.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\NameInputManager.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.Sending.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\MissionManager.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.EnemySync.cs" />
     <Compile Include="Assets\Scripts\Ryuki\PowerItem.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\PlayMetrics.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\SoundManager.cs" />
@@ -98,7 +108,9 @@
     <Compile Include="Assets\BTM_Assets\BTM_Items_Gems\Scripts\SimpleGemsAnim.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\ResultManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\ReturnToTitle.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.PlayerSync.cs" />
     <Compile Include="Assets\Scripts\Masataka\StaminaAbsorbEffect.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Network\SendMessageBuilder.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

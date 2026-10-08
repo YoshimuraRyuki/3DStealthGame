@@ -360,6 +360,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a8daa53897c0d4941b0ead0a083d5eb5, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1693453954905977115}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a8daa53897c0d4941b0ead0a083d5eb5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 738810811462210029}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a8daa53897c0d4941b0ead0a083d5eb5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6169224662582301567}
   m_SourcePrefab: {fileID: 100100000, guid: a8daa53897c0d4941b0ead0a083d5eb5, type: 3}
 --- !u!1 &5850422698325972365 stripped
 GameObject:
@@ -471,3 +477,44 @@ MonoBehaviour:
   m_DefaultActionMap: New action map
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &738810811462210029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5850422698325972365}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa7f81ed500391042953504552378d6b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  animator: {fileID: 0}
+  coreLocalPosition: {x: 0, y: 0.05, z: 0.38}
+  coreLocalEulerAngles: {x: 0, y: 0, z: 0}
+  coreLocalScale: {x: 1, y: 1, z: 1}
+  leftHandOffset: {x: -0.22, y: 0, z: 0}
+  rightHandOffset: {x: 0.22, y: 0, z: 0}
+  leftHandEulerAngles: {x: 0, y: 90, z: 90}
+  rightHandEulerAngles: {x: 0, y: -90, z: -90}
+  leftElbowOffset: {x: -0.45, y: -0.05, z: 0.05}
+  rightElbowOffset: {x: 0.45, y: -0.05, z: 0.05}
+  ikBlendSpeed: 8
+  handPositionWeight: 1
+  handRotationWeight: 0.8
+  elbowHintWeight: 0.65
+--- !u!114 &6169224662582301567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5850422698325972365}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6d4b8198e5eb4f4492ecfdfb7ede74b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  carryController: {fileID: 0}
+  testCore: {fileID: 0}
+  releaseDistance: 1.2
