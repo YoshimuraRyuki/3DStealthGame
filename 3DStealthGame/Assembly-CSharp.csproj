@@ -76,6 +76,7 @@
     <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.GameFlow.cs" />
     <Compile Include="Assets\Scripts\Ryuki\SwitchManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.WorldEvents.cs" />
+    <Compile Include="Assets\Scripts\Ryuki\MiniMap.cs" />
     <Compile Include="Assets\Scripts\Ryuki\ElementGenerator.cs" />
     <Compile Include="Assets\Scripts\Ryuki\TestPlayer.cs" />
     <Compile Include="Assets\Scripts\Ryuki\MenuSelector.cs" />

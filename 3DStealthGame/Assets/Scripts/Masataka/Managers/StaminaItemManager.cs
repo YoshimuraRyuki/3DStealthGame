@@ -117,10 +117,6 @@ public class StaminaItemManager : MonoBehaviour
 			_elementGenerator = FindObjectOfType<ElementGenerator>();
 		}
 
-		if (_elementGenerator != null)
-		{
-			_elementGenerator.RemoveItemIcon(pickedPosition);
-		}
 
 		_wsClient.SendStaminaItemPicked(pickedPosition);
 		PlayMetrics.AddStaminaItem();

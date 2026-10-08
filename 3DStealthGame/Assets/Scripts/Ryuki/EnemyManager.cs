@@ -28,7 +28,6 @@ public class EnemyManager : MonoBehaviour
 
     Light Sl;
     PlayerController Pc;
-    SwitchManager Sm;
     public TextMeshProUGUI reactionText;
     private Transform cameraTransform;
 
@@ -735,7 +734,6 @@ public class EnemyManager : MonoBehaviour
     /// <param name="volume"></param>
     void HandleSound(Vector3 soundPosition, float volume)
     {
-        if (Sm != null && Sm.isEnemyMoveStop) return;                      // スタン中は音検知しない
         if (enemyState == EnemyState.FocusPlayer && isFoundPlayer) return; // すでにプレイヤーが目視で追従しているなら、遠くの音には気を取られない
 
         // 音が聞こえる範囲内かどうかを計算
@@ -881,7 +879,6 @@ public class EnemyManager : MonoBehaviour
     public void SetReactionState(string state)
     {
         if (reactionText == null) return;
-        if (Sm != null && Sm.isEnemyMoveStop) return; // スタン中は無視
         if (string.IsNullOrEmpty(state))
         {
             reactionText.gameObject.SetActive(false);
@@ -910,7 +907,6 @@ public class EnemyManager : MonoBehaviour
     public void PlayAnimationWall()
     {
         animWall.SetTrigger("wallUp");
-        Sm.isEnemyMoveStop = true;
     }
 
     /// <summary>
@@ -919,7 +915,6 @@ public class EnemyManager : MonoBehaviour
     public void PlayAnimationEnemy()
     {
         animEnemy.SetTrigger("Stun");
-        Sm.isEnemyMoveStop = true;
 
         var col = GetComponent<Collider>();
         if (col != null)
@@ -942,7 +937,6 @@ public class EnemyManager : MonoBehaviour
     public void StunCancel()
     {
         animEnemy.SetTrigger("StunCancel");
-        if (Sm != null) Sm.isEnemyMoveStop = false; 
         var col = GetComponent<Collider>();
         if (col != null) col.enabled = true;
     }
@@ -1006,7 +1000,6 @@ public class EnemyManager : MonoBehaviour
     void InitComponent()
     {
         Sl = GetComponentInChildren<Light>();
-        Sm = GetComponent<SwitchManager>();
         animEnemy = GetComponentInChildren<Animator>();
         animWall = GetComponentInChildren<Animator>();
     }
@@ -1144,12 +1137,10 @@ public class EnemyManager : MonoBehaviour
         // 澤田作：サーバ関連Update
         if (isRemoteControlled) return;
 
-        if (Sm == null || Sm.isEnemyMoveStop) return;
 
         if (_remoteSoundCooldown > 0)
             _remoteSoundCooldown -= Time.deltaTime;
 
-        if (Sm.isEnemyMoveStop) return;
 
         if (!_soundRegistered)
         {
