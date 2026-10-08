@@ -492,7 +492,7 @@ MonoBehaviour:
   animator: {fileID: 0}
   coreLocalPosition: {x: 0, y: 0.05, z: 0.38}
   coreLocalEulerAngles: {x: 0, y: 0, z: 0}
-  coreLocalScale: {x: 1, y: 1, z: 1}
+  coreLocalScale: {x: 0.5, y: 0.5, z: 0.5}
   leftHandOffset: {x: -0.22, y: 0, z: 0}
   rightHandOffset: {x: 0.22, y: 0, z: 0}
   leftHandEulerAngles: {x: 0, y: 90, z: 90}
@@ -518,3 +518,5 @@ MonoBehaviour:
   carryController: {fileID: 0}
   testCore: {fileID: 0}
   releaseDistance: 1.2
+  createCoreAutomatically: 1
+  generatedCoreSize: 0.45
