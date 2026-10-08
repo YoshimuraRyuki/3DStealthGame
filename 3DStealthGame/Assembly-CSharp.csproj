@@ -61,6 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Masataka\Network\NetworkMessages.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Core\CoreCarryDebugInput.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\LogManager.cs" />
     <Compile Include="Assets\Scripts\Ryuki\RespawnPoint.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\PlayerData.cs" />
@@ -68,6 +69,7 @@
     <Compile Include="Assets\Scripts\Masataka\UI\RankingManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.PlayerLifecycle.cs" />
     <Compile Include="Assets\Scripts\Ryuki\CsvMapLoader.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Core\CoreCarryController.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\RoomMemberPanel.cs" />
     <Compile Include="Assets\Scripts\Ryuki\UISelectionEffect.cs" />
     <Compile Include="Assets\Scripts\Masataka\Camera\GlobalCamera.cs" />
