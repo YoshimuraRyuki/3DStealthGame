@@ -356,9 +356,6 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // スイッチのアクション状態もリセット
-        foreach (var sw in FindObjectsOfType<SwitchManager>())
-            sw.ResetActionState();
 
         // 発見時のテキストを表示
         if (catchText != null)

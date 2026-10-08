@@ -105,19 +105,19 @@ public partial class WebSocketClient
 
 	private void HandleSwitchActivatedMessage(string json)
 	{
-		var msg = JsonUtility.FromJson<SwitchActivatedMessage>(json);
-		var eg = FindObjectOfType<ElementGenerator>();
-		if (eg == null) return;
+		//var msg = JsonUtility.FromJson<SwitchActivatedMessage>(json);
+		//var eg = FindObjectOfType<ElementGenerator>();
+		//if (eg == null) return;
 
-		foreach (var sw in eg.GetSwitchList())
-		{
-			if (sw.targetEnemyID == msg.switch_id)
-			{
-				sw.OnSwitchActivated();
-				break;
-			}
-		}
-		LogManager.Instance?.AddLog("どこかのギミックが作動した", "#ffcc44");
+		//foreach (var sw in eg.GetSwitchList())
+		//{
+		//	if (sw.targetEnemyID == msg.switch_id)
+		//	{
+		//		sw.OnSwitchActivated();
+		//		break;
+		//	}
+		//}
+		//LogManager.Instance?.AddLog("どこかのギミックが作動した", "#ffcc44");
 	}
 
 
@@ -150,7 +150,7 @@ public partial class WebSocketClient
 			var generator = FindObjectOfType<ElementGenerator>();
 			if (generator != null)
 			{
-				generator.RemoveItemIcon(nearestItem.transform.position);
+				//generator.RemoveItemIcon(nearestItem.transform.position);
 			}
 
 			Destroy(nearestItem.gameObject);
@@ -196,7 +196,7 @@ public partial class WebSocketClient
 			var generator = FindObjectOfType<ElementGenerator>();
 			if (generator != null)
 			{
-				generator.RemoveItemIcon(nearestItem.transform.position);
+				//generator.RemoveItemIcon(nearestItem.transform.position);
 			}
 
 			nearestItem.gameObject.SetActive(false);
@@ -206,37 +206,37 @@ public partial class WebSocketClient
 
 	private void HandleStaminaItemDropRequestMessage(string json)
 	{
-		if (!IsHostPlayer()) return;
+		//if (!IsHostPlayer()) return;
 
-		var msg = JsonUtility.FromJson<StaminaItemDropMessage>(json);
-		if (msg.sender_id == myId) return;
+		//var msg = JsonUtility.FromJson<StaminaItemDropMessage>(json);
+		//if (msg.sender_id == myId) return;
 
-		var sw = FindObjectOfType<SwitchManager>();
-		if (sw == null) return;
+		//var sw = FindObjectOfType<SwitchManager>();
+		//if (sw == null) return;
 
-		Vector3 dropPos = new Vector3(msg.x, msg.y, msg.z);
-		if (msg.drop_type == 1)
-			sw.SpawnGreenItem(dropPos);
-		else
-			sw.SpawnBlueItem(dropPos);
+		//Vector3 dropPos = new Vector3(msg.x, msg.y, msg.z);
+		//if (msg.drop_type == 1)
+		//	sw.SpawnGreenItem(dropPos);
+		//else
+		//	sw.SpawnBlueItem(dropPos);
 
-		SendStaminaItemDrop(msg.drop_type, dropPos);
+		//SendStaminaItemDrop(msg.drop_type, dropPos);
 	}
 
 
 	private void HandleStaminaItemDropMessage(string json)
 	{
-		var msg = JsonUtility.FromJson<StaminaItemDropMessage>(json);
-		if (msg.sender_id == myId) return; // 自分のドロップは無視（すでに生成済み）
+		//var msg = JsonUtility.FromJson<StaminaItemDropMessage>(json);
+		//if (msg.sender_id == myId) return; // 自分のドロップは無視（すでに生成済み）
 
-		var sw = FindObjectOfType<SwitchManager>();
-		if (sw == null) return;
+		//var sw = FindObjectOfType<SwitchManager>();
+		//if (sw == null) return;
 
-		Vector3 pos = new Vector3(msg.x, msg.y, msg.z);
-		if (msg.drop_type == 1)
-			sw.SpawnGreenItem(pos);
-		else
-			sw.SpawnBlueItem(pos);
+		//Vector3 pos = new Vector3(msg.x, msg.y, msg.z);
+		//if (msg.drop_type == 1)
+		//	sw.SpawnGreenItem(pos);
+		//else
+		//	sw.SpawnBlueItem(pos);
 	}
 
 

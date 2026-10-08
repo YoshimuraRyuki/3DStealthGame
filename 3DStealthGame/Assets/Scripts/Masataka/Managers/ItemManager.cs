@@ -44,11 +44,6 @@ public class ItemManager : MonoBehaviour
 			_elementGenerator = FindObjectOfType<ElementGenerator>();
 		}
 
-		if (_elementGenerator != null)
-		{
-			_elementGenerator.RemoveItemIcon(transform.position);
-		}
-
 		Destroy(gameObject);
 	}
 
