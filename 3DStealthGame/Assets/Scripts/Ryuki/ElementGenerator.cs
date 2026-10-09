@@ -472,8 +472,8 @@ public class ElementGenerator : MonoBehaviour
 
 					case MapObjectType.Player1: // プレイヤー1
                         var wsClient = FindObjectOfType<WebSocketClient>();
-                        if (wsClient != null) wsClient.SetSpawnPosition(1, pos);
-                        map[x, y] = "1";
+						if (wsClient != null) wsClient.SetSpawnPosition(1, pos + Vector3.up * 2f);
+						map[x, y] = "1";
                         break;
 
                     case MapObjectType.PatrolPoint: // 敵の巡回ポイント
@@ -484,8 +484,8 @@ public class ElementGenerator : MonoBehaviour
                     case MapObjectType.Player2: // プレイヤー2
                         var wsClient2 = FindObjectOfType<WebSocketClient>();
                         if (wsClient2 != null)
-                            wsClient2.SetSpawnPosition(2, pos);
-                        map[x, y] = "1";
+							wsClient2.SetSpawnPosition(2, pos + Vector3.up * 2f);
+						map[x, y] = "1";
                         break;
 
                     case MapObjectType.Respawn: // リスポーン
