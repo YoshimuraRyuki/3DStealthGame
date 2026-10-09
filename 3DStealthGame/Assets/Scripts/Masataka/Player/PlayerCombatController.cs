@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -5,140 +6,157 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(PlayerController), typeof(PlayerInput))]
 public sealed class PlayerCombatController : MonoBehaviour
 {
+    [Header("自動ロックオン（敵NPCのみ）")]
+    [SerializeField, Min(0.1f)] private float attackRange = 14f;
+    [SerializeField] private LayerMask targetLayers = ~0;
     [Header("射撃のタイミング")]
     [SerializeField, Min(0.12f)] private float fireInterval = 0.5f;
     [SerializeField, Min(0f)] private float windup = 0.05f;
     [SerializeField, Min(0f)] private float movementLock = 0.12f;
-    [Header("直線弾")]
+    [Header("エネルギー弾")]
     [SerializeField, Min(1f)] private float projectileSpeed = 26f;
     [SerializeField, Min(0.1f)] private float projectileRange = 14f;
     [SerializeField, Min(0.01f)] private float hitRadius = 0.14f;
     [SerializeField, Min(1)] private int damage = 1;
     [SerializeField] private LayerMask hitLayers = ~0;
     [SerializeField] private float muzzleHeight = 1.1f;
-    [Header("PAD照準")]
-    [SerializeField, Range(0.05f, 0.9f)] private float stickDeadZone = 0.22f;
     private PlayerController controller;
     private PlayerInput input;
     private InputAction fire;
-    private Camera aimCamera;
-    private float nextFireTime;
-    private float releaseTime;
+    private float nextFireTime, releaseTime, nextSearchTime;
     private Vector3 shotDirection;
     private bool pendingShot;
-    private bool usingPad;
-    private LineRenderer aimLine;
+    private Transform lockedTarget, shotTarget;
+    private EnemyLockOnIndicator lockIndicator;
     private Material energyMaterial;
+    private readonly HashSet<Transform> candidates = new HashSet<Transform>();
+    public Transform LockedTarget => lockedTarget;
 
     private void Awake()
     {
         controller = GetComponent<PlayerController>();
         input = GetComponent<PlayerInput>();
-        fire = input.actions != null ? input.actions.FindAction("Fire", false) : null;
-        aimCamera = Camera.main;
         energyMaterial = CreateEnergyMaterial(new Color(0.08f, 0.8f, 1f));
-        GameObject guide = new GameObject("EnergyAimGuide");
-        guide.transform.SetParent(transform, false);
-        aimLine = guide.AddComponent<LineRenderer>();
-        aimLine.material = energyMaterial;
-        aimLine.positionCount = 2;
-        aimLine.startWidth = 0.025f;
-        aimLine.endWidth = 0.012f;
-        aimLine.startColor = new Color(0.1f, 0.8f, 1f, 0.5f);
-        aimLine.endColor = new Color(0.1f, 0.8f, 1f, 0.1f);
-        aimLine.enabled = false;
+        lockIndicator = gameObject.AddComponent<EnemyLockOnIndicator>();
     }
 
-    private Gamepad PairedPad()
+    private void Start()
     {
-        foreach (var device in input.devices)
-            if (device is Gamepad pad) return pad;
-        return null;
+        // Resolve after PlayerInput has created its player-specific action instance.
+        fire = input.actions != null ? input.actions.FindAction("Fire", false) : null;
     }
 
-    private bool HasPairedMouse()
+    private bool FireHeld()
     {
+        if (fire != null) return fire.IsPressed();
         foreach (var device in input.devices)
-            if (device is Mouse) return true;
+        {
+            if (device is Gamepad pad && pad.rightTrigger.isPressed) return true;
+            if (device is Mouse mouse && mouse.leftButton.isPressed) return true;
+        }
         return false;
     }
 
     private void Update()
     {
-        if (!controller.isLocalPlayer) { aimLine.enabled = false; return; }
-        if (controller.isPlayerMoveStop || controller.IsFading || controller.isAction)
+        if (!controller.isLocalPlayer || controller.isPlayerMoveStop || controller.IsFading || controller.isAction)
         {
-            pendingShot = false;
-            controller.CancelShotLock();
-            aimLine.enabled = false;
+            CancelAttack();
             return;
         }
-        Gamepad pad = PairedPad();
-        if (pad != null && (pad.leftStick.ReadValue().sqrMagnitude > 0.04f ||
-            pad.rightStick.ReadValue().sqrMagnitude > 0.04f || pad.rightTrigger.isPressed))
-            usingPad = true;
-        if (HasPairedMouse() && Mouse.current != null &&
-            (Mouse.current.delta.ReadValue().sqrMagnitude > 1f || Mouse.current.leftButton.wasPressedThisFrame))
-            usingPad = false;
-        // An exclusively paired gamepad must never aim using the desktop cursor.
-        if (pad != null && !HasPairedMouse()) usingPad = true;
-
+        if (!CanTarget(lockedTarget, out _))
+        {
+            lockedTarget = null;
+            if (Time.time >= nextSearchTime)
+            {
+                lockedTarget = FindNearestTarget();
+                nextSearchTime = Time.time + 0.1f;
+            }
+        }
         if (pendingShot && Time.time >= releaseTime)
         {
             pendingShot = false;
+            // Use the originally selected enemy, never silently shoot a different one.
             SpawnShot();
+            shotTarget = null;
         }
-        Vector3 aim = GetAim(pad);
-        aimLine.enabled = true;
-        Vector3 origin = transform.position + Vector3.up * muzzleHeight;
-        aimLine.SetPosition(0, origin);
-        aimLine.SetPosition(1, origin + (controller.IsShotLocked ? shotDirection : aim) * 2.5f);
-
-        // Existing Fire action takes priority. RT/left click are fallbacks for projects without Fire.
-        bool held = fire != null ? fire.IsPressed() :
-            (usingPad && pad != null ? pad.rightTrigger.isPressed :
-             HasPairedMouse() && Mouse.current != null && Mouse.current.leftButton.isPressed);
-        if (!held || pendingShot || controller.IsShotLocked || Time.time < nextFireTime) return;
-        shotDirection = aim;
+        if (!FireHeld() || lockedTarget == null || pendingShot || controller.IsShotLocked || Time.time < nextFireTime) return;
+        if (!CanTarget(lockedTarget, out Bounds bounds)) return;
+        shotTarget = lockedTarget;
+        shotDirection = bounds.center - (transform.position + Vector3.up * muzzleHeight);
+        if (shotDirection.sqrMagnitude < 0.001f) return;
+        shotDirection.Normalize();
         float lockDuration = Mathf.Max(movementLock, windup);
         controller.BeginShotLock(shotDirection, lockDuration);
         releaseTime = Time.time + windup;
         nextFireTime = Time.time + Mathf.Max(fireInterval, lockDuration);
         pendingShot = true;
-        if (windup <= 0f) { pendingShot = false; SpawnShot(); }
+        if (windup <= 0f) { pendingShot = false; SpawnShot(); shotTarget = null; }
     }
 
-    private Vector3 GetAim(Gamepad pad)
+    private Transform FindNearestTarget()
     {
-        if (usingPad && pad != null)
+        candidates.Clear();
+        // Include detection triggers so an enemy with a child trigger is discoverable.
+        foreach (Collider collider in Physics.OverlapSphere(transform.position, attackRange, targetLayers, QueryTriggerInteraction.Collide))
         {
-            Vector2 stick = pad.rightStick.ReadValue();
-            if (stick.sqrMagnitude >= stickDeadZone * stickDeadZone)
-                return new Vector3(stick.x, 0f, stick.y).normalized;
-            // Use current movement input before the body has finished turning.
-            Vector3 movement = controller.GetMoveDirection();
-            return movement.sqrMagnitude > 0.001f ? movement.normalized : transform.forward;
+            Transform target = AutoAttackTarget.Resolve(collider);
+            if (target != null) candidates.Add(target);
         }
-        if (HasPairedMouse() && Mouse.current != null)
+        Transform nearest = null;
+        float bestDistance = float.PositiveInfinity;
+        foreach (Transform target in candidates)
         {
-            if (aimCamera == null) aimCamera = Camera.main;
-            if (aimCamera != null)
-            {
-                Ray ray = aimCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
-                if (new Plane(Vector3.up, transform.position).Raycast(ray, out float distance))
-                {
-                    Vector3 direction = ray.GetPoint(distance) - transform.position;
-                    direction.y = 0f;
-                    if (direction.sqrMagnitude > 0.001f) return direction.normalized;
-                }
-            }
+            if (!CanTarget(target, out _)) continue;
+            float distance = (target.position - transform.position).sqrMagnitude;
+            if (distance < bestDistance) { bestDistance = distance; nearest = target; }
         }
-        return transform.forward;
+        return nearest;
+    }
+
+    private bool CanTarget(Transform target, out Bounds bounds)
+    {
+        bounds = new Bounds();
+        if (!AutoAttackTarget.IsAlive(target)) return false;
+        float range = Mathf.Min(attackRange, projectileRange);
+        if ((target.position - transform.position).sqrMagnitude > range * range) return false;
+        if (!AutoAttackTarget.TryBounds(target, out bounds)) return false;
+        Vector3 origin = transform.position + Vector3.up * muzzleHeight;
+        Vector3 delta = bounds.center - origin;
+        if (delta.sqrMagnitude < 0.001f || delta.sqrMagnitude > projectileRange * projectileRange) return false;
+        // Sweeps share the projectile's collision mask and radius: thin walls block locking too.
+        foreach (Collider collider in Physics.OverlapSphere(origin, hitRadius, hitLayers, QueryTriggerInteraction.Ignore))
+            if (BlocksLock(collider, target)) return false;
+        foreach (RaycastHit hit in Physics.SphereCastAll(origin, hitRadius, delta.normalized,
+            delta.magnitude, hitLayers, QueryTriggerInteraction.Ignore))
+            if (BlocksLock(hit.collider, target)) return false;
+        // Target colliders must also participate in projectile collisions.
+        foreach (Collider collider in target.GetComponentsInChildren<Collider>())
+            if (collider.enabled && !collider.isTrigger && collider.gameObject.activeInHierarchy &&
+                (hitLayers.value & (1 << collider.gameObject.layer)) != 0) return true;
+        return false;
+    }
+
+    private bool BlocksLock(Collider collider, Transform target)
+    {
+        if (collider == null || collider.isTrigger) return false;
+        if (collider.GetComponentInParent<PlayerController>() != null) return false;
+        return collider.transform != target && !collider.transform.IsChildOf(target);
+    }
+
+    private void LateUpdate()
+    {
+        if (controller.isLocalPlayer && lockedTarget != null) lockIndicator.Show(lockedTarget);
+        else lockIndicator.Hide();
     }
 
     private void SpawnShot()
     {
-        GameObject shot = new GameObject("EnergySkillshot");
+        if (!CanTarget(shotTarget, out Bounds bounds)) return;
+        Vector3 origin = transform.position + Vector3.up * muzzleHeight;
+        shotDirection = (bounds.center - origin).normalized;
+        if (shotDirection.sqrMagnitude < 0.001f) return;
+        GameObject shot = new GameObject("EnergyBasicAttack");
         // Start at the player's centre; collision sweeps ignore the owner.
         // This prevents spawning a projectile on the far side of a nearby wall.
         shot.transform.position = transform.position + Vector3.up * muzzleHeight;
@@ -162,16 +180,17 @@ public sealed class PlayerCombatController : MonoBehaviour
             projectileSpeed, projectileRange / projectileSpeed, damage, hitRadius, hitLayers);
     }
 
-    private void OnDisable()
+    private void CancelAttack()
     {
         pendingShot = false;
+        shotTarget = lockedTarget = null;
         if (controller != null) controller.CancelShotLock();
-        if (aimLine != null) aimLine.enabled = false;
+        if (lockIndicator != null) lockIndicator.Hide();
     }
+    private void OnDisable() { CancelAttack(); }
     private void OnDestroy()
     {
-        // Projectiles share this material until their short lifetime expires.
-        if (energyMaterial != null) Destroy(energyMaterial, projectileRange / projectileSpeed + 0.2f);
+        if (energyMaterial != null) Destroy(energyMaterial, projectileRange / Mathf.Max(1f, projectileSpeed) + 0.2f);
     }
     public static Material CreateEnergyMaterial(Color color)
     {
