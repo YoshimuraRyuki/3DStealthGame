@@ -19,7 +19,7 @@ MonoBehaviour:
     width: 1536
     height: 868.8
   m_ShowMode: 4
-  m_Title: Project
+  m_Title: Game
   m_RootView: {fileID: 2}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -119,7 +119,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 435
+  controlID: 162
 --- !u!114 &6
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -144,7 +144,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 436
+  controlID: 163
 --- !u!114 &7
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -169,7 +169,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 50}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 19
+  controlID: 152
 --- !u!114 &8
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -219,11 +219,11 @@ MonoBehaviour:
   m_MaxSize: {x: 4002, y: 4021}
   m_ActualView: {fileID: 14}
   m_Panes:
-  - {fileID: 14}
   - {fileID: 12}
   - {fileID: 15}
-  m_Selected: 0
-  m_LastSelected: 1
+  - {fileID: 14}
+  m_Selected: 2
+  m_LastSelected: 0
 --- !u!114 &10
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -412,9 +412,9 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 5a7d0000
+      m_SelectedIDs: 76640000
       m_LastClickedID: 0
-      m_ExpandedIDs: 14f1ffff5ef1ffff24f3ffff5ef3ffff8af3ffff8cf9ffff
+      m_ExpandedIDs: 7e29ffff6e7dffffa086ffffde86ffffb888fffff688ffff2689ffff80b2ffffcab2ffffa0b4ffffdab4ffff06b5ffffaee9ffffd8f4ffff22f5fffff4f6ffff2af7ffff52f7ffff80fafffff4ffffffac7e0000
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -820,9 +820,9 @@ MonoBehaviour:
   m_PlayAudio: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: 22.144781, y: 19.116173, z: 11.181759}
+    m_Target: {x: 21.10868, y: -63.176315, z: 113.05255}
     speed: 2
-    m_Value: {x: 22.144781, y: 19.116173, z: 11.181759}
+    m_Value: {x: 21.10868, y: -63.176315, z: 113.05255}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -868,20 +868,20 @@ MonoBehaviour:
     m_GridAxis: 1
     m_gridOpacity: 0.5
   m_Rotation:
-    m_Target: {x: -0.08570735, y: 0.0032996938, z: -0.00030166665, w: -0.99635595}
+    m_Target: {x: -0.35949278, y: -0.021553263, z: 0.008270999, w: -0.9329074}
     speed: 2
-    m_Value: {x: -0.08570385, y: 0.003299559, z: -0.0003016543, w: -0.99631524}
+    m_Value: {x: -0.35947764, y: -0.021552356, z: 0.008270651, w: -0.9328681}
   m_Size:
-    m_Target: 61.73918
+    m_Target: 73.1567
     speed: 2
-    m_Value: 61.73918
+    m_Value: 73.1567
   m_Ortho:
     m_Target: 0
     speed: 2
     m_Value: 0
   m_CameraSettings:
-    m_Speed: 1.1204399
-    m_SpeedNormalized: 0.55999994
+    m_Speed: 1.2403798
+    m_SpeedNormalized: 0.6199999
     m_SpeedMin: 0.001
     m_SpeedMax: 2
     m_EasingEnabled: 1
@@ -919,10 +919,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 237.6
+    x: 236
     y: 73.6
-    width: 993.2001
-    height: 516.6
+    width: 980.4
+    height: 463.8
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -1031,7 +1031,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/Scripts/Masataka/Network
+    - Assets/Resources/Prefabs/Ryuki
     m_Globs: []
     m_OriginalText: 
     m_ImportLogFlags: 0
@@ -1039,16 +1039,16 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 64
   m_LastFolders:
-  - Assets/Scripts/Masataka/Network
+  - Assets/Resources/Prefabs/Ryuki
   m_LastFoldersGridSize: -1
   m_LastProjectPath: C:\Users\ydauser01\Documents\Git\3DStealthGame\3DStealthGame
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 468.30487}
-    m_SelectedIDs: 4a610000
-    m_LastClickedID: 24906
-    m_ExpandedIDs: 00000000686700006a6700006c6700006e67000070670000726700007467000076670000786700007a67000000ca9a3bffffff7f
+    scrollPos: {x: 0, y: 273.00232}
+    m_SelectedIDs: 1a690000
+    m_LastClickedID: 26906
+    m_ExpandedIDs: 000000006a6700006c6700006e67000070670000726700007467000076670000786700007a6700007c67000000ca9a3bffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1076,7 +1076,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 00000000686700006a6700006c6700006e67000070670000726700007467000076670000786700007a670000
+    m_ExpandedIDs: 000000006a6700006c6700006e67000070670000726700007467000076670000786700007a6700007c670000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1207,7 +1207,7 @@ MonoBehaviour:
     m_ControlHash: -371814159
     m_PrefName: Preview_InspectorPreview
   m_LastInspectedObjectInstanceID: -1
-  m_LastVerticalScrollValue: 0
+  m_LastVerticalScrollValue: 54
   m_GlobalObjectId: 
   m_InspectorMode: 0
   m_LockTracker:

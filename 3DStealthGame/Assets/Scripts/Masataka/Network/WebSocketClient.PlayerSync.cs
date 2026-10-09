@@ -48,7 +48,47 @@ public partial class WebSocketClient
 		}
 		if (playerPrefab == null) return;
 
-		myPlayer = Instantiate(playerPrefab);
+		Vector3 spawnPos;
+
+		if (spawnPositions.TryGetValue(init.player_number, out Vector3 mapPos))
+		{
+			spawnPos = mapPos;
+		}
+		else if (init.position != null)
+		{
+			spawnPos = new Vector3(
+				init.position.x,
+				init.position.y,
+				init.position.z
+			);
+		}
+		else
+		{
+			Debug.LogError("プレイヤーの開始位置がありません");
+			return;
+		}
+
+		myPlayer = Instantiate(
+			playerPrefab,
+			spawnPos,
+			playerPrefab.transform.rotation
+		);
+
+		var playerAnimator = myPlayer.GetComponent<Animator>();
+		if (playerAnimator != null)
+			playerAnimator.applyRootMotion = false;
+
+		var playerRb = myPlayer.GetComponent<Rigidbody>();
+		if (playerRb != null)
+		{
+			playerRb.position = spawnPos;
+
+			if (!playerRb.isKinematic)
+			{
+				playerRb.velocity = Vector3.zero;
+				playerRb.angularVelocity = Vector3.zero;
+			}
+		}
 		AttachNameTag(myPlayer, playerName, false);
 		myPlayer.tag = "Player" + init.player_number;
 		myPlayerNumber = init.player_number;
@@ -86,10 +126,11 @@ public partial class WebSocketClient
 		DontDestroyOnLoad(myPlayer);
 		playerObjects[myId] = myPlayer;
 
-		if (spawnPositions.ContainsKey(init.player_number))
-			myPlayer.transform.position = spawnPositions[init.player_number];
-		else if (init.position != null)
-			myPlayer.transform.position = new Vector3(init.position.x, init.position.y, init.position.z);
+		Debug.Log(
+	$"生成確認：Player{init.player_number} " +
+	$"マップの開始位置あり={spawnPositions.ContainsKey(init.player_number)} " +
+	$"座標={myPlayer.transform.position}"
+);
 
 		if (GlobalCamera.Instance != null)
 			GlobalCamera.Instance.SetTarget(myPlayer.transform);

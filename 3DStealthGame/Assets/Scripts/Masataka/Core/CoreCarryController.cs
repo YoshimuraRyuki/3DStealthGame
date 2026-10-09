@@ -42,6 +42,7 @@ public sealed class CoreCarryController : MonoBehaviour
 
     private float currentIkWeight;
     private float targetIkWeight;
+    private CoreRunnerRobotVisual robotVisual;
 
     public bool IsCarrying => carriedCore != null;
     public GameObject CarriedCore => carriedCore;
@@ -54,6 +55,7 @@ public sealed class CoreCarryController : MonoBehaviour
 
     private void Awake()
     {
+        robotVisual = GetComponent<CoreRunnerRobotVisual>();
         ResolveAnimator();
         CreateCarryRig();
     }
@@ -117,6 +119,12 @@ public sealed class CoreCarryController : MonoBehaviour
         coreTransform.localScale = coreLocalScale;
 
         targetIkWeight = 1f;
+        ResolveRobotVisual();
+        if (robotVisual != null)
+        {
+            core.SetActive(false);
+            robotVisual.SetCoreHeld(true);
+        }
     }
 
     public GameObject ReleaseCore(Vector3 worldPosition)
@@ -127,10 +135,13 @@ public sealed class CoreCarryController : MonoBehaviour
         Transform coreTransform = releasedCore.transform;
         coreTransform.SetParent(null, true);
         coreTransform.position = worldPosition;
+        releasedCore.SetActive(true);
 
         RestorePhysics();
         carriedCore = null;
         targetIkWeight = 0f;
+        ResolveRobotVisual();
+        robotVisual?.SetCoreHeld(false);
 
         return releasedCore;
     }
@@ -139,8 +150,23 @@ public sealed class CoreCarryController : MonoBehaviour
     {
         if (carriedCore != null)
         {
-            carriedCore.SetActive(visible);
+            ResolveRobotVisual();
+            if (robotVisual != null)
+            {
+                carriedCore.SetActive(false);
+                robotVisual.SetCoreHeld(visible);
+            }
+            else
+            {
+                carriedCore.SetActive(visible);
+            }
         }
+    }
+
+    private void ResolveRobotVisual()
+    {
+        if (robotVisual == null)
+            robotVisual = GetComponent<CoreRunnerRobotVisual>();
     }
 
     private void ResolveAnimator()

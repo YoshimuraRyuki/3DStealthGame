@@ -294,7 +294,7 @@ PrefabInstance:
       objectReference: {fileID: 9100000, guid: a9e63fe6cbf889541b74a7c59807ac21, type: 2}
     - target: {fileID: 5866666021909216657, guid: a8daa53897c0d4941b0ead0a083d5eb5, type: 3}
       propertyPath: m_ApplyRootMotion
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6130386592158015027, guid: a8daa53897c0d4941b0ead0a083d5eb5, type: 3}
       propertyPath: m_Layer
@@ -435,8 +435,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isLocalPlayer: 0
-  walkSpeed: 10
+  walkSpeed: 6
   crouchSpeed: 3
+  acceleration: 34
+  deceleration: 42
+  turnSharpness: 18
+  inputDeadZone: 0.1
   sneakVolume: 0
   walkVolume: 1
   catchFadePanel: {fileID: 0}

@@ -1,46 +1,73 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// ƒvƒŒƒCƒ„[‚ÌˆÚ“®E“®ìE‘«‰¹‚ğŠÇ—‚·‚éƒNƒ‰ƒXB
-/// ©•ª‚ÌƒvƒŒƒCƒ„[‚Ì‚Æ‚«‚¾‚¯“ü—Í‚ğó‚¯•t‚¯‚éB
-/// ‘Šè‚ÌƒvƒŒƒCƒ„[‚ÍƒT[ƒo[‚©‚çó‚¯æ‚Á‚½ˆÊ’uî•ñ‚Å“®‚­B
+/// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®ç§»å‹•ãƒ»å‹•ä½œãƒ»è¶³éŸ³ã‚’ç®¡ç†ã™ã‚‹ã‚¯ãƒ©ã‚¹ã€‚
+/// è‡ªåˆ†ã®ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®ã¨ãã ã‘å…¥åŠ›ã‚’å—ã‘ä»˜ã‘ã‚‹ã€‚
+/// ç›¸æ‰‹ã®ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã¯ã‚µãƒ¼ãƒãƒ¼ã‹ã‚‰å—ã‘å–ã£ãŸä½ç½®æƒ…å ±ã§å‹•ãã€‚
 /// </summary>
 public class PlayerController : MonoBehaviour
 {
-    #region ƒCƒ“ƒXƒyƒNƒ^[İ’è
+    #region ã‚¤ãƒ³ã‚¹ãƒšã‚¯ã‚¿ãƒ¼è¨­å®š
 
-    [Header("‘€ìİ’è")]
+    [Header("æ“ä½œè¨­å®š")]
     public bool isLocalPlayer = false;
 
-    [Header("ˆÚ“®‘¬“xİ’è")]
+    [Header("ç§»å‹•é€Ÿåº¦")]
     public float walkSpeed = 5.0f;
+    [HideInInspector]
     public float crouchSpeed = 2.5f;
 
-    [Header("‘«‰¹İ’è")]
+    [Header("ç§»å‹•ã®æ‰‹è§¦ã‚Š")]
+    [SerializeField, Min(0.1f)] private float acceleration = 34f;
+    [SerializeField, Min(0.1f)] private float deceleration = 42f;
+    [SerializeField, Min(0.1f)] private float turnSharpness = 18f;
+    [SerializeField, Range(0f, 0.5f)] private float inputDeadZone = 0.1f;
+
+    [Header("è¶³éŸ³è¨­å®š")]
     public float sneakVolume = 5f;
     public float walkVolume = 15f;
     public delegate void SoundEventHandler(Vector3 position, float volume);
     public event SoundEventHandler OnMakeSound;
 
-    [Header("ƒŠƒXƒ|[ƒ“‰‰o")]
+    [Header("ãƒªã‚¹ãƒãƒ¼ãƒ³æ¼”å‡º")]
     public Image catchFadePanel;
     public Text catchText;
 
     #endregion
 
-    #region ƒtƒB[ƒ‹ƒh
+    #region ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰
 
     private Rigidbody _rb;
+    private Vector3 _aimDirection;
+    private bool _hasAimDirection;
+    private float shotLockUntil;
+    private Vector3 shotFacing;
+    public bool IsShotLocked => Time.time < shotLockUntil;
+    public Vector3 GetMoveDirection() => new Vector3(_moveInput.x, 0f, _moveInput.y);
+    public void BeginShotLock(Vector3 direction, float duration)
+    {
+        direction.y = 0f;
+        if (direction.sqrMagnitude < 0.001f) direction = transform.forward;
+        shotFacing = direction.normalized;
+        shotLockUntil = Time.time + duration;
+        Quaternion facing = Quaternion.LookRotation(shotFacing, Vector3.up);
+        if (_rb != null && !_rb.isKinematic)
+        {
+            _rb.velocity = new Vector3(0f, _rb.velocity.y, 0f);
+            _rb.rotation = facing;
+        }
+        else transform.rotation = facing;
+    }
+    public void CancelShotLock() { shotLockUntil = 0f; }
 
-    // “ü—ÍŠÇ—
+    // å…¥åŠ›ç®¡ç†
     private Vector2 _moveInput;
     private PlayerInput playerInput;
     private InputAction moveAction;
-    private InputAction punchAction;
-    private InputAction moveSneak;
+    // æ—§ãƒ‘ãƒ³ãƒå‡¦ç†ã¨ã®äº’æ›ç”¨ã€‚å…¥åŠ›è‡ªä½“ã¯å¾ŒæœŸç‰ˆã§ã¯è³¼èª­ã—ãªã„ã€‚
     public System.Action OnPunchInput;
 
     Animator Am;
@@ -48,49 +75,61 @@ public class PlayerController : MonoBehaviour
     public bool isAnimationStart = false;
 
     public bool isAction = false;
-    public bool isPlayerMoveStop = false; // ˆÚ“®’â~ƒtƒ‰ƒOiƒXƒCƒbƒ`‘€ì’†‚È‚Çj
+    public bool isPlayerMoveStop = false; // ç§»å‹•åœæ­¢ãƒ•ãƒ©ã‚°ï¼ˆã‚¹ã‚¤ãƒƒãƒæ“ä½œä¸­ãªã©ï¼‰
     public bool isSneaking = false;
 
-    public bool _isFading = false; // ƒtƒF[ƒh’†ƒtƒ‰ƒO
+    public bool _isFading = false; // ãƒ•ã‚§ãƒ¼ãƒ‰ä¸­ãƒ•ãƒ©ã‚°
     public bool IsFading => _isFading;
 
-    public string lastTrigger = ""; // ÅŒã‚É”­‰Î‚µ‚½“®ìƒgƒŠƒK[i“¯Šú—pj
+    public string lastTrigger = ""; // æœ€å¾Œã«ç™ºç«ã—ãŸå‹•ä½œãƒˆãƒªã‚¬ãƒ¼ï¼ˆåŒæœŸç”¨ï¼‰
 
-    private Transform currentRespawnPoint; // ƒŠƒXƒ|[ƒ“’n“_
+    private Transform currentRespawnPoint; // ãƒªã‚¹ãƒãƒ¼ãƒ³åœ°ç‚¹
 
     #endregion
 
-    #region UnityƒCƒxƒ“ƒg
+    #region Unityã‚¤ãƒ™ãƒ³ãƒˆ
 
     void Awake()
     {
         _rb = GetComponent<Rigidbody>();
         if (_rb != null)
+        {
             _rb.constraints = RigidbodyConstraints.FreezeRotation;
+            _rb.interpolation = RigidbodyInterpolation.Interpolate;
+        }
         Am = GetComponent<Animator>();
-        Ca = GameObject.Find("Main Camera").GetComponent<GlobalCamera>();
-        // “ü—ÍŠÇ—‚Ì‰Šú‰»
+        if (Am != null) Am.applyRootMotion = false;
+        GameObject mainCamera = GameObject.Find("Main Camera");
+        if (mainCamera != null)
+            Ca = mainCamera.GetComponent<GlobalCamera>();
+
+        // å…¥åŠ›ç®¡ç†ã®åˆæœŸåŒ–
         playerInput = GetComponent<PlayerInput>();
-        moveAction = playerInput.actions["Move"];
-        punchAction = playerInput.actions["ActionPunch"];
-        moveSneak = playerInput.actions["Sneak"];
+        if (playerInput != null)
+            moveAction = playerInput.actions.FindAction("Move", false);
+
+
+        // AIã«ç”Ÿæˆã•ã›ãŸãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®è¦‹ãŸç›®å¤‰æ›´ã€‚ã€€ã”ã¡ã‚ƒã”ã¡ã‚ƒã—ã¦ã‚‹ã®ã§è¦æ¤œè¨
+        /*if (GetComponent<CoreRunnerRobotVisual>() == null)
+            gameObject.AddComponent<CoreRunnerRobotVisual>();*/
+
+        if (playerInput != null && GetComponent<PlayerCombatController>() == null)
+            gameObject.AddComponent<PlayerCombatController>();
 
         catchFadePanel = GameObject.Find("RespawnFadePanel")?.GetComponent<Image>();
-        catchText = GameObject.Find("ƒŠƒXƒ|[ƒ“ƒeƒLƒXƒg")?.GetComponent<Text>();
+        catchText = GameObject.Find("ãƒªã‚¹ãƒãƒ¼ãƒ³æ™‚ãƒ†ã‚­ã‚¹ãƒˆ")?.GetComponent<Text>();
     }
 
     private void OnEnable()
     {
-        punchAction.performed += OnPunch;
-        moveSneak.started += OnSneakStart;
-        moveSneak.canceled += OnSneakEnd;
+        // å¾ŒæœŸç‰ˆã§ã¯ãƒ‘ãƒ³ãƒã¨ã‚¹ãƒ‹ãƒ¼ã‚¯å…¥åŠ›ã‚’ä½¿ç”¨ã—ãªã„ã€‚
+        isSneaking = false;
     }
 
     private void OnDisable()
     {
-        punchAction.performed -= OnPunch;
-        moveSneak.started -= OnSneakStart;
-        moveSneak.canceled -= OnSneakEnd;
+        if (isLocalPlayer)
+            SoundManager.Instance?.StopWalk();
     }
 
     void Update()
@@ -99,13 +138,15 @@ public class PlayerController : MonoBehaviour
 
         CaptureInput();
 
-        // ƒXƒj[ƒN‚µ‚È‚ª‚çÀÛ‚ÉˆÚ“®‚µ‚Ä‚¢‚éŠÔ‚ğŒv‘ª
-        if (isSneaking && _moveInput.sqrMagnitude > 0.01f)
+        bool isActuallyMoving = GetHorizontalSpeed() > 0.15f;
+
+        if (Am != null)
         {
-            PlayMetrics.AddSneakTime(Time.deltaTime);
+            Am.SetBool("Run", isActuallyMoving);
+            Am.SetBool("Sneak", false);
         }
 
-        if (_rb.velocity.magnitude > 0.1f && !isSneaking)
+        if (isActuallyMoving)
             SoundManager.Instance?.StartWalk();
         else
             SoundManager.Instance?.StopWalk();
@@ -119,22 +160,22 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
-    #region “ü—ÍŠÇ—
+    #region å…¥åŠ›ç®¡ç†
 
-    /// <summary>UŒ‚ƒ{ƒ^ƒ“‚ª‰Ÿ‚³‚ê‚½‚Æ‚«</summary>
+    /// <summary>æ”»æ’ƒãƒœã‚¿ãƒ³ãŒæŠ¼ã•ã‚ŒãŸã¨ã</summary>
     public void OnPunch(InputAction.CallbackContext context)
     {
         if (!context.performed) return;
         OnPunchInput?.Invoke();
     }
 
-    /// <summary>”E‚Ñ•à‚«ƒ{ƒ^ƒ“‚ª‰Ÿ‚³‚ê‚½‚Æ‚«</summary>
+    /// <summary>å¿ã³æ­©ããƒœã‚¿ãƒ³ãŒæŠ¼ã•ã‚ŒãŸã¨ã</summary>
     public void OnSneakStart(InputAction.CallbackContext context)
     {
         isSneaking = true;
     }
 
-    /// <summary>”E‚Ñ•à‚«ƒ{ƒ^ƒ“‚ª—£‚³‚ê‚½‚Æ‚«</summary>
+    /// <summary>å¿ã³æ­©ããƒœã‚¿ãƒ³ãŒé›¢ã•ã‚ŒãŸã¨ã</summary>
     public void OnSneakEnd(InputAction.CallbackContext context)
     {
         isSneaking = false;
@@ -142,14 +183,14 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
-    #region “ü—Íˆ—
+    #region å…¥åŠ›å‡¦ç†
 
     /// <summary>
-    /// “ü—Í‚ğæ“¾‚µ‚ÄƒAƒjƒ[ƒVƒ‡ƒ“‚Æ‘«‰¹‚ğ§Œä‚·‚é
+    /// å…¥åŠ›ã‚’å–å¾—ã—ã¦ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã¨è¶³éŸ³ã‚’åˆ¶å¾¡ã™ã‚‹
     /// </summary>
     private void CaptureInput()
     {
-        // ˆÚ“®’â~’†
+        // ç§»å‹•åœæ­¢ä¸­
         if (isPlayerMoveStop)
         {
             _moveInput = Vector2.zero;
@@ -159,76 +200,105 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        _moveInput = moveAction.ReadValue<Vector2>();
+        _moveInput = moveAction != null ? moveAction.ReadValue<Vector2>() : Vector2.zero;
+
+        if (_moveInput.sqrMagnitude < inputDeadZone * inputDeadZone)
+            _moveInput = Vector2.zero;
+        else
+            _moveInput = Vector2.ClampMagnitude(_moveInput, 1f);
 
         if (Ca != null && Ca.IsTransitioning)
         {
             _moveInput = Vector2.zero;
         }
 
-        bool isMoving = _moveInput.sqrMagnitude > 0.01f;
-
-        // ”E‚Ñ•à‚«
-        if (isMoving && isSneaking)
-        {
-            Am.SetBool("Sneak", true);
-            Am.SetBool("Run", false);
-        }
-        // ‘–‚è
-        else if (isMoving)
-        {
-            MakeSound(transform.position, walkVolume);
-            Am.SetBool("Run", true);
-            Am.SetBool("Sneak", false);
-        }
-        // ‘Ò‹@
-        else
-        {
-            Am.SetBool("Run", false);
-            Am.SetBool("Sneak", false);
-        }
     }
 
     #endregion
 
-    #region ˆÚ“®ˆ—
+    #region ç§»å‹•å‡¦ç†
 
     /// <summary>
-    /// ÀÛ‚ÌˆÚ“®EŒü‚«•ÏXE‘«‰¹”­¶‚ğs‚¤
+    /// å®Ÿéš›ã®ç§»å‹•ãƒ»å‘ãå¤‰æ›´ãƒ»è¶³éŸ³ç™ºç”Ÿã‚’è¡Œã†
     /// </summary>
     private void ApplyMovement()
     {
-        Vector3 moveDir = new Vector3(_moveInput.x, 0, _moveInput.y);
-        float speed = isSneaking ? crouchSpeed : walkSpeed;
-
-        if (_rb != null)
+        if (IsShotLocked || isPlayerMoveStop)
         {
-            if (moveDir.sqrMagnitude < 0.01f)
-            {
-                _rb.velocity = new Vector3(0, _rb.velocity.y, 0);
-                return;
-            }
+            if (_rb != null && !_rb.isKinematic)
+                _rb.velocity = new Vector3(0f, _rb.velocity.y, 0f);
+            return;
+        }
+        Vector3 moveDir = new Vector3(_moveInput.x, 0, _moveInput.y);
 
-            // •ûŒü“]Š·‚ğ‚È‚ß‚ç‚©‚É‚·‚é
-            Vector3 targetVelocity = new Vector3(moveDir.x * speed, _rb.velocity.y, moveDir.z * speed);
-            _rb.velocity = Vector3.Lerp(_rb.velocity, targetVelocity, Time.fixedDeltaTime * 20f);
+        if (_rb != null && !_rb.isKinematic)
+        {
+            Vector3 currentHorizontalVelocity = new Vector3(_rb.velocity.x, 0f, _rb.velocity.z);
+            Vector3 targetHorizontalVelocity = moveDir * walkSpeed;
+            float changeRate = moveDir.sqrMagnitude > 0f ? acceleration : deceleration;
+
+            Vector3 nextHorizontalVelocity = Vector3.MoveTowards(
+                currentHorizontalVelocity,
+                targetHorizontalVelocity,
+                changeRate * Time.fixedDeltaTime);
+
+            _rb.velocity = new Vector3(
+                nextHorizontalVelocity.x,
+                _rb.velocity.y,
+                nextHorizontalVelocity.z);
         }
 
-        if (moveDir != Vector3.zero)
-            transform.rotation = Quaternion.LookRotation(moveDir);
+        Vector3 facingDirection = moveDir;
 
-        if (isSneaking)
-            MakeSound(transform.position, sneakVolume);
-        else
+        if (facingDirection.sqrMagnitude > 0f)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(facingDirection, Vector3.up);
+            float rotationBlend = 1f - Mathf.Exp(-turnSharpness * Time.fixedDeltaTime);
+
+            if (_rb != null)
+                _rb.MoveRotation(Quaternion.Slerp(_rb.rotation, targetRotation, rotationBlend));
+            else
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationBlend);
+
+        }
+
+        if (moveDir.sqrMagnitude > 0f)
             MakeSound(transform.position, walkVolume);
+    }
+
+    private float GetHorizontalSpeed()
+    {
+        if (_rb == null) return 0f;
+        return new Vector2(_rb.velocity.x, _rb.velocity.z).magnitude;
+    }
+
+    /// <summary>ç…§æº–ä¸­ã«ã€ç§»å‹•æ–¹å‘ã¨ã¯åˆ¥ã®æ–¹å‘ã¸ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚’å‘ã‘ã‚‹ã€‚</summary>
+    public void SetAimDirection(Vector3 worldDirection)
+    {
+        worldDirection.y = 0f;
+        if (worldDirection.sqrMagnitude < 0.0001f) return;
+
+        _aimDirection = worldDirection.normalized;
+        _hasAimDirection = true;
+    }
+
+    /// <summary>ç…§æº–ã‚’è§£é™¤ã—ã€å†ã³ç§»å‹•æ–¹å‘ã‚’å‘ãã‚ˆã†ã«ã™ã‚‹ã€‚</summary>
+    public void ClearAimDirection()
+    {
+        _hasAimDirection = false;
+    }
+
+    public Vector3 GetFacingDirection()
+    {
+        return _hasAimDirection ? _aimDirection : transform.forward;
     }
 
     #endregion
 
-    #region ƒAƒNƒVƒ‡ƒ“ˆ—
+    #region ã‚¢ã‚¯ã‚·ãƒ§ãƒ³å‡¦ç†
 
     /// <summary>
-    /// “G‚ğUŒ‚‚·‚éƒAƒjƒ[ƒVƒ‡ƒ“‚ğÄ¶‚·‚é
+    /// æ•µã‚’æ”»æ’ƒã™ã‚‹ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã‚’å†ç”Ÿã™ã‚‹
     /// </summary>
     public void PunchEnemy()
     {
@@ -240,7 +310,7 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// “G‚Ö‚ÌUŒ‚ƒAƒjƒ[ƒVƒ‡ƒ“‚ÌŠJnƒtƒ‰ƒO‚ğ—§‚Ä‚é
+    /// æ•µã¸ã®æ”»æ’ƒã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã®é–‹å§‹ãƒ•ãƒ©ã‚°ã‚’ç«‹ã¦ã‚‹
     /// </summary>
     public void StartAnimationEnemy()
     {
@@ -248,12 +318,12 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// ƒXƒCƒbƒ`‚ğ‘€ì‚·‚éƒAƒjƒ[ƒVƒ‡ƒ“‚ğÄ¶‚·‚é
+    /// ã‚¹ã‚¤ãƒƒãƒã‚’æ“ä½œã™ã‚‹ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã‚’å†ç”Ÿã™ã‚‹
     /// </summary>
     public void PunchSwitch()
     {
         //if (isAction) return;
-        print("ƒXƒCƒbƒ`ƒAƒjƒ[ƒVƒ‡ƒ“‹N“®");
+        print("ã‚¹ã‚¤ãƒƒãƒã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³èµ·å‹•");
         //Am.SetBool("Run", false);
         //Am.SetBool("Sneak", false);
         Ca.ActionCameraTrue();
@@ -262,7 +332,7 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// Œ»İ‚Ì“®ìó‘Ô‚ğ•¶š—ñ‚Å•Ô‚·i“¯Šú—pj
+    /// ç¾åœ¨ã®å‹•ä½œçŠ¶æ…‹ã‚’æ–‡å­—åˆ—ã§è¿”ã™ï¼ˆåŒæœŸç”¨ï¼‰
     /// </summary>
     public string GetAnimState()
     {
@@ -272,7 +342,7 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// ƒAƒNƒVƒ‡ƒ“I—¹‚ÉƒAƒjƒ[ƒVƒ‡ƒ“ƒCƒxƒ“ƒg‚©‚çŒÄ‚Î‚ê‚é
+    /// ã‚¢ã‚¯ã‚·ãƒ§ãƒ³çµ‚äº†æ™‚ã«ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã‚¤ãƒ™ãƒ³ãƒˆã‹ã‚‰å‘¼ã°ã‚Œã‚‹
     /// </summary>
     public void EndAction()
     {
@@ -280,7 +350,7 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// ˆÚ“®’â~ƒtƒ‰ƒO‚ğ‰ğœ‚·‚é
+    /// ç§»å‹•åœæ­¢ãƒ•ãƒ©ã‚°ã‚’è§£é™¤ã™ã‚‹
     /// </summary>
     public void EndMove()
     {
@@ -291,7 +361,7 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
-    #region ‘«‰¹ˆ—
+    #region è¶³éŸ³å‡¦ç†
 
     void MakeSound(Vector3 position, float volume)
     {
@@ -302,19 +372,19 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
-    #region ƒŠƒXƒ|[ƒ“ˆ—
+    #region ãƒªã‚¹ãƒãƒ¼ãƒ³å‡¦ç†
 
     /// <summary>
-    /// ƒŠƒXƒ|[ƒ“’n“_‚ğ•Û‘¶‚·‚é
+    /// ãƒªã‚¹ãƒãƒ¼ãƒ³åœ°ç‚¹ã‚’ä¿å­˜ã™ã‚‹
     /// </summary>
     public void SetRespawnPoint(Transform point)
     {
         currentRespawnPoint = point;
-        Debug.Log("ƒŠƒXƒ|[ƒ“’n“_XVF" + point.position);
+        Debug.Log("ãƒªã‚¹ãƒãƒ¼ãƒ³åœ°ç‚¹æ›´æ–°ï¼š" + point.position);
     }
 
     /// <summary>
-    /// ƒŠƒXƒ|[ƒ“‰‰o‚ğŠJn‚·‚éi©•ª‚ª•ß‚Ü‚Á‚½–{lj
+    /// ãƒªã‚¹ãƒãƒ¼ãƒ³æ¼”å‡ºã‚’é–‹å§‹ã™ã‚‹ï¼ˆè‡ªåˆ†ãŒæ•ã¾ã£ãŸæœ¬äººï¼‰
     /// </summary>
     public void Respawn()
     {
@@ -323,7 +393,7 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// ‘ŠèƒvƒŒƒCƒ„[‚ª‚Â‚©‚Ü‚Á‚½‚Æ‚«‚ÉƒT[ƒo[‚©‚çŒÄ‚Î‚ê‚éƒŠƒXƒ|[ƒ“‰‰oi’Ê’m‚È‚µj
+    /// ç›¸æ‰‹ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ãŒã¤ã‹ã¾ã£ãŸã¨ãã«ã‚µãƒ¼ãƒãƒ¼ã‹ã‚‰å‘¼ã°ã‚Œã‚‹ãƒªã‚¹ãƒãƒ¼ãƒ³æ¼”å‡ºï¼ˆé€šçŸ¥ãªã—ï¼‰
     /// </summary>
     public void RespawnWithEffectPublic()
     {
@@ -331,17 +401,17 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// ‰æ–Ê‚ğˆÃ“]‚³‚¹‚ÄƒŠƒXƒ|[ƒ“ˆÊ’u‚ÉˆÚ“®‚µAƒtƒF[ƒh‚Å•œ‹A‚·‚é‰‰o
+    /// ç”»é¢ã‚’æš—è»¢ã•ã›ã¦ãƒªã‚¹ãƒãƒ¼ãƒ³ä½ç½®ã«ç§»å‹•ã—ã€ãƒ•ã‚§ãƒ¼ãƒ‰ã§å¾©å¸°ã™ã‚‹æ¼”å‡º
     /// </summary>
-    /// <param name="sendToServer">true‚È‚ç©•ª‚ª•ß‚Ü‚Á‚½–{l‚Æ‚µ‚ÄƒT[ƒo[‚É’Ê’m‚·‚é</param>
+    /// <param name="sendToServer">trueãªã‚‰è‡ªåˆ†ãŒæ•ã¾ã£ãŸæœ¬äººã¨ã—ã¦ã‚µãƒ¼ãƒãƒ¼ã«é€šçŸ¥ã™ã‚‹</param>
     private IEnumerator RespawnWithEffect(bool sendToServer)
     {
-        if (_isFading) yield break; // ƒtƒF[ƒh’†‚È‚ç–³‹
+        if (_isFading) yield break; // ãƒ•ã‚§ãƒ¼ãƒ‰ä¸­ãªã‚‰ç„¡è¦–
         _isFading = true;
 
         SoundManager.Instance?.PlayRespawn();
 
-        // €–S‚ÉƒAƒNƒVƒ‡ƒ“‚ğ••‚¶‚ÄIdle‚É–ß‚·
+        // æ­»äº¡æ™‚ã«ã‚¢ã‚¯ã‚·ãƒ§ãƒ³ã‚’å°ã˜ã¦Idleã«æˆ»ã™
         isAction = true;
         isPlayerMoveStop = true;
         Am.SetBool("Run", false);
@@ -357,7 +427,7 @@ public class PlayerController : MonoBehaviour
         }
 
 
-        // ”­Œ©‚ÌƒeƒLƒXƒg‚ğ•\¦
+        // ç™ºè¦‹æ™‚ã®ãƒ†ã‚­ã‚¹ãƒˆã‚’è¡¨ç¤º
         if (catchText != null)
         {
             var c = catchText.color;
@@ -365,7 +435,7 @@ public class PlayerController : MonoBehaviour
             catchText.color = c;
         }
 
-        // ‰æ–Ê‚ğˆÃ“]‚³‚¹‚é
+        // ç”»é¢ã‚’æš—è»¢ã•ã›ã‚‹
         if (catchFadePanel != null)
         {
             float elapsed = 0f;
@@ -381,7 +451,7 @@ public class PlayerController : MonoBehaviour
 
         yield return new WaitForSeconds(0.5f);
 
-        // ƒŠƒXƒ|[ƒ“ˆÊ’u‚ÉˆÚ“®
+        // ãƒªã‚¹ãƒãƒ¼ãƒ³ä½ç½®ã«ç§»å‹•
         _rb.velocity = Vector3.zero;
         _rb.angularVelocity = Vector3.zero;
         transform.position = currentRespawnPoint.position;
@@ -395,7 +465,7 @@ public class PlayerController : MonoBehaviour
             if (wsClient != null) wsClient.SendRespawn(transform.position);
         }
 
-        // “G‚ÌŒx‰ú“x‚ğƒŠƒZƒbƒg
+        // æ•µã®è­¦æˆ’åº¦ã‚’ãƒªã‚»ãƒƒãƒˆ
         var enemies = GameObject.FindGameObjectsWithTag("Enemy");
         foreach (var e in enemies)
         {
@@ -449,19 +519,19 @@ public class PlayerController : MonoBehaviour
         }
 
 
-        // ƒtƒF[ƒhƒCƒ“Š®—¹Œã
+        // ãƒ•ã‚§ãƒ¼ãƒ‰ã‚¤ãƒ³å®Œäº†å¾Œ
         isAction = false;
         isPlayerMoveStop = false;
-        _isFading = false; // ƒtƒ‰ƒO‰ğœ
+        _isFading = false; // ãƒ•ãƒ©ã‚°è§£é™¤
     }
 
     private IEnumerator CheckPosition()
     {
         yield return new WaitForSeconds(0.1f);
-        Debug.Log("0.1•bŒãF" + transform.position);
+        Debug.Log("0.1ç§’å¾Œï¼š" + transform.position);
 
         yield return new WaitForSeconds(0.4f);
-        Debug.Log("0.5•bŒãF" + transform.position);
+        Debug.Log("0.5ç§’å¾Œï¼š" + transform.position);
     }
 
     #endregion
