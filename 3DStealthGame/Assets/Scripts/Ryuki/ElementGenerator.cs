@@ -21,6 +21,7 @@ public class ElementGenerator : MonoBehaviour
     #region リソース格納用
 
     GameObject goalObjects;                                         // ゴール
+    GameObject[] coresList = new GameObject[1];                     // コア
     GameObject[] enemiesList = new GameObject[1];                   // 敵リスト
     GameObject[] strongEnemisList = new GameObject[1];              // 強化敵リスト
     GameObject[] itemsList = new GameObject[1];                     // アイテムリスト
@@ -56,23 +57,13 @@ public class ElementGenerator : MonoBehaviour
     public enum MapObjectType
     {
         Enemy = 3,
-        StrongEnemy = 4,
-        Item = 5,
-        Goal = 6,
-        Switch = 7,
-        Respawn = 8,
-        PatrolPoint = 9,
-        Player1 = 10,
-        Player2 = 11,
-        GimickWall = 12,
-        powerItemBlue = 13,
-        powerItemGreen = 14,
-        switchBlue = 15,
-        switchGreen = 16,
-        GimickWallBlue = 17, 
-        GimickWallGreen = 18
-
+        Goal = 4,
+        PatrolPoint = 5,
+        Player1 = 6,
+        Player2 = 7,
+        Core = 8,
     }
+
     // メンバ変数として追加
     public Dictionary<int, List<GameObject>> gimmickWallDic = new Dictionary<int, List<GameObject>>();
     public Dictionary<int, List<Vector2Int>> gimmickWallPosDic = new Dictionary<int, List<Vector2Int>>();
@@ -200,15 +191,15 @@ public class ElementGenerator : MonoBehaviour
         // マップ作成用キューブ
         wallObjects = (GameObject)Resources.Load("Prefabs/Ryuki/WallPrefab");
 
+        // コア生成
+        coresList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Core");
+
         // ゴール
         goalObjects = (GameObject)Resources.Load("Prefabs/Ryuki/Goal");
         goalIcon = Resources.Load<Sprite>("Images/Ryuki/IconGoal");
 
         // 敵リスト
         enemiesList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Enemy");
-
-        // 強化敵リスト
-        strongEnemisList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/SuperEnemy");
 
         // アイテムリスト
         itemsList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Item");
@@ -227,17 +218,13 @@ public class ElementGenerator : MonoBehaviour
         patrolPointsList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/PatrolPoint");
 
         // 2Dのマップチップ読み込み
-        mapTilesList[0] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_0");
-        mapTilesList[1] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_1");
-        mapTilesList[2] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_2");
-        mapTilesList[3] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_3");
+        //mapTilesList[0] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_0");
+        //mapTilesList[1] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_1");
+        //mapTilesList[2] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_2");
+        //mapTilesList[3] = Resources.Load<GameObject>("Prefabs/Ryuki/Map2D/MapUI_3");
 
         // リスポーン地点
         respawnPointsList[0] = (GameObject)Resources.Load("Prefabs/Ryuki/Respawn");
-
-        // 仮作成
-        powerItemBlue[0] = Resources.Load<GameObject>("Prefabs/Masataka/Thunder_Blue");
-        powerItemGreen[0] = Resources.Load<GameObject>("Prefabs/Masataka/Thunder_Green");
     }
 
     /// <summary>
@@ -488,11 +475,11 @@ public class ElementGenerator : MonoBehaviour
 						map[x, y] = "1";
                         break;
 
-                    case MapObjectType.Respawn: // リスポーン
-                        Instantiate(respawnPointsList[0], pos, Quaternion.identity);
+                    case MapObjectType.Core: // リスポーン
+                        Instantiate(coresList[0], pos, Quaternion.identity);
                         map[x, y] = "1";
-                        break;				
-				}
+                        break;
+                }
             }
         }
     }
