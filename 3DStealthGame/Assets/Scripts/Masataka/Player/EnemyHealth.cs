@@ -73,7 +73,15 @@ public sealed class EnemyHealth : MonoBehaviour, IDamageable
 
     private void OnDefeated()
     {
-        // 敵AI整理後に死亡・ダウン・リスポーン処理へ置き換える。
-        Debug.Log($"[EnemyHealth] {name}を倒しました（現在は確認用ログのみ）");
+        // HP0のまま見た目とAIだけ残って動く状態にしない。
+        Debug.Log($"[EnemyHealth] {name}を倒しました");
+        EnemyManager ai = GetComponentInParent<EnemyManager>();
+        GameObject enemyObject = ai != null ? ai.gameObject : gameObject;
+        if (ai == null)
+        {
+            for (Transform t = transform; t != null; t = t.parent)
+                if (t.tag == "Enemy" || t.tag == "StrongEnemy") { enemyObject = t.gameObject; break; }
+        }
+        enemyObject.SetActive(false);
     }
 }

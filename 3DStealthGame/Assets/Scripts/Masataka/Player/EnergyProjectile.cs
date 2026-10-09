@@ -31,6 +31,7 @@ public sealed class EnergyProjectile : MonoBehaviour
     private bool CanHit(Collider other)
     {
         return other != null && !other.isTrigger &&
+            other.GetComponentInParent<PlayerController>() == null &&
             !(owner != null && (other.transform == owner || other.transform.IsChildOf(owner))) &&
             other.transform != transform && !other.transform.IsChildOf(transform);
     }
@@ -70,13 +71,13 @@ public sealed class EnergyProjectile : MonoBehaviour
     }
     private static IDamageable FindDamageable(Collider other)
     {
+        Transform target = AutoAttackTarget.Resolve(other);
+        if (!AutoAttackTarget.IsAlive(target)) return null;
         foreach (MonoBehaviour behaviour in other.GetComponentsInParent<MonoBehaviour>())
             if (behaviour is IDamageable damageable) return damageable;
-        Transform target = other.transform;
-        while (target.parent != null && !target.CompareTag("Enemy")) target = target.parent;
-        if (!target.CompareTag("Enemy")) return null;
-        EnemyHealth health = target.GetComponent<EnemyHealth>();
-        return health != null ? health : target.gameObject.AddComponent<EnemyHealth>();
+        foreach (MonoBehaviour behaviour in target.GetComponentsInChildren<MonoBehaviour>())
+            if (behaviour is IDamageable damageable) return damageable;
+        return target.gameObject.AddComponent<EnemyHealth>();
     }
 }
 public sealed class EnergyImpactEffect : MonoBehaviour
