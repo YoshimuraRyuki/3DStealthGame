@@ -62,6 +62,7 @@ public class GoalScript : MonoBehaviour
 
 	private void TrySendGoal()
 	{
+        if (CoopGameSession.Instance != null) return;
 		if (_hasSentGoal) return;
 
 		if (_wsClient == null)
@@ -104,6 +105,7 @@ public class GoalScript : MonoBehaviour
 
 	private void UpdateWaitingLog()
 	{
+        if (CoopGameSession.Instance != null) return;
 		if (_hasSentGoal) return;
 
 		if (_wsClient == null)

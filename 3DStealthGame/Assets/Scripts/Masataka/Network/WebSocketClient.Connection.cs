@@ -156,9 +156,7 @@ public partial class WebSocketClient
 		myPlayerNumber = 0;
 		spawnPositions.Clear();
 		pendingMessages.Clear();
-		_enemyObjects = null;
-		enemyTargetPositions.Clear();
-		enemyTargetAngles.Clear();
+		ResetEnemySync();
 	}
 
 

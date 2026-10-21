@@ -116,64 +116,9 @@ public partial class WebSocketClient
 		var msg = JsonUtility.FromJson<TimerUpdateMessage>(json);
 	}
 
-	private void RestoreStaminaOnRespawn()
-	{
-		if (StaminaManager.Instance == null) return;
-
-		if (StaminaManager.Instance.GetCurrentStamina() <= 4)
-		{
-			StaminaManager.Instance.SetStamina(5);
-			LogManager.Instance?.AddLog("スタミナが5に戻った", "#88ccff");
-			Debug.Log("[Respawn] スタミナを5に戻しました");
-		}
-	}
-
-
-	private void HandleRespawnMessage(string json)
-	{
-		var msg = JsonUtility.FromJson<RespawnMessage>(json);
-		if (msg.id == myId)
-		{
-			RestoreStaminaOnRespawn();
-
-			targetPositions.Remove(myId);
-			LogManager.Instance?.AddLog("リスポーンした", "#ff6666");
-			return;
-		}
-		if (!playerObjects.ContainsKey(msg.id)) return;
-		var obj = playerObjects[msg.id];
-		if (obj == null) return;
-		obj.transform.position = new Vector3(msg.position.x, msg.position.y, msg.position.z);
-		targetPositions[msg.id] = obj.transform.position;
-		LogManager.Instance?.AddLog("味方がリスポーンした", "#ff6666");
-	}
-
-
-	private void HandleRemoteRespawnMessage(string json)
-	{
-		// 相手が敵に見つかったので、ミッション3を失敗扱いにする
-		MissionManager.Instance?.OnEnemyFound();
-
-		var mypc = myPlayer?.GetComponent<PlayerController>();
-		if (mypc != null && mypc.IsFading) return;
-
-		if (IsGuestPlayer())
-		{
-			if (myPlayer == null) return;
-
-			var pc = myPlayer.GetComponent<PlayerController>();
-			if (pc == null) return;
-
-			pc.RespawnWithEffectPublic();
-			RestoreStaminaOnRespawn();
-			LogManager.Instance?.AddLog("リスポーンした", "#ff6666");
-		}
-		else if (IsHostPlayer())
-		{
-			LogManager.Instance?.AddLog("味方がリスポーンした", "#ff6666");
-		}
-	}
-
+	// Old respawn packets no longer teleport players or restore stamina.
+	private void HandleRespawnMessage(string json) { }
+	private void HandleRemoteRespawnMessage(string json) { }
 
 	private void HandleEnemyFoundMessage(string json)
 	{

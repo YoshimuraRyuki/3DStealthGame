@@ -42,7 +42,7 @@ public sealed class CoreCarryController : MonoBehaviour
 
     private float currentIkWeight;
     private float targetIkWeight;
-    private CoreRunnerRobotVisual robotVisual;
+    private Vector3 originalWorldScale;
 
     public bool IsCarrying => carriedCore != null;
     public GameObject CarriedCore => carriedCore;
@@ -55,7 +55,6 @@ public sealed class CoreCarryController : MonoBehaviour
 
     private void Awake()
     {
-        robotVisual = GetComponent<CoreRunnerRobotVisual>();
         ResolveAnimator();
         CreateCarryRig();
     }
@@ -110,21 +109,21 @@ public sealed class CoreCarryController : MonoBehaviour
         CreateCarryRig();
 
         carriedCore = core;
+        originalWorldScale = core.transform.lossyScale;
         CacheAndDisablePhysics(core);
 
         Transform coreTransform = core.transform;
         coreTransform.SetParent(carrySocket, false);
         coreTransform.localPosition = Vector3.zero;
         coreTransform.localRotation = Quaternion.identity;
-        coreTransform.localScale = coreLocalScale;
+        Vector3 socketScale = carrySocket.lossyScale;
+        coreTransform.localScale = Vector3.Scale(coreLocalScale, new Vector3(
+            originalWorldScale.x / Mathf.Max(0.001f, Mathf.Abs(socketScale.x)),
+            originalWorldScale.y / Mathf.Max(0.001f, Mathf.Abs(socketScale.y)),
+            originalWorldScale.z / Mathf.Max(0.001f, Mathf.Abs(socketScale.z))));
 
         targetIkWeight = 1f;
-        ResolveRobotVisual();
-        if (robotVisual != null)
-        {
-            core.SetActive(false);
-            robotVisual.SetCoreHeld(true);
-        }
+
     }
 
     public GameObject ReleaseCore(Vector3 worldPosition)
@@ -135,39 +134,18 @@ public sealed class CoreCarryController : MonoBehaviour
         Transform coreTransform = releasedCore.transform;
         coreTransform.SetParent(null, true);
         coreTransform.position = worldPosition;
+        coreTransform.localScale = originalWorldScale;
         releasedCore.SetActive(true);
 
         RestorePhysics();
         carriedCore = null;
         targetIkWeight = 0f;
-        ResolveRobotVisual();
-        robotVisual?.SetCoreHeld(false);
 
         return releasedCore;
     }
 
     public void SetCarryVisible(bool visible)
-    {
-        if (carriedCore != null)
-        {
-            ResolveRobotVisual();
-            if (robotVisual != null)
-            {
-                carriedCore.SetActive(false);
-                robotVisual.SetCoreHeld(visible);
-            }
-            else
-            {
-                carriedCore.SetActive(visible);
-            }
-        }
-    }
-
-    private void ResolveRobotVisual()
-    {
-        if (robotVisual == null)
-            robotVisual = GetComponent<CoreRunnerRobotVisual>();
-    }
+    { if (carriedCore != null) carriedCore.SetActive(visible); }
 
     private void ResolveAnimator()
     {
@@ -179,16 +157,16 @@ public sealed class CoreCarryController : MonoBehaviour
 
     private void CreateCarryRig()
     {
-        if (carrySocket != null || animator == null || !animator.isHuman) return;
-
-        Transform chest = animator.GetBoneTransform(HumanBodyBones.Chest);
+        if (carrySocket != null) return;
+        Transform chest = animator != null && animator.isHuman ? animator.GetBoneTransform(HumanBodyBones.Chest) : null;
+        if (chest == null && animator != null && animator.isHuman) chest = animator.GetBoneTransform(HumanBodyBones.UpperChest);
         if (chest == null)
         {
-            chest = animator.GetBoneTransform(HumanBodyBones.UpperChest);
+            chest = transform;
+            carrySocket = CreateTarget("CoreCarrySocket", chest, new Vector3(0f, 1f, 0.5f));
         }
-        if (chest == null) return;
+        else carrySocket = CreateTarget("CoreCarrySocket", chest, coreLocalPosition);
 
-        carrySocket = CreateTarget("CoreCarrySocket", chest, coreLocalPosition);
         carrySocket.localRotation = Quaternion.Euler(coreLocalEulerAngles);
 
         leftHandTarget = CreateTarget("LeftHandTarget", carrySocket, leftHandOffset);
@@ -240,8 +218,11 @@ public sealed class CoreCarryController : MonoBehaviour
 
         previousUseGravity = carriedRigidbody.useGravity;
         previousIsKinematic = carriedRigidbody.isKinematic;
-        carriedRigidbody.velocity = Vector3.zero;
-        carriedRigidbody.angularVelocity = Vector3.zero;
+        if (!carriedRigidbody.isKinematic)
+        {
+            carriedRigidbody.velocity = Vector3.zero;
+            carriedRigidbody.angularVelocity = Vector3.zero;
+        }
         carriedRigidbody.useGravity = false;
         carriedRigidbody.isKinematic = true;
     }

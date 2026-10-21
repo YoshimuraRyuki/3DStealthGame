@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
@@ -83,7 +83,6 @@ public class PlayerController : MonoBehaviour
 
     public string lastTrigger = ""; // 最後に発火した動作トリガー（同期用）
 
-    private Transform currentRespawnPoint; // リスポーン地点
 
     #endregion
 
@@ -109,15 +108,9 @@ public class PlayerController : MonoBehaviour
             moveAction = playerInput.actions.FindAction("Move", false);
 
 
-        // AIに生成させたプレイヤーの見た目変更。　ごちゃごちゃしてるので要検討
-        /*if (GetComponent<CoreRunnerRobotVisual>() == null)
-            gameObject.AddComponent<CoreRunnerRobotVisual>();*/
-
         if (playerInput != null && GetComponent<PlayerCombatController>() == null)
             gameObject.AddComponent<PlayerCombatController>();
 
-        catchFadePanel = GameObject.Find("RespawnFadePanel")?.GetComponent<Image>();
-        catchText = GameObject.Find("リスポーン時テキスト")?.GetComponent<Text>();
     }
 
     private void OnEnable()
@@ -223,7 +216,8 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void ApplyMovement()
     {
-        if (IsShotLocked || isPlayerMoveStop)
+        CoopPlayerStateController coop = GetComponent<CoopPlayerStateController>();
+        if ((coop != null && (coop.IsStunned || (CoopGameSession.Instance != null && (CoopGameSession.Instance.Cleared || !CoopGameSession.Instance.Ready)))) || IsShotLocked || isPlayerMoveStop)
         {
             if (_rb != null && !_rb.isKinematic)
                 _rb.velocity = new Vector3(0f, _rb.velocity.y, 0f);
@@ -242,6 +236,8 @@ public class PlayerController : MonoBehaviour
                 targetHorizontalVelocity,
                 changeRate * Time.fixedDeltaTime);
 
+            if (CoopGameSession.Instance != null)
+                nextHorizontalVelocity = CoopGameSession.Instance.Chain.LimitVelocity(transform, nextHorizontalVelocity, Time.fixedDeltaTime);
             _rb.velocity = new Vector3(
                 nextHorizontalVelocity.x,
                 _rb.velocity.y,
@@ -374,155 +370,23 @@ public class PlayerController : MonoBehaviour
 
     #region リスポーン処理
 
-    /// <summary>
-    /// リスポーン地点を保存する
-    /// </summary>
-    public void SetRespawnPoint(Transform point)
+    // Kept for Ryuki-side callers and existing serialized events.
+    // Respawning/teleport/fade are retired; the host applies a temporary stagger.
+    public void SetRespawnPoint(Transform point) { }
+    public void Respawn() { CoopGameSession.Instance?.StaggerPlayer(gameObject); }
+    public void RespawnWithEffectPublic() { Respawn(); }
+
+    public void BeginStagger()
     {
-        currentRespawnPoint = point;
-        Debug.Log("リスポーン地点更新：" + point.position);
-    }
-
-    /// <summary>
-    /// リスポーン演出を開始する（自分が捕まった本人）
-    /// </summary>
-    public void Respawn()
-    {
-        if (currentRespawnPoint != null)
-            StartCoroutine(RespawnWithEffect(true));
-    }
-
-    /// <summary>
-    /// 相手プレイヤーがつかまったときにサーバーから呼ばれるリスポーン演出（通知なし）
-    /// </summary>
-    public void RespawnWithEffectPublic()
-    {
-        StartCoroutine(RespawnWithEffect(false));
-    }
-
-    /// <summary>
-    /// 画面を暗転させてリスポーン位置に移動し、フェードで復帰する演出
-    /// </summary>
-    /// <param name="sendToServer">trueなら自分が捕まった本人としてサーバーに通知する</param>
-    private IEnumerator RespawnWithEffect(bool sendToServer)
-    {
-        if (_isFading) yield break; // フェード中なら無視
-        _isFading = true;
-
-        SoundManager.Instance?.PlayRespawn();
-
-        // 死亡時にアクションを封じてIdleに戻す
-        isAction = true;
-        isPlayerMoveStop = true;
-        Am.SetBool("Run", false);
-        Am.SetBool("Sneak", false);
-        //Am.SetTrigger("Idle");
-
-        if (sendToServer && StaminaManager.Instance != null)
+        CancelShotLock();
+        _moveInput = Vector2.zero;
+        if (_rb != null && !_rb.isKinematic)
+            _rb.velocity = new Vector3(0f, _rb.velocity.y, 0f);
+        if (Am != null)
         {
-            if (StaminaManager.Instance.GetCurrentStamina() <= 4)
-            {
-                StaminaManager.Instance.SetStamina(5);
-            }
+            Am.SetBool("Run", false);
+            Am.SetBool("Sneak", false);
         }
-
-
-        // 発見時のテキストを表示
-        if (catchText != null)
-        {
-            var c = catchText.color;
-            c.a = 1f;
-            catchText.color = c;
-        }
-
-        // 画面を暗転させる
-        if (catchFadePanel != null)
-        {
-            float elapsed = 0f;
-            while (elapsed < 0.5f)
-            {
-                elapsed += Time.deltaTime;
-                var c = catchFadePanel.color;
-                c.a = Mathf.Lerp(0, 1, elapsed / 0.5f);
-                catchFadePanel.color = c;
-                yield return null;
-            }
-        }
-
-        yield return new WaitForSeconds(0.5f);
-
-        // リスポーン位置に移動
-        _rb.velocity = Vector3.zero;
-        _rb.angularVelocity = Vector3.zero;
-        transform.position = currentRespawnPoint.position;
-        transform.rotation = currentRespawnPoint.rotation;
-
-        if (sendToServer)
-        {
-            PlayMetrics.AddDeath();
-
-            var wsClient = FindObjectOfType<WebSocketClient>();
-            if (wsClient != null) wsClient.SendRespawn(transform.position);
-        }
-
-        // 敵の警戒度をリセット
-        var enemies = GameObject.FindGameObjectsWithTag("Enemy");
-        foreach (var e in enemies)
-        {
-            var em = e.GetComponent<EnemyManager>();
-            if (em != null)
-            {
-                em.ResetRespawnFlag();
-                em.currentAlertCount = em.alertCount;
-            }
-        }
-
-        yield return new WaitForSeconds(0.3f);
-
-        isAction = false;
-        isPlayerMoveStop = false;
-
-        if (catchFadePanel != null)
-        {
-            float elapsed = 0f;
-            while (elapsed < 0.5f)
-            {
-                elapsed += Time.deltaTime;
-                float alpha = Mathf.Lerp(1, 0, elapsed / 0.5f);
-
-                var c = catchFadePanel.color;
-                c.a = alpha;
-                catchFadePanel.color = c;
-
-                if (catchText != null)
-                {
-                    var tc = catchText.color;
-                    tc.a = alpha;
-                    catchText.color = tc;
-                }
-
-                yield return null;
-            }
-        }
-
-        if (catchFadePanel != null)
-        {
-            var c = catchFadePanel.color;
-            c.a = 0f;
-            catchFadePanel.color = c;
-        }
-        if (catchText != null)
-        {
-            var c = catchText.color;
-            c.a = 0f;
-            catchText.color = c;
-        }
-
-
-        // フェードイン完了後
-        isAction = false;
-        isPlayerMoveStop = false;
-        _isFading = false; // フラグ解除
     }
 
     private IEnumerator CheckPosition()

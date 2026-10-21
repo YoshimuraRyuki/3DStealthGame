@@ -16,6 +16,8 @@ public static class AutoAttackTarget
     public static bool IsAlive(Transform target)
     {
         if (target == null || !target.gameObject.activeInHierarchy) return false;
+        var gimmick = target.GetComponent<ElementalGimmick>();
+        if (gimmick != null) return !gimmick.Activated;
         EnemyHealth health = target.GetComponentInChildren<EnemyHealth>();
         return health == null || health.CurrentHealth > 0;
     }

@@ -182,10 +182,15 @@ public static class SendMessageBuilder
 	float angle,
 	Color light,
 	string reaction,
-	Vector3 lastSound)
+	Vector3 lastSound,
+	string enemyKey = "", string sessionId = "",
+	int health = 0, int maxHealth = 0, bool active = true)
 	{
 		var data = new EnemyMoveSendMessage
 		{
+			enemy_key = enemyKey, session_id = sessionId,
+			has_combat_state = !string.IsNullOrEmpty(enemyKey),
+			health = health, max_health = maxHealth, active = active,
 			enemy_index = index,
 			x = pos.x,
 			y = pos.y,

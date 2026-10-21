@@ -11,26 +11,29 @@ public partial class WebSocketClient
 
 	private void HandleEnemyMoveMessage(string json)
 	{
-		if (IsHostPlayer()) return;
+		if (!IsGuestPlayer() || !isGameSceneLoaded) return;
 		var msg = JsonUtility.FromJson<EnemyMoveMessage>(json);
-		enemyTargetPositions[msg.enemy_index] = new Vector3(msg.x, msg.y, msg.z);
-		enemyTargetAngles[msg.enemy_index] = msg.angle;
+		if (msg == null || !msg.has_combat_state || string.IsNullOrEmpty(msg.enemy_key) ||
+			string.IsNullOrEmpty(currentSessionId) || msg.session_id != currentSessionId) return;
+		EnsureEnemyObjectsLoaded();
+		if (!enemySyncByKey.TryGetValue(msg.enemy_key, out var entry) || entry.Object == null || entry.Health == null) return;
 
-		if (_enemyObjects == null || _enemyObjects.Length == 0)
-			_enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
-
-		if (msg.enemy_index < _enemyObjects.Length)
+		entry.Health.ApplyCoopHealth(msg.health, msg.max_health, msg.active);
+		if (!entry.Object.activeInHierarchy)
 		{
-			var light = _enemyObjects[msg.enemy_index].GetComponentInChildren<Light>();
-			if (light != null)
-				light.color = new Color(msg.light_r, msg.light_g, msg.light_b);
-
-			var em = _enemyObjects[msg.enemy_index].GetComponent<EnemyManager>();
-			if (em != null)
-			{
-				em.SetReactionState(msg.reaction);
-				em.SetLastSoundPosition(new Vector3(msg.last_sound_x, 0, msg.last_sound_z));
-			}
+			enemyTargetPositions.Remove(entry.Index);
+			enemyTargetAngles.Remove(entry.Index);
+			return;
+		}
+		enemyTargetPositions[entry.Index] = new Vector3(msg.x, msg.y, msg.z);
+		enemyTargetAngles[entry.Index] = msg.angle;
+		var light = entry.Object.GetComponentInChildren<Light>();
+		if (light != null) light.color = new Color(msg.light_r, msg.light_g, msg.light_b);
+		var em = entry.Object.GetComponent<EnemyManager>();
+		if (em != null)
+		{
+			em.SetReactionState(msg.reaction);
+			em.SetLastSoundPosition(new Vector3(msg.last_sound_x, 0, msg.last_sound_z));
 		}
 	}
 

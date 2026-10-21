@@ -64,13 +64,17 @@
     <Compile Include="Assets\Scripts\Masataka\Core\CoreCarryDebugInput.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\LogManager.cs" />
     <Compile Include="Assets\Scripts\Ryuki\RespawnPoint.cs" />
-    <Compile Include="Assets\Scripts\Masataka\Player\CoreRunnerRobotVisual.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\PlayerData.cs" />
     <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.Connection.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\RankingManager.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Coop\CoopReturnZone.cs" />
     <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.PlayerLifecycle.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Coop\CoopMessages.cs" />
     <Compile Include="Assets\Scripts\Ryuki\CsvMapLoader.cs" />
     <Compile Include="Assets\Scripts\Masataka\Core\CoreCarryController.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Coop\CoopProjectile.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Coop\CoopGameSession.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Coop\CoopChain.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\IDamageable.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\RoomMemberPanel.cs" />
     <Compile Include="Assets\Scripts\Ryuki\UISelectionEffect.cs" />
@@ -80,7 +84,6 @@
     <Compile Include="Assets\Scripts\Ryuki\MiniMap.cs" />
     <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.WorldEvents.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\EnemyLockOnIndicator.cs" />
-    <Compile Include="Assets\Scripts\Masataka\Player\CoreOrbitMarker.cs" />
     <Compile Include="Assets\Scripts\Ryuki\ElementGenerator.cs" />
     <Compile Include="Assets\Scripts\Ryuki\TestPlayer.cs" />
     <Compile Include="Assets\Scripts\Ryuki\MenuSelector.cs" />
@@ -88,13 +91,16 @@
     <Compile Include="Assets\Scripts\Masataka\Managers\ItemManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\StaminaItemManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\NameTag.cs" />
-    <Compile Include="Assets\Scripts\Masataka\Managers\QuickChatManager.cs" />
-    <Compile Include="Assets\Scripts\Masataka\UI\TutorialManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\AutoAttackTarget.cs" />
+    <Compile Include="Assets\Scripts\Masataka\UI\TutorialManager.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Managers\QuickChatManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Camera\PlayerCamera.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Coop\ElementalGimmick.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Coop\CoopCore.cs" />
     <Compile Include="Assets\Scripts\Masataka\SwitchOutlinePresenter.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\StaminaManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\ItemDropEffect.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Coop\CoopPlayerStateController.cs" />
     <Compile Include="Assets\Scripts\Ryuki\WallCollision.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\StaminaGaugeUI.cs" />
     <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.Lobby.cs" />
@@ -113,7 +119,6 @@
     <Compile Include="Assets\Scripts\Masataka\Managers\ResultData.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\RoomSelectManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.cs" />
-    <Compile Include="Assets\Scripts\Masataka\Player\RobotMuzzleFlash.cs" />
     <Compile Include="Assets\BTM_Assets\BTM_Items_Gems\Scripts\SimpleGemsAnim.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\PlayerCombatController.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\ResultManager.cs" />
@@ -121,6 +126,7 @@
     <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.PlayerSync.cs" />
     <Compile Include="Assets\Scripts\Masataka\StaminaAbsorbEffect.cs" />
     <Compile Include="Assets\Scripts\Masataka\Network\SendMessageBuilder.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.Coop.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

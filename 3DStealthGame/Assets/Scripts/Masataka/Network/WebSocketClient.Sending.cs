@@ -28,9 +28,9 @@ public partial class WebSocketClient
 			animationTrigger));
 	}
 
-	public async void SendRespawn(Vector3 position)
+	public void SendRespawn(Vector3 position)
 	{
-		await SendTextIfConnectedAsync(SendMessageBuilder.Respawn(myId, position));
+		CoopGameSession.Instance?.StaggerPlayer(myPlayer);
 	}
 
 	public async void SendGoal()
@@ -83,13 +83,10 @@ public partial class WebSocketClient
 		await SendTextIfConnectedAsync(SendMessageBuilder.EnemyFound(myId));
 	}
 
-	public async void SendRemoteRespawn()
+	public void SendRemoteRespawn()
 	{
-		if (_remoteRespawnSent || !IsSocketOpen) return;
-
-		_remoteRespawnSent = true;
-		await SendTextIfConnectedAsync(SendMessageBuilder.RemoteRespawn(myId));
-		StartCoroutine(ResetRemoteRespawnFlagAfterDelay());
+		// Existing EnemyManager calls this when the guest is caught.
+		if (IsHostPlayer()) CoopGameSession.Instance?.StaggerGuest();
 	}
 
 	public async void SendStaminaState(int current, int max)
@@ -97,9 +94,5 @@ public partial class WebSocketClient
 		await SendTextIfConnectedAsync(SendMessageBuilder.StaminaState(myId, current, max));
 	}
 
-	private IEnumerator ResetRemoteRespawnFlagAfterDelay()
-	{
-		yield return new WaitForSeconds(4f);
-		_remoteRespawnSent = false;
-	}
+
 }
