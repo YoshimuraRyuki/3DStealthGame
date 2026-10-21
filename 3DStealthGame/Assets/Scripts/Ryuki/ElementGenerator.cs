@@ -441,9 +441,18 @@ public class ElementGenerator : MonoBehaviour
 
                 string[] data = cell.Split('_');
 
-                //int type = int.Parse(data[0]);
-                MapObjectType type = (MapObjectType)int.Parse(data[0]);
-                int id = data.Length > 1 ? int.Parse(data[1]) : -1;
+                if (!int.TryParse(data[0].Trim(), out int typeInt))
+                {
+                    continue;
+                }
+
+                int id = -1;
+                if (data.Length > 1)
+                {
+                    int.TryParse(data[1].Trim(), out id);
+                }
+
+                MapObjectType type = (MapObjectType)typeInt;
 
                 switch (type)
                 {
@@ -464,7 +473,14 @@ public class ElementGenerator : MonoBehaviour
                         break;
 
                     case MapObjectType.PatrolPoint: // 敵の巡回ポイント
-                        Instantiate(patrolPointsList[0], pos, Quaternion.identity);
+                        GameObject pointObj = Instantiate(patrolPointsList[0], pos, Quaternion.identity);
+
+                        // グループIDとその順番を指定
+                        if (id != -1)
+                        {
+                            pointObj.name = $"PatrolPoint_{id}";
+                        }
+
                         map[x, y] = "1";
                         break;
 

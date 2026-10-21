@@ -1,11 +1,11 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
 public class EnemyManager : MonoBehaviour
 {
-    #region ó‘ÔŠÇ—
+    #region çŠ¶æ…‹ç®¡ç†
 
     public enum EnemyState
     {
@@ -24,7 +24,7 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
-    #region ƒRƒ“ƒ|[ƒlƒ“ƒgQÆ
+    #region ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆå‚ç…§
 
     Light Sl;
     PlayerController Pc;
@@ -36,43 +36,46 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
-    #region „‰ñİ’è
+    #region å·¡å›è¨­å®š
 
-    // „‰ñƒ|ƒCƒ“ƒg
-    GameObject startPoint;   // Å‰‚Ìƒ|ƒCƒ“ƒg
-    GameObject targetPoint;  // ¡Œü‚©‚Á‚Ä‚¢‚éƒ|ƒCƒ“ƒg
+    // å·¡å›ãƒã‚¤ãƒ³ãƒˆ
+    GameObject startPoint;   // æœ€åˆã®ãƒã‚¤ãƒ³ãƒˆ
+    GameObject targetPoint;  // ä»Šå‘ã‹ã£ã¦ã„ã‚‹ãƒã‚¤ãƒ³ãƒˆ
 
-    [Header("„‰ñƒ|ƒCƒ“ƒg")]
+    private List<GameObject> patrolPointList = new List<GameObject>();
+    private int currentPointIndex = 0;
+
+    [Header("å·¡å›ãƒã‚¤ãƒ³ãƒˆ")]
     public GameObject[] movePoints;
 
-    // ˆÚ“®
-    [Header("ˆÚ“®‘¬“x")]
+    // ç§»å‹•
+    [Header("ç§»å‹•é€Ÿåº¦")]
     public float speed = 3f;
-    [Header("’Ç]‚É’â~‚·‚é‹——£")]
+    [Header("è¿½å¾“æ™‚ã«åœæ­¢ã™ã‚‹è·é›¢")]
     public float stoppingDistance = 3f;
-    [Header("ƒvƒŒƒCƒ„[’Ç]‚ÌˆÚ“®‘¬“x")]
+    [Header("ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼è¿½å¾“æ™‚ã®ç§»å‹•é€Ÿåº¦")]
     public float chaseSpeed = 1.5f;
 
-    [Header("‰ñ“]‘¬“x")]
+    [Header("å›è»¢é€Ÿåº¦")]
     public float rotateSpeed = 3f;
     public float stoprotateSpeed = 50f;
 
-    // ’â~
-    [Header("’â~ŠÔ Å¬")]
-    public float stopMoveCooldownMin = 5f;
-    [Header("’â~ŠÔ Å‘å")]
-    public float stopMoveCooldownMax = 10f;
-
-    float stopMoveCooldown;
+    // åœæ­¢
+    [Header("åœæ­¢æ™‚é–“")]
+    public float stopMoveCooldown = 3f;
     float currentTime = 0f;
 
+    [Header("å·¡å›ã‚¨ãƒªã‚¢è¨­å®š")]
+    [Tooltip("æ•µãŒå·¡å›ãƒã‚¤ãƒ³ãƒˆã‚’æ¢ã™æœ€å¤§è·é›¢")]
+    public float maxPatrolDistance = 20f;
+    
     #endregion
 
-    #region ‹­‰»“Gİ’è
+    #region å¼·åŒ–æ•µè¨­å®š
 
-    [Header("‹­‰»“G—p")]
+    [Header("å¼·åŒ–æ•µç”¨")]
     [SerializeField] float waitTime = 3f;
-    [SerializeField] float rotateAngle = 90f; // ‰ñ“]‚·‚éŠp“x
+    [SerializeField] float rotateAngle = 90f; // å›è»¢ã™ã‚‹è§’åº¦
 
     private float timer = 0f;
     private bool isRotating = false;
@@ -80,160 +83,225 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
-    #region ‹ŠEŒŸ’m
+    #region è¦–ç•Œæ¤œçŸ¥
 
-    Transform targetPlayer; // ƒvƒŒƒCƒ„[ŒŸ’m
+    Transform targetPlayer; // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼æ¤œçŸ¥
 
-    [Header("ŒŸ’m‚·‚é‹——£")]
+    [Header("æ¤œçŸ¥ã™ã‚‹è·é›¢")]
     public float viewRadius = 10f;
-    [Header("ŒŸ’m‚·‚éŠp“x")]
+    [Header("æ¤œçŸ¥ã™ã‚‹è§’åº¦")]
     public float viewAngle = 90f;
 
-    [Header("Œx‰úƒJƒEƒ“ƒg")]
+    [Header("è­¦æˆ’ã‚«ã‚¦ãƒ³ãƒˆ")]
     public float alertCount = 6;
     public float currentAlertCount;
 
-    [Header("Œ©¸‚Á‚Ä‚©‚ç„‰ñ‚É–ß‚éŠÔ")]
+    [Header("è¦‹å¤±ã£ã¦ã‹ã‚‰å·¡å›ã«æˆ»ã‚‹æ™‚é–“")]
     public float lostPlayerTime = 2f;
     float lostTimer = 0f;
-    private Transform _alertTarget; // Œx‰ú“x‚ğã‚°‚½ƒvƒŒƒCƒ„[
-    [Header("ŠÑ’Ê—áƒLƒƒƒXƒg"), SerializeField]
+    private Transform _alertTarget; // è­¦æˆ’åº¦ã‚’ä¸Šã’ãŸãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼
+    [Header("è²«é€šä¾‹ã‚­ãƒ£ã‚¹ãƒˆ"), SerializeField]
     private LayerMask visionMask;
 
     #endregion
 
-    #region ‰¹ŒŸ’m
+    #region éŸ³æ¤œçŸ¥
 
-    [Header("ƒvƒŒƒCƒ„[")]
+    [Header("ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼")]
     public Transform player;
-    [Header("“G‚ª‘«‰¹‚Ì•·‚±‚¦‚é”ÍˆÍ")]
+    [Header("æ•µãŒè¶³éŸ³ã®èã“ãˆã‚‹ç¯„å›²")]
     public float hearingRange = 15f;
-    [Header("‰¹‚ª•·‚±‚¦‚È‚­‚È‚Á‚Ä‚©‚ç‚ ‚«‚ç‚ß‚é‚Ü‚Å‚ÌŠÔ")]
+    [Header("éŸ³ãŒèã“ãˆãªããªã£ã¦ã‹ã‚‰ã‚ãã‚‰ã‚ã‚‹ã¾ã§ã®æ™‚é–“")]
     public float alertDuration = 3f;
     private float alertTimer = 0f;
 
     public Vector3 GetLastSoundPosition() => lastSoundPosition;
-    private bool isHearingSound = false;     // ¡A‰¹‚ª•·‚±‚¦‚Ä‚¢‚é‚©‚Ç‚¤‚©‚Ìƒtƒ‰ƒO
-    private Vector3 lastSoundPosition;       // ÅŒã‚É‰¹‚ª•·‚±‚¦‚½êŠ
-    private float _remoteSoundCooldown = 0f; // Player2‰¹ŒŸ’m—pƒN[ƒ‹ƒ_ƒEƒ“
+    private bool isHearingSound = false;     // ä»Šã€éŸ³ãŒèã“ãˆã¦ã„ã‚‹ã‹ã©ã†ã‹ã®ãƒ•ãƒ©ã‚°
+    private Vector3 lastSoundPosition;       // æœ€å¾Œã«éŸ³ãŒèã“ãˆãŸå ´æ‰€
+    private float _remoteSoundCooldown = 0f; // Player2éŸ³æ¤œçŸ¥ç”¨ã‚¯ãƒ¼ãƒ«ãƒ€ã‚¦ãƒ³
 
     #endregion
 
-    #region ƒtƒ‰ƒOŠÇ—
+    #region ãƒ•ãƒ©ã‚°ç®¡ç†
 
     bool isAlerted = false;
     bool isFoundPlayer = false;
     bool isReaction = false;
-    public bool isStopMove = false; // “G‚ª~‚Ü‚Á‚Ä‚¢‚é‚Æ‚«‚É“®‚«‚ğŠ®‘S‚É~‚ß‚é
+    public bool isStopMove = false; // æ•µãŒæ­¢ã¾ã£ã¦ã„ã‚‹ã¨ãã«å‹•ãã‚’å®Œå…¨ã«æ­¢ã‚ã‚‹
 
     private bool _soundRegistered = false;
     private bool _isRespawning = false;
 
-    [HideInInspector] public bool isRemoteControlled = false; // player2‘¤‚Ítrue
+    [HideInInspector] public bool isRemoteControlled = false; // player2å´ã¯true
 
 
     #endregion
 
-    #region ƒMƒ~ƒbƒN˜AŒg
+    #region ã‚®ãƒŸãƒƒã‚¯é€£æº
 
-    [Header("ƒXƒCƒbƒ`ƒMƒ~ƒbƒN—pID")]
+    [Header("ã‚¹ã‚¤ãƒƒãƒã‚®ãƒŸãƒƒã‚¯ç”¨ID")]
     public int enemyID;
     public int gimmickCount = 0;
-    [Header("‚¢‚­‚Â‚Ìƒ{ƒ^ƒ“‚ÅƒMƒ~ƒbƒN‰ğœ‚·‚é‚©"), SerializeField]
+    [Header("ã„ãã¤ã®ãƒœã‚¿ãƒ³ã§ã‚®ãƒŸãƒƒã‚¯è§£é™¤ã™ã‚‹ã‹"), SerializeField]
     public int switchCount;
 
     #endregion
 
-    #region ƒfƒoƒbƒN
+    #region ãƒ‡ãƒãƒƒã‚¯
 
     [Header("Gizmos Debug")]
-    [SerializeField] bool showViewDebug = true;   // ‹ŠEEƒŒƒCƒLƒƒƒXƒg
-    [SerializeField] bool showSoundDebug = true;  // ‰¹ŒŸ’m
+    [SerializeField] bool showViewDebug = true;   // è¦–ç•Œãƒ»ãƒ¬ã‚¤ã‚­ãƒ£ã‚¹ãƒˆ
+    [SerializeField] bool showSoundDebug = true;  // éŸ³æ¤œçŸ¥
     private Vector3 debugSoundPos;
     private float debugSoundRange;
     private float debugTimer;
 
     #endregion
 
-    #region „‰ñƒ|ƒCƒ“ƒgŒˆ’è
+    #region å·¡å›ãƒã‚¤ãƒ³ãƒˆæ±ºå®š
 
     /// <summary>
-    /// ˆê”Ô‹ß‚¢ƒ|ƒCƒ“ƒg‚ğæ“¾
+    /// ä¸€ç•ªè¿‘ã„ãƒã‚¤ãƒ³ãƒˆã‚’å–å¾—
     /// </summary>
     /// <returns></returns>
-    GameObject StartPoint()
+    void StartPoint()
     {
-        GameObject[] objs = GameObject.FindGameObjectsWithTag("Point");
+        GameObject[] allPoints = GameObject.FindGameObjectsWithTag("Point");
+        patrolPointList.Clear();
 
+        if (allPoints.Length == 0) return;
+
+        // è‡ªåˆ†ã‹ã‚‰ä¸€ç•ªè¿‘ã„ãƒã‚¤ãƒ³ãƒˆã‚’æ¢ã™
+        GameObject nearestPoint = GetNearestPoint(allPoints);
+        if (nearestPoint == null) return;
+
+        int nearestID = GetIDFromName(nearestPoint.name);
+
+        if (nearestID == -1)
+        {
+            BackupPatrolSetup(allPoints);
+            return;
+        }
+
+        // ã‚°ãƒ«ãƒ¼ãƒ—IDã‚’è¨ˆç®—
+        int targetGroupID = nearestID / 100;
+
+        // åŒã˜ã‚°ãƒ«ãƒ¼ãƒ—IDã‚’æŒã¤ãƒã‚¤ãƒ³ãƒˆã‚’ã™ã¹ã¦æŠ½å‡º
+        foreach (GameObject pt in allPoints)
+        {
+            int ptID = GetIDFromName(pt.name);
+            if (ptID != -1 && (ptID / 100) == targetGroupID)
+            {
+                patrolPointList.Add(pt);
+            }
+        }
+
+        // 3. IDã®æ•°å€¤ãŒè‹¥ã„é †ã«ã‚½ãƒ¼ãƒˆ (101 -> 102 -> 103 -> 104...)
+        patrolPointList.Sort((a, b) =>
+        {
+            int idA = GetIDFromName(a.name);
+            int idB = GetIDFromName(b.name);
+            return idA.CompareTo(idB);
+        });
+
+        // ä¸€ç•ªè¿‘ã‹ã£ãŸãƒã‚¤ãƒ³ãƒˆã®ä½ç½®ã‹ã‚‰å·¡å›ã‚’é–‹å§‹ã™ã‚‹
+        if (patrolPointList.Count > 0)
+        {
+            currentPointIndex = patrolPointList.IndexOf(nearestPoint);
+            if (currentPointIndex == -1) currentPointIndex = 0;
+
+            targetPoint = patrolPointList[currentPointIndex];
+        }
+    }
+
+    int GetIDFromName(string objectName)
+    {
+        string[] parts = objectName.Split('_');
+        if (parts.Length >= 2 && int.TryParse(parts[1], out int id))
+        {
+            return id;
+        }
+        return -1;
+    }
+
+    GameObject GetNearestPoint(GameObject[] points)
+    {
         GameObject nearest = null;
         float minDistance = Mathf.Infinity;
-
         Vector3 currentPos = transform.position;
 
-        foreach (GameObject obj in objs)
+        foreach (var pt in points)
         {
-            float distance = Vector3.SqrMagnitude(obj.transform.position - currentPos);
-
-            if (distance < minDistance)
+            float dist = Vector3.SqrMagnitude(pt.transform.position - currentPos);
+            if (dist < minDistance)
             {
-                minDistance = distance;
-                nearest = obj;
+                minDistance = dist;
+                nearest = pt;
             }
         }
         return nearest;
     }
 
-    /// <summary>
-    /// ƒ‰ƒ“ƒ_ƒ€‚ÅŸ‚Ì‹ß‚­‚Ìƒ|ƒCƒ“ƒg‚ğ’T‚·
-    /// </summary>
-    /// <param name="currentPoint"></param>
-    /// <returns></returns>
-    GameObject GetNearPoint(GameObject currentPoint)
+    void BackupPatrolSetup(GameObject[] allPoints)
     {
-        GameObject[] objs = GameObject.FindGameObjectsWithTag("Point");
-        List<GameObject> nearPoints = new List<GameObject>();
-        Vector3 currentPos = currentPoint.transform.position;
-
-        foreach (GameObject obj in objs)
+        Vector3 spawnPos = transform.position;
+        foreach (GameObject pt in allPoints)
         {
-            if (obj == currentPoint) continue;
-
-            Vector3 targetPos = obj.transform.position;
-            float distance = Vector3.Distance(currentPos, targetPos);
-
-            // ˆê’è‹——£ˆÈ“à‚¾‚¯Œó•â‚É‚·‚é
-            if (distance <= 10f)
+            if (Vector3.Distance(spawnPos, pt.transform.position) <= maxPatrolDistance)
             {
-                Vector3 direction = targetPos - currentPos;
-
-                int wallLayerMask = LayerMask.GetMask("Wall");
-
-                // •Ç‚ÌŒü‚±‚¤‚É‚ ‚éƒ|ƒCƒ“ƒg‚¾‚Á‚½‚çŸ‚Ìƒ|ƒCƒ“ƒg‚ÖÄ’Š‘I
-                if (Physics.Raycast(currentPos, direction, distance, wallLayerMask))
-                {
-                    continue;
-                }
-                nearPoints.Add(obj);
-
+                patrolPointList.Add(pt);
             }
         }
+        patrolPointList.Sort((a, b) => string.Compare(a.name, b.name));
 
-        // Œó•â‚ª–³‚¢ê‡
-        if (nearPoints.Count == 0)
+        if (patrolPointList.Count > 0)
         {
-            return currentPoint;
+            currentPointIndex = 0;
+            targetPoint = patrolPointList[currentPointIndex];
         }
+    }
 
-        // Œó•â‚©‚çƒ‰ƒ“ƒ_ƒ€‘I‘ğ
-        return nearPoints[Random.Range(0, nearPoints.Count)];
+    /// <summary>
+    /// ä¸€ç•ªè¿‘ã„ãƒã‚¤ãƒ³ãƒˆã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’å–å¾—
+    /// </summary>
+    /// <returns></returns>
+    //int GetNearestPointIndex()
+    //{
+    //    int nearestIndex = 0;
+    //    float minDistance = Mathf.Infinity;
+    //    Vector3 currentPos = transform.position;
+
+    //    for (int i = 0; i < patrolPointList.Count; i++)
+    //    {
+    //        float distance = Vector3.SqrMagnitude(patrolPointList[i].transform.position - currentPos);
+    //        if (distance < minDistance)
+    //        {
+    //            minDistance = distance;
+    //            nearestIndex = i;
+    //        }
+    //    }
+    //    return nearestIndex;
+    //}
+
+    /// <summary>
+    /// æ¬¡ã®ãƒã‚¤ãƒ³ãƒˆã‚’é †ç•ªé€šã‚Šã«å–å¾—ã™ã‚‹
+    /// </summary>
+    GameObject GetNextPoint()
+    {
+        if (patrolPointList.Count == 0) return null;
+
+        // æ¬¡ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã¸
+        currentPointIndex = (currentPointIndex + 1) % patrolPointList.Count;
+
+        return patrolPointList[currentPointIndex];
     }
 
     #endregion
 
-    #region „‰ñƒ|ƒCƒ“ƒgˆÚ“®
+    #region å·¡å›ãƒã‚¤ãƒ³ãƒˆç§»å‹•
 
     /// <summary>
-    /// ƒ|ƒCƒ“ƒg‚ÉŒü‚©‚Á‚ÄˆÚ“®
+    /// ãƒã‚¤ãƒ³ãƒˆã«å‘ã‹ã£ã¦ç§»å‹•
     /// </summary>
     void MoveEnemy()
     {
@@ -241,25 +309,23 @@ public class EnemyManager : MonoBehaviour
 
         if (!isStopMove)
         {
-            MoveToPoint(targetPoint); // ÀÛ‚ÉˆÚ“®‚³‚¹‚éˆ—
+            MoveToPoint(targetPoint); // å®Ÿéš›ã«ç§»å‹•ã•ã›ã‚‹å‡¦ç†
         }
 
-        // ‹ß‚Ã‚¢‚½‚çØ‚è‘Ö‚¦
+        // è¿‘ã¥ã„ãŸã‚‰åˆ‡ã‚Šæ›¿ãˆ
         if (Vector3.Distance(transform.position, targetPoint.transform.position) < 0.1f)
         {
             isStopMove = true;
-            currentTime += Time.deltaTime; // –Ú“I‚ÌˆÊ’u‚É’…‚¢‚½‚ç­‚µ~‚ß‚é
-            SearchPlayer();                // ~‚Ü‚Á‚Ä‚¢‚éŠÔ‹“_‚ğ“®‚©‚·
+            currentTime += Time.deltaTime; // ç›®çš„ã®ä½ç½®ã«ç€ã„ãŸã‚‰å°‘ã—æ­¢ã‚ã‚‹
+            //SearchPlayer();                // æ­¢ã¾ã£ã¦ã„ã‚‹é–“è¦–ç‚¹ã‚’å‹•ã‹ã™
 
             if (currentTime >= stopMoveCooldown)
             {
-                GameObject oldPoint = targetPoint;
+                // æ¬¡ã®ãƒã‚¤ãƒ³ãƒˆã‚’ãƒ©ãƒ³ãƒ€ãƒ å–å¾—
+                targetPoint = GetNextPoint();
 
-                // Ÿ‚Ìƒ|ƒCƒ“ƒg‚ğƒ‰ƒ“ƒ_ƒ€æ“¾
-                targetPoint = GetNearPoint(oldPoint);
-
-                // ’â~ŠÔ‚ğÄ’Š‘I
-                stopMoveCooldown = Random.Range(stopMoveCooldownMin, stopMoveCooldownMax);
+                // åœæ­¢æ™‚é–“ã‚’å†æŠ½é¸
+                //stopMoveCooldown = Random.Range(stopMoveCooldownMin, stopMoveCooldownMax);
 
                 currentTime = 0;
                 isStopMove = false;
@@ -268,26 +334,26 @@ public class EnemyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// æ“¾‚µ‚½ƒ|ƒCƒ“ƒg‚ÉŒü‚©‚Á‚ÄˆÚ“®
+    /// å–å¾—ã—ãŸãƒã‚¤ãƒ³ãƒˆã«å‘ã‹ã£ã¦ç§»å‹•
     /// </summary>
     /// <param name="point"></param>
     void MoveToPoint(GameObject point)
     {
-        // –Ú“I’n•ûŒü
+        // ç›®çš„åœ°æ–¹å‘
         Vector3 direction = point.transform.position - transform.position;
 
         direction.y = 0;
 
-        // Œü‚«‚½‚¢‰ñ“]
+        // å‘ããŸã„å›è»¢
         Quaternion lookRotation = Quaternion.LookRotation(direction);
 
-        // ‚È‚ß‚ç‚©‰ñ“]
+        // ãªã‚ã‚‰ã‹å›è»¢
         transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, rotateSpeed * Time.deltaTime);
 
-        // Šp“x·‚ğæ“¾
+        // è§’åº¦å·®ã‚’å–å¾—
         float angle = Quaternion.Angle(transform.rotation, lookRotation);
 
-        // ‚ ‚é’ö“xŒü‚¯‚½‚çˆÚ“®
+        // ã‚ã‚‹ç¨‹åº¦å‘ã‘ãŸã‚‰ç§»å‹•
         if (angle < 3f)
         {
             transform.position += transform.forward * speed * Time.deltaTime;
@@ -296,10 +362,10 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
-    #region ƒvƒŒƒCƒ„[‚ğ’T‚·ˆ—
+    #region ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚’æ¢ã™å‡¦ç†
 
     /// <summary>
-    /// “G‚ª‚ ‚½‚è‚ğŒ©“n‚·ˆ—
+    /// æ•µãŒã‚ãŸã‚Šã‚’è¦‹æ¸¡ã™å‡¦ç†
     /// </summary>
     void SearchPlayer()
     {
@@ -311,16 +377,16 @@ public class EnemyManager : MonoBehaviour
         {
             return;
         }
-        // Œ©‰ñ‚è“®ì
-        transform.Rotate(0, stoprotateSpeed * Time.deltaTime, 0); // ‰E‰ñ“]
+        // è¦‹å›ã‚Šå‹•ä½œ
+        transform.Rotate(0, stoprotateSpeed * Time.deltaTime, 0); // å³å›è»¢
     }
 
     /// <summary>
-    /// ‹­‰»“G‚ª‚ ‚½‚è‚ğŒ©“n‚·ˆ—
+    /// å¼·åŒ–æ•µãŒã‚ãŸã‚Šã‚’è¦‹æ¸¡ã™å‡¦ç†
     /// </summary>
     void StrongSearchPlayer()
     {
-        // ’â~’†
+        // åœæ­¢ä¸­
         if (!isRotating)
         {
             timer += Time.deltaTime;
@@ -333,7 +399,7 @@ public class EnemyManager : MonoBehaviour
                 currentRotateAmount = 0f;
             }
         }
-        // ‰ñ“]’†
+        // å›è»¢ä¸­
         else
         {
             float rotateThisFrame = rotateSpeed * Time.deltaTime;
@@ -351,21 +417,21 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
-    #region ƒvƒŒƒCƒ„[”­Œ©ˆ—
+    #region ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ç™ºè¦‹å‡¦ç†
 
     /// <summary>
-    /// ƒvƒŒƒCƒ„[‚ğ”­Œ©‚·‚é‚³‚¹‚é‚Ìˆ—
-    /// Player1‚ÆPlayer2—¼•û‚ğŒŸ’m‚·‚é‚æ‚¤‚É•ÏX
+    /// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚’ç™ºè¦‹ã™ã‚‹ã•ã›ã‚‹æ™‚ã®å‡¦ç†
+    /// Player1ã¨Player2ä¸¡æ–¹ã‚’æ¤œçŸ¥ã™ã‚‹ã‚ˆã†ã«å¤‰æ›´
     /// </summary>
     void PlayerFound()
     {
-        // —¼•û‚ÌƒvƒŒƒCƒ„[‚ğŠm”F‚µ‚Ä‹ß‚¢•û‚ğƒ^[ƒQƒbƒg‚É
+        // ä¸¡æ–¹ã®ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚’ç¢ºèªã—ã¦è¿‘ã„æ–¹ã‚’ã‚¿ãƒ¼ã‚²ãƒƒãƒˆã«
         GameObject p1 = GameObject.FindWithTag("Player1");
         GameObject p2 = GameObject.FindWithTag("Player2");
 
         if (enemyState == EnemyState.FocusPlayer && isFoundPlayer && targetPlayer != null)
         {
-            // Œ»İƒƒbƒNƒIƒ“’†‚Ìƒ^[ƒQƒbƒg‚ª‚Ü‚¾‹ŠE“à‚É‚¢‚é‚©‚ğƒ`ƒFƒbƒN‚·‚é
+            // ç¾åœ¨ãƒ­ãƒƒã‚¯ã‚ªãƒ³ä¸­ã®ã‚¿ãƒ¼ã‚²ãƒƒãƒˆãŒã¾ã è¦–ç•Œå†…ã«ã„ã‚‹ã‹ã‚’ãƒã‚§ãƒƒã‚¯ã™ã‚‹
             bool stillVisible = CheckSinglePlayerVision(targetPlayer);
 
             if (stillVisible)
@@ -373,19 +439,19 @@ public class EnemyManager : MonoBehaviour
                 _alertTarget = targetPlayer;
                 if (gameObject.tag == "StrongEnemy") return;
 
-                //iTowardThePlayer‚Ì’†‚Ì isHearingSound ğŒ‚É”›‚ç‚ê‚È‚¢‚æ‚¤‚ÉA–{—ˆ‚Í•Êˆ—‚É‚·‚é‚©Aƒtƒ‰ƒOŠÇ—‚ğŒ©’¼‚·‚Ì‚ª—‘z‚Å‚·j
+                //ï¼ˆTowardThePlayerã®ä¸­ã® isHearingSound æ¡ä»¶ã«ç¸›ã‚‰ã‚Œãªã„ã‚ˆã†ã«ã€æœ¬æ¥ã¯åˆ¥å‡¦ç†ã«ã™ã‚‹ã‹ã€ãƒ•ãƒ©ã‚°ç®¡ç†ã‚’è¦‹ç›´ã™ã®ãŒç†æƒ³ã§ã™ï¼‰
                 FocusPlayer();
                 float distanceToPlayer = Vector3.Distance(transform.position, targetPlayer.position);                
                 if (distanceToPlayer > stoppingDistance)
                 {
-                    // chaseSpeedi’x‚­‚µ‚½’Ç]‘¬“xj‚ğg‚Á‚ÄˆÚ“®‚³‚¹‚é
+                    // chaseSpeedï¼ˆé…ãã—ãŸè¿½å¾“é€Ÿåº¦ï¼‰ã‚’ä½¿ã£ã¦ç§»å‹•ã•ã›ã‚‹
                     transform.position = Vector3.MoveTowards(transform.position, targetPlayer.position, chaseSpeed * Time.deltaTime);
                 }
                 return;
             }
             else
             {
-                // Œ©¸‚Á‚½uŠÔA–Ú‹ƒtƒ‰ƒO‚ğˆê’UÜ‚é
+                // è¦‹å¤±ã£ãŸç¬é–“ã€ç›®è¦–ãƒ•ãƒ©ã‚°ã‚’ä¸€æ—¦æŠ˜ã‚‹
                 isFoundPlayer = false;
 
                 if (reactionText != null)
@@ -395,7 +461,7 @@ public class EnemyManager : MonoBehaviour
                 }
 
                 lastSoundPosition = targetPlayer.position;
-                currentTime = 0; // ƒ^ƒCƒ}[ƒŠƒZƒbƒg
+                currentTime = 0; // ã‚¿ã‚¤ãƒãƒ¼ãƒªã‚»ãƒƒãƒˆ
 
                 if (gameObject.tag == "StrongEnemy")
                 {
@@ -403,7 +469,7 @@ public class EnemyManager : MonoBehaviour
                 }
                 else
                 {
-                    enemyState = EnemyState.LookSoundPoint; // ‰¹‚ğŠm”F‚·‚éƒXƒe[ƒg‚Ö
+                    enemyState = EnemyState.LookSoundPoint; // éŸ³ã‚’ç¢ºèªã™ã‚‹ã‚¹ãƒ†ãƒ¼ãƒˆã¸
                 }
                 return;
             }
@@ -415,7 +481,7 @@ public class EnemyManager : MonoBehaviour
         {
             if (p == null) continue;
 
-            // ’P‚É‹——£‚ª‹ß‚¢‚¾‚¯‚Å‚È‚­Au‹ŠE‚É“ü‚Á‚Ä‚¢‚é‚©v‚à“¯‚Éƒ`ƒFƒbƒN‚·‚é
+            // å˜ã«è·é›¢ãŒè¿‘ã„ã ã‘ã§ãªãã€ã€Œè¦–ç•Œã«å…¥ã£ã¦ã„ã‚‹ã‹ã€ã‚‚åŒæ™‚ã«ãƒã‚§ãƒƒã‚¯ã™ã‚‹
             if (CheckSinglePlayerVision(p.transform))
             {
                 float dist = Vector3.Distance(transform.position, p.transform.position);
@@ -427,7 +493,7 @@ public class EnemyManager : MonoBehaviour
             }
         }
 
-        // ‹ŠE‚É“ü‚Á‚Ä‚¢‚éƒvƒŒƒCƒ„[‚ª‚¢‚ê‚Îƒ^[ƒQƒbƒg‚Éİ’è
+        // è¦–ç•Œã«å…¥ã£ã¦ã„ã‚‹ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ãŒã„ã‚Œã°ã‚¿ãƒ¼ã‚²ãƒƒãƒˆã«è¨­å®š
         if (closest != null)
         {
             if (!isFoundPlayer)
@@ -435,11 +501,11 @@ public class EnemyManager : MonoBehaviour
                 if (reactionText != null)
                 {
                     reactionText.text = "!";
-                    reactionText.gameObject.SetActive(true); // ƒrƒbƒNƒŠƒ}[ƒN•\¦
+                    reactionText.gameObject.SetActive(true); // ãƒ“ãƒƒã‚¯ãƒªãƒãƒ¼ã‚¯è¡¨ç¤º
                     isReaction = true;
                 }
 
-                // ‘Ò‹@ƒ^ƒCƒ}[‚È‚Ç‚ğƒŠƒZƒbƒgi‰¹ŒŸ’m‚Æ“¯—l‚ÉA“®‚«‚ğÄŠJ‚³‚¹‚é‚½‚ßj
+                // å¾…æ©Ÿã‚¿ã‚¤ãƒãƒ¼ãªã©ã‚’ãƒªã‚»ãƒƒãƒˆï¼ˆéŸ³æ¤œçŸ¥ã¨åŒæ§˜ã«ã€å‹•ãã‚’å†é–‹ã•ã›ã‚‹ãŸã‚ï¼‰
                 currentTime = 0;
             }
 
@@ -454,7 +520,7 @@ public class EnemyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// “Á’è‚ÌƒvƒŒƒCƒ„[‚ª‹ŠE‚É“ü‚Á‚Ä‚¢‚é‚©‚Ç‚¤‚©‚ğ”»’è
+    /// ç‰¹å®šã®ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ãŒè¦–ç•Œã«å…¥ã£ã¦ã„ã‚‹ã‹ã©ã†ã‹ã‚’åˆ¤å®š
     /// </summary>
     /// <param name="playerTransform"></param>
     /// <returns></returns>
@@ -485,22 +551,22 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
-    #region Œx‰úó‘Ôˆ—
+    #region è­¦æˆ’çŠ¶æ…‹å‡¦ç†
 
     /// <summary>
-    /// Œx‰úó‘Ôˆ—
+    /// è­¦æˆ’çŠ¶æ…‹å‡¦ç†
     /// </summary>
     void AlertFunction()
     {
-        // ’N‚à–Ú‹‚µ‚Ä‚¨‚ç‚¸A‚©‚Â‰¹‚Å‚ÌŒx‰úó‘Ô‚Å‚à‚È‚¢iŠ®‘S‚È’Êí„‰ñ’†j‚È‚çAŒx‰ú“xŒvZ‚àƒŠƒXƒ|[ƒ“”»’è‚àˆêØs‚í‚È‚¢
+        // èª°ã‚‚ç›®è¦–ã—ã¦ãŠã‚‰ãšã€ã‹ã¤éŸ³ã§ã®è­¦æˆ’çŠ¶æ…‹ã§ã‚‚ãªã„ï¼ˆå®Œå…¨ãªé€šå¸¸å·¡å›ä¸­ï¼‰ãªã‚‰ã€è­¦æˆ’åº¦è¨ˆç®—ã‚‚ãƒªã‚¹ãƒãƒ¼ãƒ³åˆ¤å®šã‚‚ä¸€åˆ‡è¡Œã‚ãªã„
         if (!isFoundPlayer && !isAlerted)
         {
-            currentAlertCount = alertCount; // í‚ÉÅ‘å’l‚ÅˆÀ’è‚³‚¹‚é
-            if (Sl != null) Sl.color = new Color(0.827f, 0.851f, 0.439f); // ’Êí‚Ìƒ‰ƒCƒgF
+            currentAlertCount = alertCount; // å¸¸ã«æœ€å¤§å€¤ã§å®‰å®šã•ã›ã‚‹
+            if (Sl != null) Sl.color = new Color(0.827f, 0.851f, 0.439f); // é€šå¸¸æ™‚ã®ãƒ©ã‚¤ãƒˆè‰²
             return;
         }
 
-        // Œx‰úŠÔ
+        // è­¦æˆ’æ™‚é–“
         if (isFoundPlayer)
         {
             currentAlertCount -= Time.deltaTime;
@@ -512,20 +578,20 @@ public class EnemyManager : MonoBehaviour
 
         currentAlertCount = Mathf.Clamp(currentAlertCount, 0, alertCount);
 
-        // Œ©¸‚Á‚½‚Ìˆ—
+        // è¦‹å¤±ã£ãŸæ™‚ã®å‡¦ç†
         if (enemyState == EnemyState.FocusPlayer && !isAlerted)
         {
             if (isFoundPlayer)
             {
-                // Œ©‚¦‚Ä‚¢‚éŠÔ‚ÍƒŠƒZƒbƒg
+                // è¦‹ãˆã¦ã„ã‚‹é–“ã¯ãƒªã‚»ãƒƒãƒˆ
                 lostTimer = lostPlayerTime;
             }
             else
             {
-                // Œ©¸‚Á‚½‚çŒ¸Z
+                // è¦‹å¤±ã£ãŸã‚‰æ¸›ç®—
                 lostTimer -= Time.deltaTime;
 
-                // ˆê’èŠÔŒ©¸‚Á‚½‚ç„‰ñ‚Ö
+                // ä¸€å®šæ™‚é–“è¦‹å¤±ã£ãŸã‚‰å·¡å›ã¸
                 if (lostTimer <= 0f)
                 {
                     ResetPatrolState();
@@ -534,14 +600,14 @@ public class EnemyManager : MonoBehaviour
             }
         }
 
-        AlertColor(); // ƒXƒ|ƒbƒgƒ‰ƒCƒgF•ÏX
+        AlertColor(); // ã‚¹ãƒãƒƒãƒˆãƒ©ã‚¤ãƒˆè‰²å¤‰æ›´
 
-        // Œx‰úó‘Ô‚Ì‚Æ‚«‚Ì‚İƒ^ƒCƒ}[‚ğŒ¸Z
+        // è­¦æˆ’çŠ¶æ…‹ã®ã¨ãã®ã¿ã‚¿ã‚¤ãƒãƒ¼ã‚’æ¸›ç®—
         if (isAlerted)
         {
             alertTimer -= Time.deltaTime;
 
-            // ‰¹‚ª•·‚±‚¦‚È‚­‚È‚Á‚Äˆê’èŠÔŒo‚Á‚½
+            // éŸ³ãŒèã“ãˆãªããªã£ã¦ä¸€å®šæ™‚é–“çµŒã£ãŸ
             if (alertTimer <= 0)
             {
                 CancelAlert();
@@ -550,7 +616,7 @@ public class EnemyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ƒXƒ|ƒbƒgƒ‰ƒCƒg‚ÌF•ÏX
+    /// ã‚¹ãƒãƒƒãƒˆãƒ©ã‚¤ãƒˆã®è‰²å¤‰æ›´
     /// </summary>
     void AlertColor()
     {
@@ -565,7 +631,7 @@ public class EnemyManager : MonoBehaviour
                 wsClient.SendEnemyFound();
             }
             SoundManager.Instance?.PlayDetected();
-			Debug.Log($"•ß‚Ü‚Á‚½: _alertTarget={_alertTarget?.name} isLocalPlayer={_alertTarget?.GetComponent<PlayerController>()?.isLocalPlayer}");
+			Debug.Log($"æ•ã¾ã£ãŸ: _alertTarget={_alertTarget?.name} isLocalPlayer={_alertTarget?.GetComponent<PlayerController>()?.isLocalPlayer}");
             if (_alertTarget != null)
             {
                 var pc = _alertTarget.GetComponent<PlayerController>();
@@ -578,8 +644,8 @@ public class EnemyManager : MonoBehaviour
                 else
                 {
                     if (wsClient != null) wsClient.SendRemoteRespawn();
-                    currentAlertCount = alertCount; // Œx‰ú“xƒŠƒZƒbƒg
-                    _isRespawning = false; // ‚±‚±‚ÅƒŠƒZƒbƒg
+                    currentAlertCount = alertCount; // è­¦æˆ’åº¦ãƒªã‚»ãƒƒãƒˆ
+                    _isRespawning = false; // ã“ã“ã§ãƒªã‚»ãƒƒãƒˆ
                 }
             }
         }
@@ -592,7 +658,7 @@ public class EnemyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ‰¹‚ª•·‚±‚¦‚È‚­‚È‚Á‚½‚Ìˆ—
+    /// éŸ³ãŒèã“ãˆãªããªã£ãŸæ™‚ã®å‡¦ç†
     /// </summary>
     void CancelAlert()
     {
@@ -605,7 +671,7 @@ public class EnemyManager : MonoBehaviour
             return;
         }
 
-        // ÅŒã‚É•·‚±‚¦‚½‰¹‚Ì’n“_‚É‹“_‚ğŒü‚¯‚é
+        // æœ€å¾Œã«èã“ãˆãŸéŸ³ã®åœ°ç‚¹ã«è¦–ç‚¹ã‚’å‘ã‘ã‚‹
         enemyState = EnemyState.LookSoundPoint;
     }
 
@@ -617,12 +683,12 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
-    #region ƒfƒoƒbƒN—pƒMƒYƒ‚
+    #region ãƒ‡ãƒãƒƒã‚¯ç”¨ã‚®ã‚ºãƒ¢
 
-    // ”ÍˆÍƒfƒoƒbƒN—p
+    // ç¯„å›²ãƒ‡ãƒãƒƒã‚¯ç”¨
     private void OnDrawGizmos()
     {
-        // ‹ŠEEƒŒƒCƒLƒƒƒXƒg
+        // è¦–ç•Œãƒ»ãƒ¬ã‚¤ã‚­ãƒ£ã‚¹ãƒˆ
         if (showViewDebug)
         {
             Gizmos.color = Color.yellow;
@@ -647,14 +713,14 @@ public class EnemyManager : MonoBehaviour
             }
         }
 
-        // ‰¹ŒŸ’m
+        // éŸ³æ¤œçŸ¥
         if (showSoundDebug)
         {
-            // ‰¹ŒŸ’m”ÍˆÍ
+            // éŸ³æ¤œçŸ¥ç¯„å›²
             Gizmos.color = Color.cyan;
             Gizmos.DrawWireSphere(transform.position, hearingRange);
 
-            // ÅŒã‚É•·‚¢‚½‰¹
+            // æœ€å¾Œã«èã„ãŸéŸ³
             if (lastSoundPosition != Vector3.zero)
             {
                 Gizmos.color = Color.magenta;
@@ -663,7 +729,7 @@ public class EnemyManager : MonoBehaviour
                 Gizmos.DrawLine(transform.position, lastSoundPosition);
             }
 
-            // ŒŸ’m‚µ‚½‰¹‚Ì—LŒø”ÍˆÍ
+            // æ¤œçŸ¥ã—ãŸéŸ³ã®æœ‰åŠ¹ç¯„å›²
             if (debugTimer > 0)
             {
                 Gizmos.color = Color.red;
@@ -679,47 +745,47 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
-    #region ‰¹ŒŸ’mŠÖ”
+    #region éŸ³æ¤œçŸ¥é–¢æ•°
 
     /// <summary>
-    /// ƒvƒŒƒCƒ„[‚Ì•ûŒü‚ÉŒü‚©‚¹‚éˆ—
+    /// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®æ–¹å‘ã«å‘ã‹ã›ã‚‹å‡¦ç†
     /// </summary>
     void FocusPlayer()
     {
         if (targetPlayer == null) return;
         Vector3 direction = targetPlayer.position - transform.position;
 
-        // ‚‚³–³‹
+        // é«˜ã•ç„¡è¦–
         direction.y = 0;
 
-        // Œü‚«‚½‚¢‰ñ“]
+        // å‘ããŸã„å›è»¢
         Quaternion lookRotation = Quaternion.LookRotation(direction);
 
-        // ‚È‚ß‚ç‚©‰ñ“]
+        // ãªã‚ã‚‰ã‹å›è»¢
         transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, rotateSpeed * Time.deltaTime);
     }
 
     /// <summary>
-    /// ‹–ì‚Ì”ÍˆÍ“à‚È‚çƒvƒŒƒCƒ„[‚Ì•ûŒü‚ğŒ©‚È‚ª‚çˆÚ“®
+    /// è¦–é‡ã®ç¯„å›²å†…ãªã‚‰ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®æ–¹å‘ã‚’è¦‹ãªãŒã‚‰ç§»å‹•
     /// </summary>
     void TowardThePlayer()
     {
-        // ‰¹‚ª•·‚±‚¦‚Ä‚¢‚éŠÔ‚¾‚¯A‚»‚ÌêŠ‚ÉŒü‚©‚Á‚ÄˆÚ“®‚·‚é
+        // éŸ³ãŒèã“ãˆã¦ã„ã‚‹é–“ã ã‘ã€ãã®å ´æ‰€ã«å‘ã‹ã£ã¦ç§»å‹•ã™ã‚‹
         if (isHearingSound)
         {
-            // ‰¹‚ÌˆÊ’u
+            // éŸ³ã®ä½ç½®
             Vector3 targetPos = new Vector3(lastSoundPosition.x, transform.position.y, lastSoundPosition.z);
 
-            // Œü‚«‚½‚¢•ûŒü
+            // å‘ããŸã„æ–¹å‘
             Vector3 direction = targetPos - transform.position;
 
-            // Œü‚«‚½‚¢‰ñ“]
+            // å‘ããŸã„å›è»¢
             Quaternion lookRotation = Quaternion.LookRotation(direction);
 
-            // ‚È‚ß‚ç‚©‰ñ“]
+            // ãªã‚ã‚‰ã‹å›è»¢
             transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, rotateSpeed * Time.deltaTime);
 
-            // ‰ñ“]‚µ‚È‚ª‚çˆÚ“®
+            // å›è»¢ã—ãªãŒã‚‰ç§»å‹•
             float towardSpeed = speed / 2;
 
             transform.position = Vector3.MoveTowards(transform.position, targetPos, towardSpeed * Time.deltaTime);
@@ -728,33 +794,33 @@ public class EnemyManager : MonoBehaviour
     }
 
     /// <summary>
-    ///  ƒvƒŒƒCƒ„[‚Ì‰¹ŒŸ’m
+    ///  ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®éŸ³æ¤œçŸ¥
     /// </summary>
     /// <param name="soundPosition"></param>
     /// <param name="volume"></param>
     void HandleSound(Vector3 soundPosition, float volume)
     {
-        if (enemyState == EnemyState.FocusPlayer && isFoundPlayer) return; // ‚·‚Å‚ÉƒvƒŒƒCƒ„[‚ª–Ú‹‚Å’Ç]‚µ‚Ä‚¢‚é‚È‚çA‰“‚­‚Ì‰¹‚É‚Í‹C‚ğæ‚ç‚ê‚È‚¢
+        if (enemyState == EnemyState.FocusPlayer && isFoundPlayer) return; // ã™ã§ã«ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ãŒç›®è¦–ã§è¿½å¾“ã—ã¦ã„ã‚‹ãªã‚‰ã€é ãã®éŸ³ã«ã¯æ°—ã‚’å–ã‚‰ã‚Œãªã„
 
-        // ‰¹‚ª•·‚±‚¦‚é”ÍˆÍ“à‚©‚Ç‚¤‚©‚ğŒvZ
+        // éŸ³ãŒèã“ãˆã‚‹ç¯„å›²å†…ã‹ã©ã†ã‹ã‚’è¨ˆç®—
         float distanceToSound = Vector3.Distance(transform.position, soundPosition);
 
-        // ‰¹—Ê‚Æ‹——£‚©‚çÅI“I‚ÈŒŸ’m‹——£‚ğŒvZ
+        // éŸ³é‡ã¨è·é›¢ã‹ã‚‰æœ€çµ‚çš„ãªæ¤œçŸ¥è·é›¢ã‚’è¨ˆç®—
         if (distanceToSound <= hearingRange * volume)
         {
-            // ‰¹‚ğŒŸ’m‚µ‚½‚çAŒx‰úó‘Ô‚É‚µ‚Äƒ^ƒCƒ}[‚ğÅ‘å’l‚ÉƒŠƒZƒbƒg
+            // éŸ³ã‚’æ¤œçŸ¥ã—ãŸã‚‰ã€è­¦æˆ’çŠ¶æ…‹ã«ã—ã¦ã‚¿ã‚¤ãƒãƒ¼ã‚’æœ€å¤§å€¤ã«ãƒªã‚»ãƒƒãƒˆ
             isAlerted = true;
             alertTimer = alertDuration;
 
-            isHearingSound = true;           // ‰¹‚ª•·‚±‚¦‚Ä‚¢‚éó‘Ô‚É‚·‚é
-            lastSoundPosition = soundPosition; // ‰¹‚ÌˆÊ’u‚ğ‹L‰¯
+            isHearingSound = true;           // éŸ³ãŒèã“ãˆã¦ã„ã‚‹çŠ¶æ…‹ã«ã™ã‚‹
+            lastSoundPosition = soundPosition; // éŸ³ã®ä½ç½®ã‚’è¨˜æ†¶
 
-            // ƒfƒoƒbƒN—p
+            // ãƒ‡ãƒãƒƒã‚¯ç”¨
             debugSoundPos = soundPosition;
             debugSoundRange = hearingRange * volume;
-            debugTimer = 2f; // 2•b•\¦
+            debugTimer = 2f; // 2ç§’è¡¨ç¤º
 
-            // ‰¹‚ğo‚µ‚½ƒvƒŒƒCƒ„[‚ğ“Á’è‚µ‚ÄalertTarget‚Éİ’è
+            // éŸ³ã‚’å‡ºã—ãŸãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚’ç‰¹å®šã—ã¦alertTargetã«è¨­å®š
             var p1 = GameObject.FindWithTag("Player1");
             var p2 = GameObject.FindWithTag("Player2");
             foreach (var p in new[] { p1, p2 })
@@ -770,11 +836,11 @@ public class EnemyManager : MonoBehaviour
             if (reactionText != null)
             {
                 reactionText.text = "!";
-                reactionText.gameObject.SetActive(true); // ƒrƒbƒNƒŠƒ}[ƒN•\¦
+                reactionText.gameObject.SetActive(true); // ãƒ“ãƒƒã‚¯ãƒªãƒãƒ¼ã‚¯è¡¨ç¤º
                 isReaction = true;
             }
 
-            // FocusPlayer ‚Å‚Í‚È‚­A‰¹‚Ì•ûŒü‚ğŒ©‚éƒXƒe[ƒg‚É’¼ÚØ‚è‘Ö‚¦‚é
+            // FocusPlayer ã§ã¯ãªãã€éŸ³ã®æ–¹å‘ã‚’è¦‹ã‚‹ã‚¹ãƒ†ãƒ¼ãƒˆã«ç›´æ¥åˆ‡ã‚Šæ›¿ãˆã‚‹
             if (gameObject.tag == "StrongEnemy")
             {
                 strongEnemyState = StrongEnemyState.sLookSoundPoint;
@@ -786,15 +852,15 @@ public class EnemyManager : MonoBehaviour
         }
     }
 
-    #region àV“cìFƒT[ƒo‘¤‰¹ŒŸ’m
+    #region æ¾¤ç”°ä½œï¼šã‚µãƒ¼ãƒå´éŸ³æ¤œçŸ¥
 
     /// <summary>
-    /// Player2‚Ì‰¹ŒŸ’miWebSocketClientŒo—R‚ÅŒÄ‚Î‚ê‚éj
-    /// ƒN[ƒ‹ƒ_ƒEƒ“•t‚«‚ÅHandleSound‚ğŒÄ‚Ô
+    /// Player2ã®éŸ³æ¤œçŸ¥ï¼ˆWebSocketClientçµŒç”±ã§å‘¼ã°ã‚Œã‚‹ï¼‰
+    /// ã‚¯ãƒ¼ãƒ«ãƒ€ã‚¦ãƒ³ä»˜ãã§HandleSoundã‚’å‘¼ã¶
     /// </summary>
     public void HandleSoundFromRemote(Vector3 position, float volume)
     {
-        if (_remoteSoundCooldown > 0) return; // ƒN[ƒ‹ƒ_ƒEƒ“’†‚Í–³‹
+        if (_remoteSoundCooldown > 0) return; // ã‚¯ãƒ¼ãƒ«ãƒ€ã‚¦ãƒ³ä¸­ã¯ç„¡è¦–
         HandleSound(position, volume);
         _remoteSoundCooldown = 0.1f;
     }
@@ -802,7 +868,7 @@ public class EnemyManager : MonoBehaviour
     #endregion
 
     /// <summary>
-    /// ÅŒã‚É•·‚±‚¦‚½‰¹‚Ì•ûŒü‚ğŒ©‚é
+    /// æœ€å¾Œã«èã“ãˆãŸéŸ³ã®æ–¹å‘ã‚’è¦‹ã‚‹
     /// </summary>
     void LookSoundPoint()
     {
@@ -812,15 +878,15 @@ public class EnemyManager : MonoBehaviour
 
         Quaternion lookRotation = Quaternion.LookRotation(direction);
 
-        // ‚È‚ß‚ç‚©‰ñ“]
+        // ãªã‚ã‚‰ã‹å›è»¢
         transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, rotateSpeed * Time.deltaTime);
 
-        // Œü‚«I‚í‚Á‚½‚©”»’è
+        // å‘ãçµ‚ã‚ã£ãŸã‹åˆ¤å®š
         float angle = Quaternion.Angle(transform.rotation, lookRotation);
 
         if (angle < 3f)
         {
-            // ­‚µ‘Ò‚Á‚Ä‚©‚ç„‰ñ‚Ö–ß‚·
+            // å°‘ã—å¾…ã£ã¦ã‹ã‚‰å·¡å›ã¸æˆ»ã™
             currentTime += Time.deltaTime;
             reactionText.text = "?";
 
@@ -828,14 +894,14 @@ public class EnemyManager : MonoBehaviour
             {
                 ResetPatrolState();
                 currentTime = 0;
-                reactionText.gameObject.SetActive(false); // ƒrƒbƒNƒŠƒ}[ƒN”ñ•\¦
+                reactionText.gameObject.SetActive(false); // ãƒ“ãƒƒã‚¯ãƒªãƒãƒ¼ã‚¯éè¡¨ç¤º
                 enemyState = EnemyState.Patrol;
             }
         }
     }
 
     /// <summary>
-    /// ‹­‰»“K—p‰¹ŒŸ’m
+    /// å¼·åŒ–é©ç”¨éŸ³æ¤œçŸ¥
     /// </summary>
     void StrongLookSoundPoint()
     {
@@ -845,22 +911,22 @@ public class EnemyManager : MonoBehaviour
 
         Quaternion lookRotation = Quaternion.LookRotation(direction);
 
-        // ‚È‚ß‚ç‚©‰ñ“]
+        // ãªã‚ã‚‰ã‹å›è»¢
         transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, rotateSpeed * Time.deltaTime);
 
-        // Œü‚«I‚í‚Á‚½‚©”»’è
+        // å‘ãçµ‚ã‚ã£ãŸã‹åˆ¤å®š
         float angle = Quaternion.Angle(transform.rotation, lookRotation);
 
         if (angle < 3f)
         {
-            // ­‚µ‘Ò‚Á‚Ä‚©‚ç„‰ñ‚Ö–ß‚·
+            // å°‘ã—å¾…ã£ã¦ã‹ã‚‰å·¡å›ã¸æˆ»ã™
             currentTime += Time.deltaTime;
             reactionText.text = "?";
 
             if (currentTime >= 1.5f)
             {
                 currentTime = 0;
-                reactionText.gameObject.SetActive(false); // ƒrƒbƒNƒŠƒ}[ƒN”ñ•\¦
+                reactionText.gameObject.SetActive(false); // ãƒ“ãƒƒã‚¯ãƒªãƒãƒ¼ã‚¯éè¡¨ç¤º
                 strongEnemyState = StrongEnemyState.sPatrol;
             }
         }
@@ -868,7 +934,7 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
-    #region àV“cìFState(ƒT[ƒo[—p)
+    #region æ¾¤ç”°ä½œï¼šState(ã‚µãƒ¼ãƒãƒ¼ç”¨)
 
     public string GetReactionState()
     {
@@ -899,10 +965,10 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
-    #region ƒAƒjƒ[ƒVƒ‡ƒ“
+    #region ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³
 
     /// <summary>
-    /// ‹­‰»“G‚Ì•Ç‚ğ‚¾‚·ˆ—
+    /// å¼·åŒ–æ•µã®å£ã‚’ã ã™å‡¦ç†
     /// </summary>
     public void PlayAnimationWall()
     {
@@ -910,7 +976,7 @@ public class EnemyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// “G‚ªUŒ‚‚³‚ê‚ÄƒXƒ^ƒ“ó‘Ô‚É‚·‚éˆ—
+    /// æ•µãŒæ”»æ’ƒã•ã‚Œã¦ã‚¹ã‚¿ãƒ³çŠ¶æ…‹ã«ã™ã‚‹å‡¦ç†
     /// </summary>
     public void PlayAnimationEnemy()
     {
@@ -925,10 +991,10 @@ public class EnemyManager : MonoBehaviour
 
     public void TextCancel()
     {      
-        // UŒ‚‚³‚ê‚½‚çƒŠƒAƒNƒVƒ‡ƒ“ƒeƒLƒXƒg‚ğÁ‚·
+        // æ”»æ’ƒã•ã‚ŒãŸã‚‰ãƒªã‚¢ã‚¯ã‚·ãƒ§ãƒ³ãƒ†ã‚­ã‚¹ãƒˆã‚’æ¶ˆã™
         if (reactionText != null)
         {
-            print("ŒÄ‚Î‚ê‚½");
+            print("å‘¼ã°ã‚ŒãŸ");
             reactionText.gameObject.SetActive(false);
             isReaction = false;
         }
@@ -943,7 +1009,7 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
-    #region ƒMƒ~ƒbƒN
+    #region ã‚®ãƒŸãƒƒã‚¯
 
     public void SwitchCountValue(int value)
     {
@@ -952,10 +1018,10 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
-    #region ‰Šú‰»ˆ—
+    #region åˆæœŸåŒ–å‡¦ç†
 
     /// <summary>
-    /// „‰ñó‘Ô‚ğ‰Šú‰»
+    /// å·¡å›çŠ¶æ…‹ã‚’åˆæœŸåŒ–
     /// </summary>
     public void ResetPatrolState()
     {
@@ -967,18 +1033,18 @@ public class EnemyManager : MonoBehaviour
         isAlerted = false;
         currentAlertCount = alertCount;
 
-        // Ÿ‚Ìƒ|ƒCƒ“ƒg‚ğÄİ’è
-        targetPoint = GetNearPoint(StartPoint());
+        // æ¬¡ã®ãƒã‚¤ãƒ³ãƒˆã‚’å†è¨­å®š
+        StartPoint();
 
-        // ’â~ŠÔ‚ğÄ’Š‘I
-        stopMoveCooldown = Random.Range(stopMoveCooldownMin, stopMoveCooldownMax);
+        // åœæ­¢æ™‚é–“ã‚’å†æŠ½é¸
+        //stopMoveCooldown = Random.Range(stopMoveCooldownMin, stopMoveCooldownMax);
 
-        // ƒeƒLƒXƒg”ñ•\¦
+        // ãƒ†ã‚­ã‚¹ãƒˆéè¡¨ç¤º
         reactionText.gameObject.SetActive(false);
     }
 
     /// <summary>
-    /// ƒeƒLƒXƒg‰Šú‰»
+    /// ãƒ†ã‚­ã‚¹ãƒˆåˆæœŸåŒ–
     /// </summary>
     void InitText()
     {
@@ -990,12 +1056,12 @@ public class EnemyManager : MonoBehaviour
 
         if (reactionText != null)
         {
-            reactionText.gameObject.SetActive(false); // Å‰‚Í”ñ•\¦
+            reactionText.gameObject.SetActive(false); // æœ€åˆã¯éè¡¨ç¤º
         }
     }
 
     /// <summary>
-    /// ƒRƒ“ƒ|[ƒlƒ“ƒg‰Šú‰»
+    /// ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆåˆæœŸåŒ–
     /// </summary>
     void InitComponent()
     {
@@ -1012,22 +1078,19 @@ public class EnemyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Å‰‚ÌˆÚ“®ƒ|ƒCƒ“ƒgŒˆ’è
+    /// æœ€åˆã®ç§»å‹•ãƒã‚¤ãƒ³ãƒˆæ±ºå®š
     /// </summary>
     void InitPoint()
     {
-        // ˆê”Ô‹ß‚¢ƒ|ƒCƒ“ƒgiƒXƒ^[ƒg’n“_j
-        startPoint = StartPoint();
+        // ä¸€ç•ªè¿‘ã„ãƒã‚¤ãƒ³ãƒˆï¼ˆã‚¹ã‚¿ãƒ¼ãƒˆåœ°ç‚¹ï¼‰
+        StartPoint();
 
-        // Å‰‚Ì–Ú“I’n‚ğƒ‰ƒ“ƒ_ƒ€‚ÉŒˆ’è
-        targetPoint = GetNearPoint(startPoint);
-
-        // Å‰‚Ì’â~ŠÔ‚ğƒ‰ƒ“ƒ_ƒ€‰»
-        stopMoveCooldown = Random.Range(stopMoveCooldownMin, stopMoveCooldownMax);
+        // æœ€åˆã®åœæ­¢æ™‚é–“ã‚’ãƒ©ãƒ³ãƒ€ãƒ åŒ–
+        //stopMoveCooldown = Random.Range(stopMoveCooldownMin, stopMoveCooldownMax);
     }
 
     /// <summary>
-    /// àV“cìFƒvƒŒƒCƒ„[‰Šú‰»
+    /// æ¾¤ç”°ä½œï¼šãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼åˆæœŸåŒ–
     /// </summary>
     void InitPlayer()
     {
@@ -1048,22 +1111,22 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
-    #region àV“cìFƒT[ƒoŠÖ˜AUpdateˆ—
+    #region æ¾¤ç”°ä½œï¼šã‚µãƒ¼ãƒé–¢é€£Updateå‡¦ç†
 
     void TextUpdate()
     {
-        // ƒeƒLƒXƒg‚ª•\¦‚³‚ê‚Ä‚¢‚éŠÔAí‚ÉƒJƒƒ‰‚Ì•û‚ğŒü‚©‚¹‚é
+        // ãƒ†ã‚­ã‚¹ãƒˆãŒè¡¨ç¤ºã•ã‚Œã¦ã„ã‚‹é–“ã€å¸¸ã«ã‚«ãƒ¡ãƒ©ã®æ–¹ã‚’å‘ã‹ã›ã‚‹
         if (isReaction && reactionText != null && cameraTransform != null)
         {
             Vector3 dir = reactionText.transform.position - cameraTransform.position;
-            dir.y = 0; // Y²‰ñ“]‚¾‚¯‚É‚·‚é
+            dir.y = 0; // Yè»¸å›è»¢ã ã‘ã«ã™ã‚‹
             reactionText.transform.rotation = Quaternion.LookRotation(dir);
         }
     }
 
     #endregion
 
-    #region ƒXƒe[ƒgŠÇ—ˆ—
+    #region ã‚¹ãƒ†ãƒ¼ãƒˆç®¡ç†å‡¦ç†
 
     void StateMachine()
     {
@@ -1072,7 +1135,7 @@ public class EnemyManager : MonoBehaviour
             switch (strongEnemyState)
             {
                 case StrongEnemyState.sPatrol:
-                    StrongSearchPlayer(); // ˆê’èŠÔ‚É‹“_‚ğ‰ñ“]‚³‚¹‚é
+                    StrongSearchPlayer(); // ä¸€å®šæ™‚é–“ã«è¦–ç‚¹ã‚’å›è»¢ã•ã›ã‚‹
                     break;
                 case StrongEnemyState.sLookSoundPoint:
                     StrongLookSoundPoint();
@@ -1081,24 +1144,24 @@ public class EnemyManager : MonoBehaviour
             return;
         }
 
-        // ƒXƒe[ƒgƒ}ƒV[ƒ“
+        // ã‚¹ãƒ†ãƒ¼ãƒˆãƒã‚·ãƒ¼ãƒ³
         switch (enemyState)
         {
             case EnemyState.Patrol:
-                MoveEnemy();   // “G‚ªˆÚ“®‚·‚éˆ—
+                MoveEnemy();   // æ•µãŒç§»å‹•ã™ã‚‹å‡¦ç†
                 break;
             case EnemyState.FocusPlayer:
-                FocusPlayer(); // ƒvƒŒƒCƒ„[‚É‹“_‚Ì‚Ù‚¤‚É‹“_‚ğŒü‚¯‚éˆ—
+                FocusPlayer(); // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã«è¦–ç‚¹ã®ã»ã†ã«è¦–ç‚¹ã‚’å‘ã‘ã‚‹å‡¦ç†
                 break;
             case EnemyState.LookSoundPoint:
-                LookSoundPoint(); // ÅŒã‚É•·‚±‚¦‚½‰¹‚Ì’n“_‚É‹“_‚ğŒü‚¯‚éˆ—
+                LookSoundPoint(); // æœ€å¾Œã«èã“ãˆãŸéŸ³ã®åœ°ç‚¹ã«è¦–ç‚¹ã‚’å‘ã‘ã‚‹å‡¦ç†
                 break;
         }
     }
 
     #endregion
 
-    #region Updateˆ—
+    #region Updateå‡¦ç†
 
     void UpdateDebugTimer()
     {
@@ -1110,9 +1173,9 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
-    #region UnityƒCƒxƒ“ƒg
+    #region Unityã‚¤ãƒ™ãƒ³ãƒˆ
 
-    // Start‚ğƒvƒŒƒCƒ„[¶¬‘Ò‚¿‚Ì‚½‚ß‚É’x‰„Às‚É•ÏX
+    // Startã‚’ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ç”Ÿæˆå¾…ã¡ã®ãŸã‚ã«é…å»¶å®Ÿè¡Œã«å¤‰æ›´
     void Start()
     {
         Invoke("DelayedStart", 0.5f);
@@ -1120,21 +1183,21 @@ public class EnemyManager : MonoBehaviour
 
     void DelayedStart()
     {
-        InitText();                                 // ƒeƒLƒXƒg‰Šú‰»
-        InitComponent();                            // ƒRƒ“ƒ|[ƒlƒ“ƒg‰Šú‰»
-        InitializeEnemyState();                     // “GŠÖ˜A‰Šú‰»
-        InitPlayer();                               // ƒvƒŒƒCƒ„[‰Šú‰»(àV“cì)
-        InitCamera();                               // ƒJƒƒ‰‰Šú‰»
-        InitPoint();                                // ŠJnƒ|ƒCƒ“ƒgŒˆ’è
+        InitText();                                 // ãƒ†ã‚­ã‚¹ãƒˆåˆæœŸåŒ–
+        InitComponent();                            // ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆåˆæœŸåŒ–
+        InitializeEnemyState();                     // æ•µé–¢é€£åˆæœŸåŒ–
+        InitPlayer();                               // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼åˆæœŸåŒ–(æ¾¤ç”°ä½œ)
+        InitCamera();                               // ã‚«ãƒ¡ãƒ©åˆæœŸåŒ–
+        InitPoint();                                // é–‹å§‹ãƒã‚¤ãƒ³ãƒˆæ±ºå®š
     }
 
     // Update is called once per frame
     void Update()
     {
-        UpdateDebugTimer();                         // ‰¹ŒŸ’mƒfƒoƒbƒN
-        TextUpdate();                               // ƒeƒLƒXƒg‚ğ‰æ–Ê‚Ì•ûŒü‚ÉŒü‚¯‚éˆ—(ƒT[ƒo˜AŒg‚µ‚Ä‚È‚¢‚Ì‚Å¡ŒãÀ‘•—\’è)
+        UpdateDebugTimer();                         // éŸ³æ¤œçŸ¥ãƒ‡ãƒãƒƒã‚¯
+        TextUpdate();                               // ãƒ†ã‚­ã‚¹ãƒˆã‚’ç”»é¢ã®æ–¹å‘ã«å‘ã‘ã‚‹å‡¦ç†(ã‚µãƒ¼ãƒé€£æºã—ã¦ãªã„ã®ã§ä»Šå¾Œå®Ÿè£…äºˆå®š)
 
-        // àV“cìFƒT[ƒoŠÖ˜AUpdate
+        // æ¾¤ç”°ä½œï¼šã‚µãƒ¼ãƒé–¢é€£Update
         if (isRemoteControlled) return;
 
 
@@ -1156,12 +1219,12 @@ public class EnemyManager : MonoBehaviour
             }
         }
 
-        if (isRemoteControlled) return;             // ƒQƒXƒg‘¤‚ÍAI‚ğ“®‚©‚³‚È‚¢iWebSocketClient‚ªˆÊ’u‚ğóM‚µ‚Ä“®‚©‚·j
+        if (isRemoteControlled) return;             // ã‚²ã‚¹ãƒˆå´ã¯AIã‚’å‹•ã‹ã•ãªã„ï¼ˆWebSocketClientãŒä½ç½®ã‚’å—ä¿¡ã—ã¦å‹•ã‹ã™ï¼‰
 
-        PlayerFound();                              // ƒvƒŒƒCƒ„[”­Œ©ˆ—
-        AlertFunction();                            // Œx‰úó‘Ôˆ—
+        PlayerFound();                              // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ç™ºè¦‹å‡¦ç†
+        AlertFunction();                            // è­¦æˆ’çŠ¶æ…‹å‡¦ç†
 
-        StateMachine();                             // “G‚ÌƒXƒe[ƒgŠÇ—ŠÖ”
+        StateMachine();                             // æ•µã®ã‚¹ãƒ†ãƒ¼ãƒˆç®¡ç†é–¢æ•°
     }
 
     #endregion
