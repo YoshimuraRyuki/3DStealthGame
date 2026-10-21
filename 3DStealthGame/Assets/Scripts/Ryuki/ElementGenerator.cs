@@ -49,7 +49,6 @@ public class ElementGenerator : MonoBehaviour
     #region マップ生成管理
 
     CsvMapLoader mapGenerate;                                       // ミニマップ生成スクリプト
-    public string[,] CoopMap => map;
     string[,] map;                                                  // マップ読み込み
     GameObject objMap2D;                                            // Map2D
     GameObject[,] objMapExist;                                      // 生成したマップチップ
@@ -442,20 +441,20 @@ public class ElementGenerator : MonoBehaviour
 
                 string[] data = cell.Split('_');
 
-				if (!int.TryParse(data[0].Trim(), out int typeInt))
-				{
-					continue;
-				}
+                if (!int.TryParse(data[0].Trim(), out int typeInt))
+                {
+                    continue;
+                }
 
-				int id = -1;
-				if (data.Length > 1)
-				{
-					int.TryParse(data[1].Trim(), out id);
-				}
+                int id = -1;
+                if (data.Length > 1)
+                {
+                    int.TryParse(data[1].Trim(), out id);
+                }
 
-				MapObjectType type = (MapObjectType)typeInt;
+                MapObjectType type = (MapObjectType)typeInt;
 
-				switch (type)
+                switch (type)
                 {
                     case MapObjectType.Enemy: // 敵
                         GameObject normalEnemyObj = Instantiate(enemiesList[0], pos, Quaternion.identity);
@@ -474,7 +473,14 @@ public class ElementGenerator : MonoBehaviour
                         break;
 
                     case MapObjectType.PatrolPoint: // 敵の巡回ポイント
-                        Instantiate(patrolPointsList[0], pos, Quaternion.identity);
+                        GameObject pointObj = Instantiate(patrolPointsList[0], pos, Quaternion.identity);
+
+                        // グループIDとその順番を指定
+                        if (id != -1)
+                        {
+                            pointObj.name = $"PatrolPoint_{id}";
+                        }
+
                         map[x, y] = "1";
                         break;
 
@@ -486,10 +492,7 @@ public class ElementGenerator : MonoBehaviour
                         break;
 
                     case MapObjectType.Core: // リスポーン
-                        GameObject coreObject = Instantiate(coresList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
-                        var coopClient = FindObjectOfType<WebSocketClient>();
-                        if (coopClient != null && coopClient.enableCoreCoop && coreObject.GetComponent<CoopCore>() == null)
-                            coreObject.AddComponent<CoopCore>();
+                        Instantiate(coresList[0], pos, Quaternion.identity);
                         map[x, y] = "1";
                         break;
                 }
