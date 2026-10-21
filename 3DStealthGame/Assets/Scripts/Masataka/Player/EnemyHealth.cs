@@ -14,28 +14,63 @@ public sealed class EnemyHealth : MonoBehaviour, IDamageable
     private int currentHealth;
     private Coroutine hitFlashCoroutine;
 
-    public int CurrentHealth => currentHealth;
+    private bool initialized;
+
+    public int CurrentHealth { get { EnsureInitialized(); return currentHealth; } }
     public int MaxHealth => maxHealth;
 
-    private void Awake()
+    public void ApplyCoopHealth(int value)
     {
+        ApplyCoopHealth(value, maxHealth, value > 0);
+    }
+
+    // Called only for a host snapshot; never sends damage back to the host.
+    public void ApplyCoopHealth(int value, int synchronizedMax, bool active)
+    {
+        EnsureInitialized();
+        int previous = currentHealth;
+        if (synchronizedMax > 0) maxHealth = synchronizedMax;
+        currentHealth = Mathf.Clamp(value, 0, maxHealth);
+        GameObject root = EnemyObject();
+        if (!active || currentHealth == 0)
+        {
+            if (root.activeSelf) root.SetActive(false);
+            return;
+        }
+        if (!root.activeSelf) root.SetActive(true);
+        if (currentHealth < previous) PlayHitFlash();
+    }
+
+    private void Awake() { EnsureInitialized(); }
+
+    private void EnsureInitialized()
+    {
+        if (initialized) return;
+        initialized = true;
+        maxHealth = Mathf.Max(1, maxHealth);
         currentHealth = maxHealth;
     }
 
     public void TakeDamage(int damage)
     {
+        EnsureInitialized();
+        if (CoopGameSession.Instance != null && !CoopGameSession.Instance.IsHost) return;
         if (damage <= 0 || currentHealth <= 0) return;
 
         currentHealth = Mathf.Max(0, currentHealth - damage);
-
-        if (hitFlashCoroutine != null)
-            StopCoroutine(hitFlashCoroutine);
-        hitFlashCoroutine = StartCoroutine(FlashOnHit());
+        PlayHitFlash();
 
         Debug.Log($"[EnemyHealth] {name}: {currentHealth}/{maxHealth}");
 
         if (currentHealth == 0)
             OnDefeated();
+    }
+
+    private void PlayHitFlash()
+    {
+        // Repeated hits must not stop the coroutine while the material is white.
+        if (hitFlashCoroutine == null && gameObject.activeInHierarchy)
+            hitFlashCoroutine = StartCoroutine(FlashOnHit());
     }
 
     private IEnumerator FlashOnHit()
@@ -75,6 +110,11 @@ public sealed class EnemyHealth : MonoBehaviour, IDamageable
     {
         // HP0のまま見た目とAIだけ残って動く状態にしない。
         Debug.Log($"[EnemyHealth] {name}を倒しました");
+        EnemyObject().SetActive(false);
+    }
+
+    private GameObject EnemyObject()
+    {
         EnemyManager ai = GetComponentInParent<EnemyManager>();
         GameObject enemyObject = ai != null ? ai.gameObject : gameObject;
         if (ai == null)
@@ -82,6 +122,6 @@ public sealed class EnemyHealth : MonoBehaviour, IDamageable
             for (Transform t = transform; t != null; t = t.parent)
                 if (t.tag == "Enemy" || t.tag == "StrongEnemy") { enemyObject = t.gameObject; break; }
         }
-        enemyObject.SetActive(false);
+        return enemyObject;
     }
 }

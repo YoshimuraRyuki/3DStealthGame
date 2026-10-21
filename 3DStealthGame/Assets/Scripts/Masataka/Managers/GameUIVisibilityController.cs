@@ -2,35 +2,42 @@
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// GameScene上のUI表示/非表示を切り替える。
-/// キーボード: H
-/// ゲームパッド：Ⓧ
+/// UIの表示・非表示を切り替える。
+/// キーボード: H / ゲームパッド: X・□
 /// </summary>
 public class GameUIVisibilityController : MonoBehaviour
 {
 	[SerializeField] private GameObject uiRoot;
+	[SerializeField] private bool initiallyVisible = true;
 
-	private bool _isVisible = true;
+	private bool _isVisible;
+
+	private void Start()
+	{
+		_isVisible = initiallyVisible;
+		ApplyVisibility();
+	}
 
 	private void Update()
 	{
 		if (IsTogglePressed())
 		{
-			ToggleUI();
+			_isVisible = !_isVisible;
+			ApplyVisibility();
 		}
 	}
 
 	private bool IsTogglePressed()
 	{
-		// キーボード H
-		if (Keyboard.current != null && Keyboard.current.hKey.wasPressedThisFrame)
+		if (Keyboard.current != null &&
+			Keyboard.current.hKey.wasPressedThisFrame)
 		{
 			return true;
 		}
 
-		// ゲームパッド 左フェイスボタン
-		// Xbox: Xボタン / PlayStation: □ボタン
-		if (Gamepad.current != null && Gamepad.current.buttonWest.wasPressedThisFrame)
+		if (CoopGameSession.Instance == null &&
+			Gamepad.current != null &&
+			Gamepad.current.buttonWest.wasPressedThisFrame)
 		{
 			return true;
 		}
@@ -38,10 +45,8 @@ public class GameUIVisibilityController : MonoBehaviour
 		return false;
 	}
 
-	private void ToggleUI()
+	private void ApplyVisibility()
 	{
-		_isVisible = !_isVisible;
-
 		if (uiRoot != null)
 		{
 			uiRoot.SetActive(_isVisible);

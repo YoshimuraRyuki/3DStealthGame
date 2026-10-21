@@ -104,6 +104,12 @@ public class GoalSendMessage
 [System.Serializable]
 public class EnemyMoveMessage
 {
+	public string enemy_key;
+	public string session_id;
+	public bool has_combat_state;
+	public int health, max_health;
+	public bool active;
+
 	public string type;         // "enemy_move"
 	public int enemy_index;     // シーン内の敵の番号
 	public float x;
@@ -122,6 +128,12 @@ public class EnemyMoveMessage
 [System.Serializable]
 public class EnemyMoveSendMessage
 {
+	public string enemy_key;
+	public string session_id;
+	public bool has_combat_state;
+	public int health, max_health;
+	public bool active;
+
 	public string type = "enemy_move";
 	public int enemy_index;
 	public float x;

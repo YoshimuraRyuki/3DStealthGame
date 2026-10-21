@@ -59,7 +59,8 @@ public sealed class PlayerCombatController : MonoBehaviour
 
     private void Update()
     {
-        if (!controller.isLocalPlayer || controller.isPlayerMoveStop || controller.IsFading || controller.isAction)
+        CoopPlayerStateController coop = GetComponent<CoopPlayerStateController>();
+        if ((CoopGameSession.Instance != null && !CoopGameSession.Instance.Ready) || (coop != null && coop.AttackBlocked) || !controller.isLocalPlayer || controller.isPlayerMoveStop || controller.IsFading || controller.isAction)
         {
             CancelAttack();
             return;
@@ -101,6 +102,9 @@ public sealed class PlayerCombatController : MonoBehaviour
         foreach (Collider collider in Physics.OverlapSphere(transform.position, attackRange, targetLayers, QueryTriggerInteraction.Collide))
         {
             Transform target = AutoAttackTarget.Resolve(collider);
+            var gimmick = collider.GetComponentInParent<ElementalGimmick>();
+            var coop = GetComponent<CoopPlayerStateController>();
+            if (gimmick != null && coop != null && !gimmick.Activated && gimmick.requiredElement == coop.Element) target = gimmick.transform;
             if (target != null) candidates.Add(target);
         }
         Transform nearest = null;
@@ -114,10 +118,19 @@ public sealed class PlayerCombatController : MonoBehaviour
         return nearest;
     }
 
+    public float CoopFireInterval => fireInterval;
+    public CoopShot MakeCoopShot(string owner, AttackElement element, Vector3 direction, string session)
+    {
+        return new CoopShot { session_id = session, owner = owner, element = (int)element,
+            origin = transform.position + Vector3.up * muzzleHeight, direction = direction,
+            speed = projectileSpeed, range = projectileRange, radius = hitRadius, damage = damage };
+    }
     private bool CanTarget(Transform target, out Bounds bounds)
     {
         bounds = new Bounds();
         if (!AutoAttackTarget.IsAlive(target)) return false;
+        var gimmick = target.GetComponent<ElementalGimmick>();
+        if (gimmick != null && gimmick.Activated) return false;
         float range = Mathf.Min(attackRange, projectileRange);
         if ((target.position - transform.position).sqrMagnitude > range * range) return false;
         if (!AutoAttackTarget.TryBounds(target, out bounds)) return false;
@@ -156,6 +169,11 @@ public sealed class PlayerCombatController : MonoBehaviour
         Vector3 origin = transform.position + Vector3.up * muzzleHeight;
         shotDirection = (bounds.center - origin).normalized;
         if (shotDirection.sqrMagnitude < 0.001f) return;
+        if (CoopGameSession.Instance != null)
+        {
+            CoopGameSession.Instance.RequestShot(shotDirection);
+            return;
+        }
         GameObject shot = new GameObject("EnergyBasicAttack");
         // Start at the player's centre; collision sweeps ignore the owner.
         // This prevents spawning a projectile on the far side of a nearby wall.

@@ -126,6 +126,7 @@ public partial class WebSocketClient : MonoBehaviour
 	{
 		Application.runInBackground = true;
 		playerName = "";
+		EnsureEnemyObjectsLoaded();
 	}
 
 
@@ -161,6 +162,8 @@ public partial class WebSocketClient : MonoBehaviour
 	void OnSceneLoaded(Scene scene, LoadSceneMode mode)
 	{
 		isGameSceneLoaded = scene.name == "GameScene";
+		ResetEnemySync();
+		if (isGameSceneLoaded) EnsureEnemyObjectsLoaded();
 
 		if (scene.name == "Title")
 		{
@@ -279,6 +282,7 @@ public partial class WebSocketClient : MonoBehaviour
 	private void ProcessMessage(string json)
 	{
 		string type = GetMessageType(json);
+        if (type.StartsWith("coop_")) { ReceiveCoop(type, json); return; }
 
 		switch (type)
 		{

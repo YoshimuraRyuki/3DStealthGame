@@ -366,6 +366,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a8daa53897c0d4941b0ead0a083d5eb5, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6169224662582301567}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a8daa53897c0d4941b0ead0a083d5eb5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6067010178159098749}
   m_SourcePrefab: {fileID: 100100000, guid: a8daa53897c0d4941b0ead0a083d5eb5, type: 3}
 --- !u!1 &5850422698325972365 stripped
 GameObject:
@@ -524,3 +527,30 @@ MonoBehaviour:
   releaseDistance: 1.2
   createCoreAutomatically: 1
   generatedCoreSize: 0.45
+--- !u!114 &6067010178159098749
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5850422698325972365}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ddeac1e8d299e24aa7d87bc73e83564, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackRange: 8
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  fireInterval: 0.5
+  windup: 0.05
+  movementLock: 0.12
+  projectileSpeed: 26
+  projectileRange: 14
+  hitRadius: 0.14
+  damage: 1
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  muzzleHeight: 1.1

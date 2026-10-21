@@ -699,7 +699,6 @@ GameObject:
   - component: {fileID: 3046921135032358081}
   - component: {fileID: 4614583792957077495}
   - component: {fileID: 7865888513491822896}
-  - component: {fileID: 3470185511107027951}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Enemy
@@ -787,22 +786,6 @@ MonoBehaviour:
   switchCount: 0
   showViewDebug: 1
   showSoundDebug: 1
---- !u!114 &3470185511107027951
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2378751683544714875}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2bc1347d82b61e94cb7191cdccf2c68c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  isPressed: 0
-  isEnemyMoveStop: 0
-  stanTime: 5
-  targetEnemyID: 0
 --- !u!1 &3071219106759320695
 GameObject:
   m_ObjectHideFlags: 0
@@ -1956,7 +1939,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &7050889478703880107
 RectTransform:
   m_ObjectHideFlags: 0
