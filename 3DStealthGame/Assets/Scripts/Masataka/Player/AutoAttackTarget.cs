@@ -35,4 +35,30 @@ public static class AutoAttackTarget
         }
         return found;
     }
+    // Both the reticle and HP bar use the same projected rectangle, including
+    // the reticle's padding/minimum size. A world-space head point is insufficient
+    // when the camera is tilted or the enemy has depth.
+    public static bool TryLockScreenBounds(Transform target, Camera camera, out Vector2 min, out Vector2 max)
+    {
+        min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+        max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+        if (camera == null || !IsAlive(target) || !TryBounds(target, out Bounds bounds)) return false;
+        for (int i = 0; i < 8; i++)
+        {
+            Vector3 corner = bounds.center + Vector3.Scale(bounds.extents,
+                new Vector3((i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f));
+            Vector3 point = camera.WorldToScreenPoint(corner);
+            if (point.z <= 0f) return false;
+            min = Vector2.Min(min, new Vector2(point.x, point.y));
+            max = Vector2.Max(max, new Vector2(point.x, point.y));
+        }
+        if (max.x < 0f || max.y < 0f || min.x > Screen.width || min.y > Screen.height) return false;
+        Vector2 center = (min + max) * 0.5f;
+        Vector2 size = max - min + Vector2.one * 14f;
+        size.x = Mathf.Max(52f, size.x);
+        size.y = Mathf.Max(68f, size.y);
+        min = center - size * 0.5f;
+        max = center + size * 0.5f;
+        return true;
+    }
 }

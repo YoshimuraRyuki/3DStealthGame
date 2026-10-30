@@ -41,6 +41,8 @@ public class PlayerController : MonoBehaviour
     #region フィールド
 
     private Rigidbody _rb;
+    private PlayerDashController dash;
+    public bool IsDashing => dash != null && dash.IsDashing;
     private Vector3 _aimDirection;
     private bool _hasAimDirection;
     private float shotLockUntil;
@@ -62,6 +64,10 @@ public class PlayerController : MonoBehaviour
         else transform.rotation = facing;
     }
     public void CancelShotLock() { shotLockUntil = 0f; }
+    public void ExtendShotLock(float seconds)
+    {
+        shotLockUntil = Mathf.Max(shotLockUntil, Time.time + Mathf.Max(0f, seconds));
+    }
 
     // 入力管理
     private Vector2 _moveInput;
@@ -108,6 +114,9 @@ public class PlayerController : MonoBehaviour
             moveAction = playerInput.actions.FindAction("Move", false);
 
 
+        dash = GetComponent<PlayerDashController>();
+        if (dash == null && playerInput != null) dash = gameObject.AddComponent<PlayerDashController>();
+
         if (playerInput != null && GetComponent<PlayerCombatController>() == null)
             gameObject.AddComponent<PlayerCombatController>();
 
@@ -148,6 +157,11 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         if (!isLocalPlayer) return;
+        if (dash != null && dash.TickDash(Time.fixedDeltaTime))
+        {
+            MakeSound(transform.position, walkVolume);
+            return;
+        }
         ApplyMovement();
     }
 
@@ -165,7 +179,7 @@ public class PlayerController : MonoBehaviour
     /// <summary>忍び歩きボタンが押されたとき</summary>
     public void OnSneakStart(InputAction.CallbackContext context)
     {
-        isSneaking = true;
+        isSneaking = false;
     }
 
     /// <summary>忍び歩きボタンが離されたとき</summary>
@@ -364,7 +378,7 @@ public class PlayerController : MonoBehaviour
         OnMakeSound?.Invoke(position, volume);
     }
 
-    public bool IsSneaking => Input.GetKey(KeyCode.LeftShift);
+    public bool IsSneaking => false;
 
     #endregion
 
@@ -378,6 +392,7 @@ public class PlayerController : MonoBehaviour
 
     public void BeginStagger()
     {
+        if (dash != null) dash.CancelDash();
         CancelShotLock();
         _moveInput = Vector2.zero;
         if (_rb != null && !_rb.isKinematic)

@@ -20,9 +20,11 @@ public enum AttackElement { Fire = 0, Water = 1 }
     public string type = "coop_state", session_id;
     public int sequence;
     public bool cleared;
+    public CoopImpact[] impacts;
     public CoopCoreState[] cores;
     public CoopPlayerState[] players;
     public CoopGimmickState[] gimmicks;
+    public CoopAttackConditionState[] attackConditions;
 }
 [Serializable] public sealed class CoopCoreState
 {
@@ -36,3 +38,18 @@ public enum AttackElement { Fire = 0, Water = 1 }
     public float stun, immune;
 }
 [Serializable] public sealed class CoopGimmickState { public string key; public bool activated; }
+
+[Serializable] public sealed class CoopAttackConditionState
+{
+    public string key;
+    public bool allowed, requireElement;
+    public int element;
+}
+
+// Cosmetic events only: kind 0=surface, 1=confirmed damage, 2=blocked.
+[Serializable] public sealed class CoopImpact
+{
+    public int id, element, kind;
+    public Vector3 position, normal;
+    [NonSerialized] public float expiresAt;
+}

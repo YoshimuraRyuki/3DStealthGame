@@ -62,6 +62,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Masataka\Network\NetworkMessages.cs" />
     <Compile Include="Assets\Scripts\Masataka\Core\CoreCarryDebugInput.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Player\PlayerStaggerAnimation.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\LogManager.cs" />
     <Compile Include="Assets\Scripts\Ryuki\RespawnPoint.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\PlayerData.cs" />
@@ -85,8 +86,10 @@
     <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.WorldEvents.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\EnemyLockOnIndicator.cs" />
     <Compile Include="Assets\Scripts\Ryuki\ElementGenerator.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Player\PlayerDashController.cs" />
     <Compile Include="Assets\Scripts\Ryuki\TestPlayer.cs" />
     <Compile Include="Assets\Scripts\Ryuki\MenuSelector.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Player\EnemyHealthBar.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\PlayerController.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\ItemManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\StaminaItemManager.cs" />
@@ -95,6 +98,7 @@
     <Compile Include="Assets\Scripts\Masataka\UI\TutorialManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\QuickChatManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Camera\PlayerCamera.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Player\AttackTargetCondition.cs" />
     <Compile Include="Assets\Scripts\Masataka\Coop\ElementalGimmick.cs" />
     <Compile Include="Assets\Scripts\Masataka\Coop\CoopCore.cs" />
     <Compile Include="Assets\Scripts\Masataka\SwitchOutlinePresenter.cs" />
@@ -120,6 +124,7 @@
     <Compile Include="Assets\Scripts\Masataka\UI\RoomSelectManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.cs" />
     <Compile Include="Assets\BTM_Assets\BTM_Items_Gems\Scripts\SimpleGemsAnim.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Player\PlayerFireAnimation.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\PlayerCombatController.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\ResultManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\ReturnToTitle.cs" />
@@ -127,6 +132,7 @@
     <Compile Include="Assets\Scripts\Masataka\StaminaAbsorbEffect.cs" />
     <Compile Include="Assets\Scripts\Masataka\Network\SendMessageBuilder.cs" />
     <Compile Include="Assets\Scripts\Masataka\Network\WebSocketClient.Coop.cs" />
+    <Compile Include="Assets\Scripts\Masataka\Player\EnergyHitFeedback.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

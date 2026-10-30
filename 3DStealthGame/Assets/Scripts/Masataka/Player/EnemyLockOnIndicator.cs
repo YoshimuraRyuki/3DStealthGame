@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 using UnityEngine.UI;
 
 // Screen-space brackets stay readable at any camera distance. No external assets required.
@@ -6,9 +7,13 @@ public sealed class EnemyLockOnIndicator : MonoBehaviour
 {
 	private GameObject canvasObject;
 	private readonly RectTransform[] corners = new RectTransform[8];
-	private RectTransform arrow;
-	private readonly Vector3[] worldCorners = new Vector3[8];
-	private readonly Color targetColor = new Color(1f, 0.12f, 0.12f);
+	[SerializeField] private Color canAttackColor = new Color(0.15f, 1f, 0.25f);
+    [SerializeField] private Color cannotAttackColor = new Color(1f, 0.12f, 0.12f);
+    [SerializeField, Min(0.01f)] private float deniedShakeDuration = 0.2f;
+    [SerializeField, Min(0f)] private float deniedShakePixels = 8f;
+    private readonly List<Image> images = new List<Image>();
+    private Transform shakeTarget;
+    private float shakeStartedAt = -100f;
 
 	private void Awake()
 	{
@@ -16,9 +21,7 @@ public sealed class EnemyLockOnIndicator : MonoBehaviour
 		Canvas canvas = canvasObject.GetComponent<Canvas>();
 		canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 		canvas.sortingOrder = 200;
-		for (int i = 0; i < corners.Length; i++) corners[i] = CreateImage("Corner", targetColor, true);
-		arrow = CreateImage("TargetDiamond", targetColor, true);
-		arrow.localRotation = Quaternion.Euler(0f, 0f, 45f);
+		for (int i = 0; i < corners.Length; i++) corners[i] = CreateImage("Corner", canAttackColor, true);
 		canvasObject.SetActive(false);
 	}
 
@@ -31,6 +34,7 @@ public sealed class EnemyLockOnIndicator : MonoBehaviour
 		rect.pivot = Vector2.one * 0.5f;
 		Image image = obj.GetComponent<Image>();
 		image.color = color;
+        images.Add(image);
 		image.raycastTarget = false;
 		if (outlined)
 		{
@@ -41,29 +45,32 @@ public sealed class EnemyLockOnIndicator : MonoBehaviour
 		return rect;
 	}
 
-	public void Show(Transform target)
+	public void Show(Transform target) { Show(target, true); }
+
+    public void ShakeDenied(Transform target)
+    {
+        shakeTarget = target;
+        shakeStartedAt = Time.unscaledTime;
+    }
+
+    internal static Vector2 DeniedOffset(float elapsed, float duration, float pixels)
+    {
+        if (elapsed < 0f || duration <= 0f || elapsed >= duration) return Vector2.zero;
+        float strength = pixels * (1f - elapsed / duration);
+        return new Vector2(Mathf.Sin(elapsed * 150f) * strength, Mathf.Sin(elapsed * 110f) * strength * 0.35f);
+    }
+
+    public void Show(Transform target, bool canAttack)
 	{
-		Camera camera = Camera.main;
-		if (camera == null || !AutoAttackTarget.IsAlive(target) || !AutoAttackTarget.TryBounds(target, out Bounds bounds))
-		{ Hide(); return; }
-		Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
-		Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
-		for (int i = 0; i < worldCorners.Length; i++)
-		{
-			worldCorners[i] = bounds.center + Vector3.Scale(bounds.extents,
-				new Vector3((i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f));
-			Vector3 screen = camera.WorldToScreenPoint(worldCorners[i]);
-			if (screen.z <= 0f) { Hide(); return; }
-			min = Vector2.Min(min, new Vector2(screen.x, screen.y));
-			max = Vector2.Max(max, new Vector2(screen.x, screen.y));
-		}
-		if (max.x < 0f || max.y < 0f || min.x > Screen.width || min.y > Screen.height)
-		{ Hide(); return; }
+        if (!AutoAttackTarget.TryLockScreenBounds(target, Camera.main, out Vector2 min, out Vector2 max))
+        { Hide(); return; }
 		canvasObject.SetActive(true);
+        Color color = canAttack ? canAttackColor : cannotAttackColor;
+        foreach (Image image in images) image.color = color;
 		Vector2 center = (min + max) * 0.5f;
-		Vector2 size = max - min + Vector2.one * 14f;
-		size.x = Mathf.Max(52f, size.x);
-		size.y = Mathf.Max(68f, size.y);
+        if (target == shakeTarget)
+            center += DeniedOffset(Time.unscaledTime - shakeStartedAt, deniedShakeDuration, deniedShakePixels);
+		Vector2 size = max - min;
 		min = center - size * 0.5f;
 		max = center + size * 0.5f;
 		float length = Mathf.Clamp(Mathf.Min(size.x, size.y) * 0.25f, 14f, 26f);
@@ -74,13 +81,17 @@ public sealed class EnemyLockOnIndicator : MonoBehaviour
 			Place(corners[i * 2], corner + new Vector2(left ? length * 0.5f : -length * 0.5f, 0f), new Vector2(length, 4f));
 			Place(corners[i * 2 + 1], corner + new Vector2(0f, bottom ? length * 0.5f : -length * 0.5f), new Vector2(4f, length));
 		}
-		Place(arrow, new Vector2(center.x, max.y + 15f), Vector2.one * 11f);
 
 	}
 
 	private static void Place(RectTransform rect, Vector2 position, Vector2 size)
 	{ rect.anchoredPosition = position; rect.sizeDelta = size; }
-	public void Hide() { if (canvasObject != null) canvasObject.SetActive(false); }
+	public void Hide()
+    {
+        if (canvasObject != null) canvasObject.SetActive(false);
+        shakeTarget = null;
+        shakeStartedAt = -100f;
+    }
 	private void OnDisable() { Hide(); }
 	private void OnDestroy() { if (canvasObject != null) Destroy(canvasObject); }
 }

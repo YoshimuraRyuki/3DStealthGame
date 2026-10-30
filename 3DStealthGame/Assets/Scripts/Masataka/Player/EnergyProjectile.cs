@@ -40,7 +40,7 @@ public sealed class EnergyProjectile : MonoBehaviour
         if (!initialized || spent) return;
         // Sphere casts do not report colliders that already overlap the origin.
         foreach (Collider other in Physics.OverlapSphere(transform.position, radius, hitLayers, QueryTriggerInteraction.Ignore))
-            if (CanHit(other)) { Hit(other, transform.position); return; }
+            if (CanHit(other)) { Hit(other, other.ClosestPoint(transform.position)); return; }
         float distance = speed * Mathf.Min(Time.deltaTime, Mathf.Max(0f, lifeTime));
         RaycastHit[] hits = Physics.SphereCastAll(transform.position, radius, direction,
             distance, hitLayers, QueryTriggerInteraction.Ignore);
@@ -55,18 +55,35 @@ public sealed class EnergyProjectile : MonoBehaviour
     {
         if (spent) return;
         spent = true;
-        IDamageable target = FindDamageable(other);
-        if (target != null) target.TakeDamage(damage);
-        GameObject impact = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        impact.name = "EnergyImpact";
-        impact.transform.position = position;
-        impact.transform.localScale = Vector3.one * 0.18f;
-        Collider collider = impact.GetComponent<Collider>();
-        collider.enabled = false;
-        Destroy(collider);
-        Material material = PlayerCombatController.CreateEnergyMaterial(new Color(0.2f, 0.9f, 1f));
-        impact.GetComponent<Renderer>().sharedMaterial = material;
-        impact.AddComponent<EnergyImpactEffect>().Initialize(material);
+        var playerState = owner != null ? owner.GetComponent<CoopPlayerStateController>() : null;
+        AttackElement element = playerState != null ? playerState.Element :
+            (owner != null && owner.CompareTag("Player2") ? AttackElement.Water : AttackElement.Fire);
+        var gimmick = other.GetComponentInParent<ElementalGimmick>();
+        int kind = 0;
+        if (gimmick != null)
+        {
+            kind = gimmick.CanReceiveAttack(element) ? 1 : 2;
+            gimmick.Hit(element);
+        }
+        else
+        {
+            IDamageable target = FindDamageable(other);
+            if (target is EnemyHealth health)
+            {
+                int before = health.CurrentHealth;
+                health.TakeDamage(damage, element);
+                kind = health.CurrentHealth < before ? 1 : 2;
+            }
+            else if (target != null)
+            {
+                bool allowed = AttackTargetCondition.AllowsTarget(AutoAttackTarget.Resolve(other), element);
+                kind = allowed ? 1 : 2;
+                if (allowed) target.TakeDamage(damage);
+            }
+        }
+        Vector3 normal = (transform.position - position).normalized;
+        if (normal.sqrMagnitude < 0.001f) normal = -direction;
+        EnergyHitFeedback.Play(position, normal, element, kind);
         Destroy(gameObject);
     }
     private static IDamageable FindDamageable(Collider other)

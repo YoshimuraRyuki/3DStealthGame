@@ -41,7 +41,12 @@ public sealed class EnemyHealth : MonoBehaviour, IDamageable
         if (currentHealth < previous) PlayHitFlash();
     }
 
-    private void Awake() { EnsureInitialized(); }
+    private void Awake()
+    {
+        EnsureInitialized();
+        if (GetComponent<EnemyHealthBar>() == null)
+            gameObject.AddComponent<EnemyHealthBar>();
+    }
 
     private void EnsureInitialized()
     {
@@ -51,10 +56,17 @@ public sealed class EnemyHealth : MonoBehaviour, IDamageable
         currentHealth = maxHealth;
     }
 
+    public void TakeDamage(int damage, AttackElement element)
+    {
+        if (AttackTargetCondition.AllowsTarget(transform, element)) TakeDamage(damage);
+    }
+
     public void TakeDamage(int damage)
     {
         EnsureInitialized();
         if (CoopGameSession.Instance != null && !CoopGameSession.Instance.IsHost) return;
+        var condition = GetComponentInParent<AttackTargetCondition>();
+        if (condition != null && !condition.AttackAllowed) return;
         if (damage <= 0 || currentHealth <= 0) return;
 
         currentHealth = Mathf.Max(0, currentHealth - damage);
