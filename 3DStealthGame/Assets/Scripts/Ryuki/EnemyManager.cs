@@ -11,16 +11,12 @@ public class EnemyManager : MonoBehaviour
     {
         Patrol,
         FocusPlayer,
-        LookSoundPoint
-    }
-    public enum StrongEnemyState
-    {
-        sPatrol,
-        sLookSoundPoint
+        LookSoundPoint,
+        FocusCore,
+        CarryCore
     }
 
     [SerializeField] EnemyState enemyState;
-    [SerializeField] StrongEnemyState strongEnemyState;
 
     #endregion
 
@@ -68,18 +64,9 @@ public class EnemyManager : MonoBehaviour
     [Header("巡回エリア設定")]
     [Tooltip("敵が巡回ポイントを探す最大距離")]
     public float maxPatrolDistance = 20f;
-    
-    #endregion
 
-    #region 強化敵設定
-
-    [Header("強化敵用")]
-    [SerializeField] float waitTime = 3f;
-    [SerializeField] float rotateAngle = 90f; // 回転する角度
-
-    private float timer = 0f;
-    private bool isRotating = false;
-    private float currentRotateAmount = 0f;
+    // 追従後に別のルートに行かないよう固定するグループID
+    private int myGroupID = -1;
 
     #endregion
 
@@ -119,6 +106,16 @@ public class EnemyManager : MonoBehaviour
     private bool isHearingSound = false;     // 今、音が聞こえているかどうかのフラグ
     private Vector3 lastSoundPosition;       // 最後に音が聞こえた場所
     private float _remoteSoundCooldown = 0f; // Player2音検知用クールダウン
+
+    #endregion
+
+    #region コア設定
+
+    [Header("Core設定")]
+    public float coreRadius = 8f;
+    public Transform coreHoldPoint; // 手元や背中にCoreを付ける位置
+    private Core targetCore = null;
+    private Core carriedCore = null; // 現在持っているCore
 
     #endregion
 
@@ -171,32 +168,32 @@ public class EnemyManager : MonoBehaviour
 
         if (allPoints.Length == 0) return;
 
-        // 自分から一番近いポイントを探す
-        GameObject nearestPoint = GetNearestPoint(allPoints);
-        if (nearestPoint == null) return;
-
-        int nearestID = GetIDFromName(nearestPoint.name);
-
-        if (nearestID == -1)
+        if (myGroupID == -1)
         {
-            BackupPatrolSetup(allPoints);
-            return;
+            GameObject nearestPoint = GetNearestPoint(allPoints);
+            if (nearestPoint == null) return;
+
+            int nearestID = GetIDFromName(nearestPoint.name);
+            if (nearestID == -1)
+            {
+                BackupPatrolSetup(allPoints);
+                return;
+            }
+
+            myGroupID = nearestID / 100; // グループIDを決定して保存
         }
 
-        // グループIDを計算
-        int targetGroupID = nearestID / 100;
-
-        // 同じグループIDを持つポイントをすべて抽出
+        // 保存された myGroupID に属するポイントのみを集める
         foreach (GameObject pt in allPoints)
         {
             int ptID = GetIDFromName(pt.name);
-            if (ptID != -1 && (ptID / 100) == targetGroupID)
+            if (ptID != -1 && (ptID / 100) == myGroupID)
             {
                 patrolPointList.Add(pt);
             }
         }
 
-        // 3. IDの数値が若い順にソート (101 -> 102 -> 103 -> 104...)
+        // IDの昇順にソート (101 -> 102 -> 103...)
         patrolPointList.Sort((a, b) =>
         {
             int idA = GetIDFromName(a.name);
@@ -204,10 +201,11 @@ public class EnemyManager : MonoBehaviour
             return idA.CompareTo(idB);
         });
 
-        // 一番近かったポイントの位置から巡回を開始する
+        // 巡回ポイントの中で復帰時に一番近いポイントから再開
         if (patrolPointList.Count > 0)
         {
-            currentPointIndex = patrolPointList.IndexOf(nearestPoint);
+            GameObject nearestInGroup = GetNearestPoint(patrolPointList.ToArray());
+            currentPointIndex = patrolPointList.IndexOf(nearestInGroup);
             if (currentPointIndex == -1) currentPointIndex = 0;
 
             targetPoint = patrolPointList[currentPointIndex];
@@ -260,28 +258,6 @@ public class EnemyManager : MonoBehaviour
             targetPoint = patrolPointList[currentPointIndex];
         }
     }
-
-    /// <summary>
-    /// 一番近いポイントのインデックスを取得
-    /// </summary>
-    /// <returns></returns>
-    //int GetNearestPointIndex()
-    //{
-    //    int nearestIndex = 0;
-    //    float minDistance = Mathf.Infinity;
-    //    Vector3 currentPos = transform.position;
-
-    //    for (int i = 0; i < patrolPointList.Count; i++)
-    //    {
-    //        float distance = Vector3.SqrMagnitude(patrolPointList[i].transform.position - currentPos);
-    //        if (distance < minDistance)
-    //        {
-    //            minDistance = distance;
-    //            nearestIndex = i;
-    //        }
-    //    }
-    //    return nearestIndex;
-    //}
 
     /// <summary>
     /// 次のポイントを順番通りに取得する
@@ -362,61 +338,6 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
-    #region プレイヤーを探す処理
-
-    /// <summary>
-    /// 敵があたりを見渡す処理
-    /// </summary>
-    void SearchPlayer()
-    {
-        if (!isStopMove)
-        {
-            return;
-        }
-        if (currentTime >= 3)
-        {
-            return;
-        }
-        // 見回り動作
-        transform.Rotate(0, stoprotateSpeed * Time.deltaTime, 0); // 右回転
-    }
-
-    /// <summary>
-    /// 強化敵があたりを見渡す処理
-    /// </summary>
-    void StrongSearchPlayer()
-    {
-        // 停止中
-        if (!isRotating)
-        {
-            timer += Time.deltaTime;
-
-            if (timer >= waitTime)
-            {
-                timer = 0f;
-
-                isRotating = true;
-                currentRotateAmount = 0f;
-            }
-        }
-        // 回転中
-        else
-        {
-            float rotateThisFrame = rotateSpeed * Time.deltaTime;
-
-            transform.Rotate(0f, rotateThisFrame, 0f);
-
-            currentRotateAmount += rotateThisFrame;
-
-            if (currentRotateAmount >= rotateAngle)
-            {
-                isRotating = false;
-            }
-        }
-    }
-
-    #endregion
-
     #region プレイヤー発見処理
 
     /// <summary>
@@ -437,7 +358,6 @@ public class EnemyManager : MonoBehaviour
             if (stillVisible)
             {
                 _alertTarget = targetPlayer;
-                if (gameObject.tag == "StrongEnemy") return;
 
                 //（TowardThePlayerの中の isHearingSound 条件に縛られないように、本来は別処理にするか、フラグ管理を見直すのが理想です）
                 FocusPlayer();
@@ -462,15 +382,8 @@ public class EnemyManager : MonoBehaviour
 
                 lastSoundPosition = targetPlayer.position;
                 currentTime = 0; // タイマーリセット
-
-                if (gameObject.tag == "StrongEnemy")
-                {
-                    strongEnemyState = StrongEnemyState.sLookSoundPoint;
-                }
-                else
-                {
-                    enemyState = EnemyState.LookSoundPoint; // 音を確認するステートへ
-                }
+                enemyState = EnemyState.LookSoundPoint; // 音を確認するステートへ
+                
                 return;
             }
         }
@@ -481,7 +394,7 @@ public class EnemyManager : MonoBehaviour
         {
             if (p == null) continue;
 
-            // 単に距離が近いだけでなく、「視界に入っているか」も同時にチェックする
+            // 単に距離が近いだけでなく、視界に入っているかも同時にチェックする
             if (CheckSinglePlayerVision(p.transform))
             {
                 float dist = Vector3.Distance(transform.position, p.transform.position);
@@ -665,12 +578,6 @@ public class EnemyManager : MonoBehaviour
         isAlerted = false;
         isStopMove = false;
 
-        if (gameObject.tag == "StrongEnemy")
-        {
-            strongEnemyState = StrongEnemyState.sLookSoundPoint;
-            return;
-        }
-
         // 最後に聞こえた音の地点に視点を向ける
         enemyState = EnemyState.LookSoundPoint;
     }
@@ -766,34 +673,6 @@ public class EnemyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 視野の範囲内ならプレイヤーの方向を見ながら移動
-    /// </summary>
-    void TowardThePlayer()
-    {
-        // 音が聞こえている間だけ、その場所に向かって移動する
-        if (isHearingSound)
-        {
-            // 音の位置
-            Vector3 targetPos = new Vector3(lastSoundPosition.x, transform.position.y, lastSoundPosition.z);
-
-            // 向きたい方向
-            Vector3 direction = targetPos - transform.position;
-
-            // 向きたい回転
-            Quaternion lookRotation = Quaternion.LookRotation(direction);
-
-            // なめらか回転
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, rotateSpeed * Time.deltaTime);
-
-            // 回転しながら移動
-            float towardSpeed = speed / 2;
-
-            transform.position = Vector3.MoveTowards(transform.position, targetPos, towardSpeed * Time.deltaTime);
-        }
-        isHearingSound = false;
-    }
-
-    /// <summary>
     ///  プレイヤーの音検知
     /// </summary>
     /// <param name="soundPosition"></param>
@@ -840,15 +719,7 @@ public class EnemyManager : MonoBehaviour
                 isReaction = true;
             }
 
-            // FocusPlayer ではなく、音の方向を見るステートに直接切り替える
-            if (gameObject.tag == "StrongEnemy")
-            {
-                strongEnemyState = StrongEnemyState.sLookSoundPoint;
-            }
-            else
-            {
-                enemyState = EnemyState.LookSoundPoint;
-            }
+            enemyState = EnemyState.LookSoundPoint;
         }
     }
 
@@ -900,39 +771,101 @@ public class EnemyManager : MonoBehaviour
         }
     }
 
+    #endregion
+
+    #region コア用関数
+
     /// <summary>
-    /// 強化適用音検知
+    /// 範囲内にあるCoreを検索する
     /// </summary>
-    void StrongLookSoundPoint()
+    void SearchCore()
     {
-        Vector3 direction = lastSoundPosition - transform.position;
+        // 自分が既にコアを手に保持しているなら何もしない
+        if (carriedCore != null) return;
 
-        direction.y = 0;
+        // タグが "Core" のオブジェクトを取得
+        GameObject coreObj = GameObject.FindGameObjectWithTag("Core");
+        if (coreObj == null) return;
 
-        Quaternion lookRotation = Quaternion.LookRotation(direction);
+        Core core = coreObj.GetComponent<Core>();
+        if (core == null) return;
 
-        // なめらか回転
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, rotateSpeed * Time.deltaTime);
+        Vector3 enemyPos = new Vector3(transform.position.x, 0, transform.position.z);
+        Vector3 corePos = new Vector3(core.transform.position.x, 0, core.transform.position.z);
+        float distance = Vector3.Distance(enemyPos, corePos);
 
-        // 向き終わったか判定
-        float angle = Quaternion.Angle(transform.rotation, lookRotation);
-
-        if (angle < 3f)
+        // すでにこのコアに向かって追従中の場合→範囲外チェック
+        if (targetCore != null && enemyState == EnemyState.FocusCore)
         {
-            // 少し待ってから巡回へ戻す
-            currentTime += Time.deltaTime;
-            reactionText.text = "?";
-
-            if (currentTime >= 1.5f)
+            if (distance > coreRadius)
             {
-                currentTime = 0;
-                reactionText.gameObject.SetActive(false); // ビックリマーク非表示
-                strongEnemyState = StrongEnemyState.sPatrol;
+                Debug.Log("Coreが範囲外に出たため巡回に戻ります");
+                core.ReleaseCore(transform);
+                targetCore = null;
+                ResetPatrolState();
+                enemyState = EnemyState.Patrol;
+            }
+            return;
+        }
+
+        // まだターゲットにしていない場合→範囲内に入ったか判定
+        // 他の敵が既に持っている、または他の敵が追従中なら無視
+        if (!core.isCarried && (core.carrier == null || core.carrier == transform))
+        {
+            if (distance <= coreRadius)
+            {
+                if (core.ClaimCore(transform))
+                {
+                    targetCore = core;
+                    isFoundPlayer = false; // プレイヤー検知フラグ解除
+                    enemyState = EnemyState.FocusCore;
+                    isStopMove = false;
+                    Debug.Log($"Coreを検知！追従を開始します (距離: {distance:F2}m)");
+                }
             }
         }
     }
 
+    void FocusCore()
+    {
+        if (targetCore == null)
+        {
+            enemyState = EnemyState.Patrol;
+            return;
+        }
+
+        // Coreの方向を見る＆移動する
+        Vector3 targetPos = targetCore.transform.position;
+        Vector3 direction = targetPos - transform.position;
+        direction.y = 0;
+
+        if (direction != Vector3.zero)
+        {
+            Quaternion lookRotation = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, rotateSpeed * Time.deltaTime);
+        }
+
+        Vector3 destination = new Vector3(targetPos.x, transform.position.y, targetPos.z);
+        transform.position = Vector3.MoveTowards(transform.position, destination, speed * Time.deltaTime);
+
+        // Coreに到達・接触した判定
+        float distance = Vector3.Distance(new Vector3(transform.position.x, 0, transform.position.z), new Vector3(targetPos.x, 0, targetPos.z));
+        if (distance < 1.0f) // 到達判定範囲
+        {
+            Debug.Log("Coreを回収しました。巡回に戻ります。");
+
+            // Coreを持てる状態にしてアタッチ
+            Transform attachTarget = (coreHoldPoint != null) ? coreHoldPoint : transform;
+            targetCore.AttachToEnemy(attachTarget);
+
+            // 回収完了後、敵は通常の巡回に戻る
+            ResetPatrolState();
+            enemyState = EnemyState.Patrol;
+        }
+    }
+
     #endregion
+
 
     #region 澤田作：State(サーバー用)
 
@@ -1033,11 +966,12 @@ public class EnemyManager : MonoBehaviour
         isAlerted = false;
         currentAlertCount = alertCount;
 
+        // コア関係をリセット
+        targetCore = null;
+        carriedCore = null;
+
         // 次のポイントを再設定
         StartPoint();
-
-        // 停止時間を再抽選
-        //stopMoveCooldown = Random.Range(stopMoveCooldownMin, stopMoveCooldownMax);
 
         // テキスト非表示
         reactionText.gameObject.SetActive(false);
@@ -1130,31 +1064,20 @@ public class EnemyManager : MonoBehaviour
 
     void StateMachine()
     {
-        if (gameObject.tag == "StrongEnemy")
-        {
-            switch (strongEnemyState)
-            {
-                case StrongEnemyState.sPatrol:
-                    StrongSearchPlayer(); // 一定時間に視点を回転させる
-                    break;
-                case StrongEnemyState.sLookSoundPoint:
-                    StrongLookSoundPoint();
-                    break;
-            }
-            return;
-        }
-
         // ステートマシーン
         switch (enemyState)
         {
             case EnemyState.Patrol:
-                MoveEnemy();   // 敵が移動する処理
+                MoveEnemy();                // 敵が移動する処理
                 break;
             case EnemyState.FocusPlayer:
-                FocusPlayer(); // プレイヤーに視点のほうに視点を向ける処理
+                FocusPlayer();              // プレイヤーに視点のほうに視点を向ける処理
                 break;
             case EnemyState.LookSoundPoint:
-                LookSoundPoint(); // 最後に聞こえた音の地点に視点を向ける処理
+                LookSoundPoint();           // 最後に聞こえた音の地点に視点を向ける処理
+                break;
+            case EnemyState.FocusCore:
+                FocusCore();                // Coreに向かって移動する処理
                 break;
         }
     }
@@ -1217,6 +1140,14 @@ public class EnemyManager : MonoBehaviour
                     _soundRegistered = true;
                 }
             }
+        }
+
+        SearchCore();                               // 範囲内のコアを捜す処理
+        if (enemyState == EnemyState.FocusCore)
+        {
+            print("コアを追従します");
+            FocusCore();
+            return;
         }
 
         if (isRemoteControlled) return;             // ゲスト側はAIを動かさない（WebSocketClientが位置を受信して動かす）

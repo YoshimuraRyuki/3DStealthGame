@@ -61,7 +61,7 @@ public sealed class EnemyHealth : MonoBehaviour, IDamageable
         PlayHitFlash();
 
         Debug.Log($"[EnemyHealth] {name}: {currentHealth}/{maxHealth}");
-
+        
         if (currentHealth == 0)
             OnDefeated();
     }
@@ -108,6 +108,13 @@ public sealed class EnemyHealth : MonoBehaviour, IDamageable
 
     private void OnDefeated()
     {
+        // 竜希作:コアドロップ処理
+        GameObject coreObj = GameObject.FindGameObjectWithTag("Core");
+        if (coreObj == null) return;
+        Core core = coreObj.GetComponent<Core>();
+        if (core == null) return;
+        core.ResetCore();
+
         // HP0のまま見た目とAIだけ残って動く状態にしない。
         Debug.Log($"[EnemyHealth] {name}を倒しました");
         EnemyObject().SetActive(false);
