@@ -6,12 +6,12 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(PlayerController), typeof(PlayerInput))]
 public sealed class PlayerCombatController : MonoBehaviour
 {
-    [Header("自動ロックオン（敵NPCのみ）")]
+    [Header("自動ロックオン（敵・ギミック）")]
     [SerializeField, Min(0.1f)] private float attackRange = 14f;
     [SerializeField] private LayerMask targetLayers = ~0;
     [Header("射撃のタイミング")]
     [SerializeField, Min(0.12f)] private float fireInterval = 0.5f;
-    [SerializeField, Min(0f)] private float windup = 0.05f;
+    [SerializeField, Min(0f)] private float windup = 0.1f;
     [SerializeField, Min(0f)] private float movementLock = 0.12f;
     [Header("エネルギー弾")]
     [SerializeField, Min(1f)] private float projectileSpeed = 26f;
@@ -25,10 +25,11 @@ public sealed class PlayerCombatController : MonoBehaviour
     private InputAction fire;
     private float nextFireTime, releaseTime, nextSearchTime;
     private Vector3 shotDirection;
-    private bool pendingShot;
+    private bool pendingShot, fireWasHeld;
     private Transform lockedTarget, shotTarget;
     private EnemyLockOnIndicator lockIndicator;
     private Material energyMaterial;
+    private PlayerFireAnimation fireAnimation;
     private readonly HashSet<Transform> candidates = new HashSet<Transform>();
     public Transform LockedTarget => lockedTarget;
 
@@ -36,6 +37,7 @@ public sealed class PlayerCombatController : MonoBehaviour
     {
         controller = GetComponent<PlayerController>();
         input = GetComponent<PlayerInput>();
+        fireAnimation = PlayerFireAnimation.GetOrCreate(gameObject);
         energyMaterial = CreateEnergyMaterial(new Color(0.08f, 0.8f, 1f));
         lockIndicator = gameObject.AddComponent<EnemyLockOnIndicator>();
     }
@@ -59,8 +61,10 @@ public sealed class PlayerCombatController : MonoBehaviour
 
     private void Update()
     {
-        CoopPlayerStateController coop = GetComponent<CoopPlayerStateController>();
-        if ((CoopGameSession.Instance != null && !CoopGameSession.Instance.Ready) || (coop != null && coop.AttackBlocked) || !controller.isLocalPlayer || controller.isPlayerMoveStop || controller.IsFading || controller.isAction)
+        bool held = FireHeld();
+        bool pressed = held && !fireWasHeld;
+        fireWasHeld = held;
+        if (!controller.isLocalPlayer || (CoopGameSession.Instance != null && !CoopGameSession.Instance.Ready))
         {
             CancelAttack();
             return;
@@ -74,25 +78,54 @@ public sealed class PlayerCombatController : MonoBehaviour
                 nextSearchTime = Time.time + 0.1f;
             }
         }
+        if (pendingShot && !CanAttackTarget(shotTarget))
+        {
+            pendingShot = false;
+            shotTarget = null;
+            controller.CancelShotLock();
+            if (fireAnimation != null) fireAnimation.Cancel();
+        }
+        if (pressed && lockedTarget != null && !CanAttackTarget(lockedTarget))
+            lockIndicator.ShakeDenied(lockedTarget);
         if (pendingShot && Time.time >= releaseTime)
         {
             pendingShot = false;
-            // Use the originally selected enemy, never silently shoot a different one.
             SpawnShot();
             shotTarget = null;
         }
-        if (!FireHeld() || lockedTarget == null || pendingShot || controller.IsShotLocked || Time.time < nextFireTime) return;
-        if (!CanTarget(lockedTarget, out Bounds bounds)) return;
+        if (!held || lockedTarget == null || pendingShot || controller.IsShotLocked || Time.time < nextFireTime) return;
+        if (!CanAttackTarget(lockedTarget) || !CanTarget(lockedTarget, out Bounds bounds)) return;
         shotTarget = lockedTarget;
         shotDirection = bounds.center - (transform.position + Vector3.up * muzzleHeight);
         if (shotDirection.sqrMagnitude < 0.001f) return;
         shotDirection.Normalize();
-        float lockDuration = Mathf.Max(movementLock, windup);
+        float animationLock = fireAnimation != null ? fireAnimation.GetMovementLockSeconds(windup) : windup;
+        float lockDuration = Mathf.Max(movementLock, animationLock);
         controller.BeginShotLock(shotDirection, lockDuration);
+        if (fireAnimation != null) fireAnimation.BeginWindup(windup);
         releaseTime = Time.time + windup;
         nextFireTime = Time.time + Mathf.Max(fireInterval, lockDuration);
         pendingShot = true;
         if (windup <= 0f) { pendingShot = false; SpawnShot(); shotTarget = null; }
+    }
+
+    private AttackElement CurrentElement
+    {
+        get
+        {
+            var state = GetComponent<CoopPlayerStateController>();
+            return state != null ? state.Element : (CompareTag("Player2") ? AttackElement.Water : AttackElement.Fire);
+        }
+    }
+
+    private bool CanAttackTarget(Transform target)
+    {
+        if (!AutoAttackTarget.IsAlive(target) || controller.IsDashing || controller.isPlayerMoveStop || controller.IsFading || controller.isAction) return false;
+        var state = GetComponent<CoopPlayerStateController>();
+        if (state != null && state.AttackBlocked) return false;
+        if (!AttackTargetCondition.AllowsTarget(target, CurrentElement)) return false;
+        var gimmick = target.GetComponent<ElementalGimmick>();
+        return gimmick == null || gimmick.CanReceiveAttack(CurrentElement);
     }
 
     private Transform FindNearestTarget()
@@ -103,8 +136,7 @@ public sealed class PlayerCombatController : MonoBehaviour
         {
             Transform target = AutoAttackTarget.Resolve(collider);
             var gimmick = collider.GetComponentInParent<ElementalGimmick>();
-            var coop = GetComponent<CoopPlayerStateController>();
-            if (gimmick != null && coop != null && !gimmick.Activated && gimmick.requiredElement == coop.Element) target = gimmick.transform;
+            if (gimmick != null && !gimmick.Activated) target = gimmick.transform;
             if (target != null) candidates.Add(target);
         }
         Transform nearest = null;
@@ -159,16 +191,25 @@ public sealed class PlayerCombatController : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (controller.isLocalPlayer && lockedTarget != null) lockIndicator.Show(lockedTarget);
+        if (controller.isLocalPlayer && lockedTarget != null) lockIndicator.Show(lockedTarget, CanAttackTarget(lockedTarget));
         else lockIndicator.Hide();
     }
 
     private void SpawnShot()
     {
-        if (!CanTarget(shotTarget, out Bounds bounds)) return;
+        if (!CanAttackTarget(shotTarget) || !CanTarget(shotTarget, out Bounds bounds))
+        {
+            if (fireAnimation != null) fireAnimation.Cancel();
+            return;
+        }
         Vector3 origin = transform.position + Vector3.up * muzzleHeight;
         shotDirection = (bounds.center - origin).normalized;
-        if (shotDirection.sqrMagnitude < 0.001f) return;
+        if (shotDirection.sqrMagnitude < 0.001f)
+        {
+            if (fireAnimation != null) fireAnimation.Cancel();
+            return;
+        }
+        if (fireAnimation != null) fireAnimation.MarkReleased();
         if (CoopGameSession.Instance != null)
         {
             CoopGameSession.Instance.RequestShot(shotDirection);
@@ -203,6 +244,7 @@ public sealed class PlayerCombatController : MonoBehaviour
         pendingShot = false;
         shotTarget = lockedTarget = null;
         if (controller != null) controller.CancelShotLock();
+        if (controller != null && controller.isLocalPlayer && fireAnimation != null) fireAnimation.Cancel();
         if (lockIndicator != null) lockIndicator.Hide();
     }
     private void OnDisable() { CancelAttack(); }

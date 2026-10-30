@@ -10,7 +10,7 @@ public sealed class CoopGameSession : MonoBehaviour
     public static CoopGameSession Instance { get; private set; }
     [Header("ルール調整")]
     [Min(0.1f)] public float snapshotInterval = 0.1f;
-    [Min(0f)] public float staggerSeconds = 3f;
+    [Min(0f)] public float staggerSeconds = 1.5f;
     [Min(0f)] public float staggerRecoverySeconds = 1f;
     public bool Cleared { get; private set; }
     public bool Ready { get; private set; }
@@ -20,12 +20,15 @@ public sealed class CoopGameSession : MonoBehaviour
     private readonly Dictionary<string, CoopCore> cores = new Dictionary<string, CoopCore>();
     private readonly Dictionary<string, ElementalGimmick> gimmicks = new Dictionary<string, ElementalGimmick>();
     private readonly Dictionary<string, CoopPlayerStateController> players = new Dictionary<string, CoopPlayerStateController>();
+    private readonly Dictionary<string, AttackTargetCondition> attackConditions = new Dictionary<string, AttackTargetCondition>();
     private readonly Dictionary<string, float> fireTimes = new Dictionary<string, float>();
     private CoopReturnZone[] zones;
     private float nextSnapshot, nextPlayerScan, lastSnapshot, startedAt;
     private int sequence, appliedSequence = -1;
     private string sessionId;
     private bool announcedClear;
+    private readonly List<CoopImpact> recentImpacts = new List<CoopImpact>();
+    private int impactSequence, lastImpactId;
     private static void SceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (scene.name != "GameScene") return;
@@ -64,6 +67,13 @@ public sealed class CoopGameSession : MonoBehaviour
             gimmick.Initialize();
             if (gimmicks.ContainsKey(gimmick.Key)) { Debug.LogError("[Coop] ギミックIDが重複: " + gimmick.Key); continue; }
             gimmicks.Add(gimmick.Key, gimmick);
+        }
+        foreach (AttackTargetCondition condition in FindObjectsOfType<AttackTargetCondition>(true))
+        {
+            condition.Initialize();
+            if (attackConditions.ContainsKey(condition.Key))
+            { Debug.LogError("[Coop] 攻撃条件のIDが重複: " + condition.Key); continue; }
+            attackConditions.Add(condition.Key, condition);
         }
         zones = FindObjectsOfType<CoopReturnZone>();
         if (cores.Count == 0) Debug.LogError("コアがない");
@@ -128,14 +138,39 @@ public sealed class CoopGameSession : MonoBehaviour
         if (Time.time >= nextSnapshot)
         {
             nextSnapshot = Time.time + snapshotInterval;
+            recentImpacts.RemoveAll(impact => impact.expiresAt < Time.time);
             network.SendCoop(new CoopState {
                 session_id = sessionId, sequence = ++sequence, cleared = Cleared,
+                impacts = recentImpacts.ToArray(),
                 cores = cores.Values.Select(c => c.Capture()).ToArray(),
+                attackConditions = attackConditions.Values.Where(c => c != null).Select(c => c.Capture()).ToArray(),
                 players = players.Values.Where(p => p != null).Select(p => new CoopPlayerState { id = p.PlayerId, stun = p.StunRemaining, immune = p.ImmuneRemaining }).ToArray(),
                 gimmicks = gimmicks.Values.Select(g => new CoopGimmickState { key = g.Key, activated = g.Activated }).ToArray()
             });
         }
     }
+    public void ReportImpact(Vector3 position, Vector3 normal, AttackElement element, int kind)
+    {
+        if (!IsHost || !Ready || !Finite(position) || !Finite(normal)) return;
+        var impact = new CoopImpact { id = ++impactSequence, position = position, normal = normal,
+            element = (int)element, kind = kind, expiresAt = Time.time + 0.75f };
+        if (recentImpacts.Count >= 32) recentImpacts.RemoveAt(0);
+        recentImpacts.Add(impact);
+        EnergyHitFeedback.Play(position, normal, element, kind);
+        nextSnapshot = 0f;
+    }
+
+    private void ApplyImpacts(CoopImpact[] impacts)
+    {
+        if (impacts == null) return;
+        foreach (CoopImpact impact in impacts)
+        {
+            if (impact == null || impact.id <= lastImpactId || !Finite(impact.position) || !Finite(impact.normal)) continue;
+            lastImpactId = impact.id;
+            EnergyHitFeedback.Play(impact.position, impact.normal, (AttackElement)impact.element, impact.kind);
+        }
+    }
+
     // EnemyManager's existing capture callbacks are translated here; no enemy AI changes.
     public void StaggerPlayer(GameObject target)
     {
@@ -187,7 +222,10 @@ public sealed class CoopGameSession : MonoBehaviour
         CoopState state = JsonUtility.FromJson<CoopState>(json);
         if (state.session_id != network.CoopSessionId || state.sequence <= appliedSequence) return;
         appliedSequence = state.sequence; lastSnapshot = Time.time; Ready = true;
+        ApplyImpacts(state.impacts);
         // Enemy state is handled by the existing WebSocket enemy synchronization.
+        if (state.attackConditions != null) foreach (var c in state.attackConditions)
+            if (attackConditions.TryGetValue(c.key, out var condition)) condition.Apply(c);
         if (state.cores != null) foreach (var c in state.cores) if (cores.TryGetValue(c.key, out var core)) core.Set(c.mode, c.owner, c.enemy, c.position);
         if (state.players != null) foreach (var p in state.players) if (players.TryGetValue(p.id, out var actor)) actor.ApplyTimers(p.stun, p.immune);
         if (state.gimmicks != null) foreach (var g in state.gimmicks) if (gimmicks.TryGetValue(g.key, out var gimmick)) gimmick.Apply(g.activated);
