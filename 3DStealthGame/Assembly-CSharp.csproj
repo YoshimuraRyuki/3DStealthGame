@@ -97,6 +97,7 @@
     <Compile Include="Assets\Scripts\Masataka\Player\AutoAttackTarget.cs" />
     <Compile Include="Assets\Scripts\Masataka\UI\TutorialManager.cs" />
     <Compile Include="Assets\Scripts\Masataka\Managers\QuickChatManager.cs" />
+    <Compile Include="Assets\Scripts\Ryuki\Core.cs" />
     <Compile Include="Assets\Scripts\Masataka\Camera\PlayerCamera.cs" />
     <Compile Include="Assets\Scripts\Masataka\Player\AttackTargetCondition.cs" />
     <Compile Include="Assets\Scripts\Masataka\Coop\ElementalGimmick.cs" />

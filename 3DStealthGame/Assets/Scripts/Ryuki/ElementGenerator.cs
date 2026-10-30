@@ -491,8 +491,8 @@ public class ElementGenerator : MonoBehaviour
 						map[x, y] = "1";
                         break;
 
-                    case MapObjectType.Core: // リスポーン
-                        Instantiate(coresList[0], pos, Quaternion.identity);
+                    case MapObjectType.Core: // コア
+                        Instantiate(coresList[0], pos + Vector3.up * 0.5f, Quaternion.identity);
                         map[x, y] = "1";
                         break;
                 }

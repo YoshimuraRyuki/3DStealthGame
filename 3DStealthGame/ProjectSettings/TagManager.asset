@@ -16,6 +16,7 @@ TagManager:
   - Goal
   - Planeta
   - PowerItem
+  - Core
   layers:
   - Default
   - TransparentFX

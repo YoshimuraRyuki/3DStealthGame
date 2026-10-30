@@ -76,7 +76,7 @@ public sealed class CoopGameSession : MonoBehaviour
             attackConditions.Add(condition.Key, condition);
         }
         zones = FindObjectsOfType<CoopReturnZone>();
-        if (cores.Count == 0) Debug.LogError("コアがない");
+        //if (cores.Count == 0) Debug.LogError("コアがない");
     }
     public static string Key(string prefix, Vector3 position)
     { return prefix + ":" + Mathf.RoundToInt(position.x * 100f) + ":" + Mathf.RoundToInt(position.y * 100f) + ":" + Mathf.RoundToInt(position.z * 100f); }
