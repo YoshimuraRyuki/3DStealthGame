@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using Random = UnityEngine.Random;
+using UnityEngine.AI;
 
 public class EnemyManager : MonoBehaviour
 {
@@ -116,6 +116,12 @@ public class EnemyManager : MonoBehaviour
     public Transform coreHoldPoint; // 手元や背中にCoreを付ける位置
     private Core targetCore = null;
     private Core carriedCore = null; // 現在持っているCore
+
+    #endregion
+
+    #region コア追尾用ナビメッシュ
+
+    private NavMeshAgent agent;
 
     #endregion
 
@@ -295,14 +301,16 @@ public class EnemyManager : MonoBehaviour
             currentTime += Time.deltaTime; // 目的の位置に着いたら少し止める
             //SearchPlayer();                // 止まっている間視点を動かす
 
+            if (agent != null && agent.isOnNavMesh)
+            {
+                agent.isStopped = true;
+                agent.ResetPath();
+            }
+
             if (currentTime >= stopMoveCooldown)
             {
                 // 次のポイントをランダム取得
                 targetPoint = GetNextPoint();
-
-                // 停止時間を再抽選
-                //stopMoveCooldown = Random.Range(stopMoveCooldownMin, stopMoveCooldownMax);
-
                 currentTime = 0;
                 isStopMove = false;
             }
@@ -316,9 +324,32 @@ public class EnemyManager : MonoBehaviour
     void MoveToPoint(GameObject point)
     {
         // 目的地方向
-        Vector3 direction = point.transform.position - transform.position;
-
+        Vector3 targetPos = point.transform.position;
+        Vector3 direction = targetPos - transform.position;
         direction.y = 0;
+
+        float distance = direction.magnitude;
+        if (distance < 0.01f) return;
+
+        // 前方に壁があるかレイキャストでチェック
+        bool isWallAhead = Physics.Raycast(transform.position + Vector3.up * 0.5f, direction.normalized, distance, visionMask);
+        // 壁がある場合、またはNavMeshAgentがまだ目的地追尾中の場合はNavMeshAgentで迂回移動
+        if (isWallAhead)
+        {
+            if (agent != null && agent.isOnNavMesh)
+            {
+                agent.isStopped = false;
+                agent.speed = speed;
+                agent.SetDestination(targetPos);
+            }
+            return;
+        }
+        // 直線上に壁がない場合はNavMeshAgentを停止して、従来の向き調整と直線移動を行う
+        if (agent != null && agent.isOnNavMesh && agent.hasPath)
+        {
+            agent.isStopped = true;
+            agent.ResetPath();
+        }
 
         // 向きたい回転
         Quaternion lookRotation = Quaternion.LookRotation(direction);
@@ -830,33 +861,31 @@ public class EnemyManager : MonoBehaviour
     {
         if (targetCore == null)
         {
+            if (agent != null && agent.isOnNavMesh) agent.ResetPath();
             enemyState = EnemyState.Patrol;
             return;
         }
 
-        // Coreの方向を見る＆移動する
-        Vector3 targetPos = targetCore.transform.position;
-        Vector3 direction = targetPos - transform.position;
-        direction.y = 0;
-
-        if (direction != Vector3.zero)
+        // NavMeshAgent で壁を避けて追従
+        if (agent != null && agent.isOnNavMesh)
         {
-            Quaternion lookRotation = Quaternion.LookRotation(direction);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, rotateSpeed * Time.deltaTime);
+            agent.isStopped = false;
+            agent.speed = speed;
+            agent.SetDestination(targetCore.transform.position);
         }
 
-        Vector3 destination = new Vector3(targetPos.x, transform.position.y, targetPos.z);
-        transform.position = Vector3.MoveTowards(transform.position, destination, speed * Time.deltaTime);
-
-        // Coreに到達・接触した判定
-        float distance = Vector3.Distance(new Vector3(transform.position.x, 0, transform.position.z), new Vector3(targetPos.x, 0, targetPos.z));
-        if (distance < 1.0f) // 到達判定範囲
+        if (!agent.pathPending && agent.remainingDistance <= 1.0f)
         {
             Debug.Log("Coreを回収しました。巡回に戻ります。");
+
+            // 移動停止
+            agent.isStopped = true;
+            agent.ResetPath();
 
             // Coreを持てる状態にしてアタッチ
             Transform attachTarget = (coreHoldPoint != null) ? coreHoldPoint : transform;
             targetCore.AttachToEnemy(attachTarget);
+            carriedCore = targetCore;
 
             // 回収完了後、敵は通常の巡回に戻る
             ResetPatrolState();
@@ -865,7 +894,6 @@ public class EnemyManager : MonoBehaviour
     }
 
     #endregion
-
 
     #region 澤田作：State(サーバー用)
 
@@ -1097,6 +1125,14 @@ public class EnemyManager : MonoBehaviour
     #endregion
 
     #region Unityイベント
+
+    void Awake()
+    {
+        agent = GetComponent<NavMeshAgent>();
+
+        agent.speed = speed;
+        agent.angularSpeed = rotateSpeed;
+    }
 
     // Startをプレイヤー生成待ちのために遅延実行に変更
     void Start()
