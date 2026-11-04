@@ -879,6 +879,7 @@ GameObject:
   - component: {fileID: 3046921135032358081}
   - component: {fileID: 4614583792957077495}
   - component: {fileID: 7865888513491822896}
+  - component: {fileID: 7492919706735819598}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Enemy
@@ -943,7 +944,7 @@ MonoBehaviour:
   movePoints: []
   speed: 5
   stoppingDistance: 3
-  chaseSpeed: 1.5
+  chaseSpeed: 1
   rotateSpeed: 90
   stoprotateSpeed: 90
   stopMoveCooldown: 3
@@ -968,6 +969,28 @@ MonoBehaviour:
   switchCount: 0
   showViewDebug: 1
   showSoundDebug: 1
+--- !u!195 &7492919706735819598
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2378751683544714875}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 1
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 100
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
 --- !u!1 &3007810557290453372
 GameObject:
   m_ObjectHideFlags: 0

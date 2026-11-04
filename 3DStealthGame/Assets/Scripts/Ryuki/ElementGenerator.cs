@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.AI.Navigation;
 using UnityEngine;
 #if UNITY_EDITOR
 using static UnityEditor.Experimental.GraphView.GraphView;
@@ -52,6 +53,7 @@ public class ElementGenerator : MonoBehaviour
     string[,] map;                                                  // マップ読み込み
     GameObject objMap2D;                                            // Map2D
     GameObject[,] objMapExist;                                      // 生成したマップチップ
+    [SerializeField] private NavMeshSurface navMeshSurface;         // ナビメッシュ
 
     // CSVデータ数値パラメータ
     public enum MapObjectType
@@ -171,6 +173,9 @@ public class ElementGenerator : MonoBehaviour
 
         // 敵・アイテム・ゴール・プレイヤー初期配置決め
         GenerateObjectsCSV();
+
+        // 生成が完了したらNavMeshをリアルタイム構築
+        RebakeNavMesh();
 
         // WebSocketClientからプレイヤーを取得
         var wsClient = FindObjectOfType<WebSocketClient>();
@@ -418,6 +423,20 @@ public class ElementGenerator : MonoBehaviour
         if (col2 != null)
         {
             col2.enabled = enableWallCollider;
+        }
+    }
+
+    public void RebakeNavMesh()
+    {
+        if (navMeshSurface != null)
+        {
+            // 古いNavMeshデータを一度クリア
+            navMeshSurface.RemoveData();
+
+            // NavMeshを再構築
+            navMeshSurface.BuildNavMesh();
+
+            //Debug.Log("[ElementGenerator] NavMeshの再構築（Rebake）が完了しました。");
         }
     }
 
