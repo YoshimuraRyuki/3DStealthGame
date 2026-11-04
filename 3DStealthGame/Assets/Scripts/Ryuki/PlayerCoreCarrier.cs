@@ -30,6 +30,7 @@ public class PlayerCoreCarrier : MonoBehaviour
     private CoopPlayerStateController coopState;
 
     private float originalWalkSpeed; // 元の移動速度を記憶する変数
+    private float pickupCooldownTimer = 0f;
     public bool HasCore => currentHeldCore != null;
 
     #endregion
@@ -42,6 +43,9 @@ public class PlayerCoreCarrier : MonoBehaviour
     /// </summary>
     private void ExecuteInteract()
     {
+        // 強奪直後のクールダウン中は入力を受け付けない（ワープ防止）
+        if (pickupCooldownTimer > 0f) return;
+
         // ローカルプレイヤー以外は処理しない
         if (playerController != null && !playerController.isLocalPlayer) return;
 
@@ -70,10 +74,12 @@ public class PlayerCoreCarrier : MonoBehaviour
     /// </summary>
     private void TryPickUpCore()
     {
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, interactRadius, coreLayer);
+        if (pickupCooldownTimer > 0f) return;
 
-        float closestDistance = float.MaxValue;
         Core targetCore = null;
+        float closestDistance = float.MaxValue;
+
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, interactRadius, coreLayer);
 
         foreach (var col in hitColliders)
         {
@@ -93,9 +99,25 @@ public class PlayerCoreCarrier : MonoBehaviour
 
         if (targetCore == null) return;
 
-        // Coreの権利を確保 (ClaimCore)
-        if (targetCore.ClaimCore(transform))
+        bool isCarriedByActiveEnemy = false;
+        if (targetCore.isCarried && targetCore.carrier != null)
         {
+            EnemyManager enemy = targetCore.carrier.GetComponent<EnemyManager>();
+            if (enemy != null && enemy.gameObject.activeInHierarchy)
+            {
+                isCarriedByActiveEnemy = true;
+            }
+        }
+
+        // 生きている敵が手に持っている場合以外は、安全に拾う
+        if (!isCarriedByActiveEnemy)
+        {
+            // 残存している古い参照があればリセット
+            if (targetCore.isCarried && targetCore.carrier != transform)
+            {
+                targetCore.ResetCore();
+            }
+
             targetCore.AttachToEnemy(holdPoint);
             currentHeldCore = targetCore;
 
@@ -105,7 +127,7 @@ public class PlayerCoreCarrier : MonoBehaviour
             // 射撃スクリプトをオフにする
             SetCombatActive(false);
 
-            //Debug.Log($"[PlayerCoreCarrier] Core ({targetCore.name}) を取得しました。");
+            Debug.Log($"[PlayerCoreCarrier] Core ({targetCore.name}) を無事に取得しました。");
         }
     }
 
@@ -134,6 +156,23 @@ public class PlayerCoreCarrier : MonoBehaviour
         SetCombatActive(true);
 
         Debug.Log($"[PlayerCoreCarrier] Core ({coreToRelease.name}) を離しました。");
+    }
+
+    /// <summary>
+    /// 敵などにコアを強奪された際に外部から呼ばれる処理
+    /// </summary>
+    public void ForceStealCore()
+    {
+        if (currentHeldCore == null) return;
+
+        currentHeldCore = null;
+        RestoreOriginalSpeed();
+        SetCombatActive(true);
+
+        // 強奪直後の連打や誤検知によるワープを防ぐためクールダウンを設定 (0.5秒)
+        pickupCooldownTimer = 0.5f;
+
+        Debug.Log($"[PlayerCoreCarrier] 敵にCoreを奪われました！");
     }
 
     #endregion
@@ -214,6 +253,15 @@ public class PlayerCoreCarrier : MonoBehaviour
         if (playerCombatController == null)
         {
             playerCombatController = GetComponent("PlayerCombatController") as MonoBehaviour;
+        }
+    }
+
+    private void Update()
+    {
+        // タイマーのカウントダウン更新
+        if (pickupCooldownTimer > 0f)
+        {
+            pickupCooldownTimer -= Time.deltaTime;
         }
     }
 

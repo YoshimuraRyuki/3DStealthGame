@@ -331,6 +331,15 @@ public class EnemyManager : MonoBehaviour
         float distance = direction.magnitude;
         if (distance < 0.01f) return;
 
+        // 向きたい回転を計算
+        Quaternion lookRotation = Quaternion.LookRotation(direction);
+
+        // まず視点を巡回ポイントの方向になめらかに向け直す
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, rotateSpeed * Time.deltaTime);
+
+        // 現在の向きと目的地の角度差を取得
+        float angle = Quaternion.Angle(transform.rotation, lookRotation);
+
         // 前方に壁があるかレイキャストでチェック
         bool isWallAhead = Physics.Raycast(transform.position + Vector3.up * 0.5f, direction.normalized, distance, visionMask);
         // 壁がある場合、またはNavMeshAgentがまだ目的地追尾中の場合はNavMeshAgentで迂回移動
@@ -341,6 +350,13 @@ public class EnemyManager : MonoBehaviour
                 agent.isStopped = false;
                 agent.speed = speed;
                 agent.SetDestination(targetPos);
+
+                // NavMeshAgentの移動方向にも視点を合わせる
+                if (agent.desiredVelocity != Vector3.zero)
+                {
+                    Quaternion agentRot = Quaternion.LookRotation(new Vector3(agent.desiredVelocity.x, 0, agent.desiredVelocity.z));
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, agentRot, rotateSpeed * Time.deltaTime);
+                }
             }
             return;
         }
@@ -351,17 +367,7 @@ public class EnemyManager : MonoBehaviour
             agent.ResetPath();
         }
 
-        // 向きたい回転
-        Quaternion lookRotation = Quaternion.LookRotation(direction);
-
-        // なめらか回転
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRotation, rotateSpeed * Time.deltaTime);
-
-        // 角度差を取得
-        float angle = Quaternion.Angle(transform.rotation, lookRotation);
-
-        // ある程度向けたら移動
-        if (angle < 3f)
+        if (angle < 10f)
         {
             transform.position += transform.forward * speed * Time.deltaTime;
         }
@@ -377,6 +383,12 @@ public class EnemyManager : MonoBehaviour
     /// </summary>
     void PlayerFound()
     {
+        if (enemyState == EnemyState.FocusCore)
+        {
+            isFoundPlayer = false;
+            return;
+        }
+
         // 両方のプレイヤーを確認して近い方をターゲットに
         GameObject p1 = GameObject.FindWithTag("Player1");
         GameObject p2 = GameObject.FindWithTag("Player2");
@@ -710,7 +722,8 @@ public class EnemyManager : MonoBehaviour
     /// <param name="volume"></param>
     void HandleSound(Vector3 soundPosition, float volume)
     {
-        if (enemyState == EnemyState.FocusPlayer && isFoundPlayer) return; // すでにプレイヤーが目視で追従しているなら、遠くの音には気を取られない
+        // すでにプレイヤーが目視で追従しているなら、遠くの音には気を取られない
+        if (enemyState == EnemyState.FocusCore || (enemyState == EnemyState.FocusPlayer && isFoundPlayer)) return; 
 
         // 音が聞こえる範囲内かどうかを計算
         float distanceToSound = Vector3.Distance(transform.position, soundPosition);
@@ -749,7 +762,7 @@ public class EnemyManager : MonoBehaviour
                 reactionText.gameObject.SetActive(true); // ビックリマーク表示
                 isReaction = true;
             }
-
+            
             enemyState = EnemyState.LookSoundPoint;
         }
     }
@@ -821,6 +834,13 @@ public class EnemyManager : MonoBehaviour
         Core core = coreObj.GetComponent<Core>();
         if (core == null) return;
 
+        // すでに自分が手元にアタッチ済みの場合は除外
+        if (core.transform.IsChildOf(transform))
+        {
+            carriedCore = core;
+            return;
+        }
+
         Vector3 enemyPos = new Vector3(transform.position.x, 0, transform.position.z);
         Vector3 corePos = new Vector3(core.transform.position.x, 0, core.transform.position.z);
         float distance = Vector3.Distance(enemyPos, corePos);
@@ -831,19 +851,30 @@ public class EnemyManager : MonoBehaviour
             if (distance > coreRadius)
             {
                 Debug.Log("Coreが範囲外に出たため巡回に戻ります");
-                core.ReleaseCore(transform);
+               // core.ReleaseCore(transform);
                 targetCore = null;
+
+                if (agent != null && agent.isOnNavMesh)
+                {
+                    agent.isStopped = true;
+                    agent.ResetPath();
+                }
+
                 ResetPatrolState();
                 enemyState = EnemyState.Patrol;
             }
             return;
         }
 
-        // まだターゲットにしていない場合→範囲内に入ったか判定
         // 他の敵が既に持っている、または他の敵が追従中なら無視
-        if (!core.isCarried && (core.carrier == null || core.carrier == transform))
+        if (distance <= coreRadius)
         {
-            if (distance <= coreRadius)
+            bool isCarriedByOtherEnemy = core.isCarried && core.carrier != null &&
+                                               core.carrier != transform &&
+                                               core.carrier.GetComponent<EnemyManager>() != null;
+
+            // 敵が自分以外にコアを手に取っていない状態であれば狙う
+            if (!isCarriedByOtherEnemy)
             {
                 if (core.ClaimCore(transform))
                 {
@@ -851,6 +882,12 @@ public class EnemyManager : MonoBehaviour
                     isFoundPlayer = false; // プレイヤー検知フラグ解除
                     enemyState = EnemyState.FocusCore;
                     isStopMove = false;
+
+                    if (agent != null && agent.isOnNavMesh)
+                    {
+                        agent.isStopped = false;
+                    }
+
                     Debug.Log($"Coreを検知！追従を開始します (距離: {distance:F2}m)");
                 }
             }
@@ -866,7 +903,16 @@ public class EnemyManager : MonoBehaviour
             return;
         }
 
-        // NavMeshAgent で壁を避けて追従
+        // 他の敵が既にアタッチして運んでいる場合は諦めて巡回に戻る
+        if (targetCore.isCarried && targetCore.carrier != null && targetCore.carrier != transform && targetCore.carrier.GetComponent<EnemyManager>() != null)
+        {
+            targetCore = null;
+            if (agent != null && agent.isOnNavMesh) agent.ResetPath();
+            ResetPatrolState();
+            enemyState = EnemyState.Patrol;
+            return;
+        }
+
         if (agent != null && agent.isOnNavMesh)
         {
             agent.isStopped = false;
@@ -874,22 +920,65 @@ public class EnemyManager : MonoBehaviour
             agent.SetDestination(targetCore.transform.position);
         }
 
-        if (!agent.pathPending && agent.remainingDistance <= 1.0f)
+        // リアルタイム距離チェック
+        float currentDist = Vector3.Distance(
+              new Vector3(transform.position.x, 0, transform.position.z),
+              new Vector3(targetCore.transform.position.x, 0, targetCore.transform.position.z)
+          );
+
+        if (currentDist <= 1.2f || (agent != null && agent.isOnNavMesh && !agent.pathPending && agent.remainingDistance <= 1.2f))
         {
-            Debug.Log("Coreを回収しました。巡回に戻ります。");
+            Debug.Log("Coreを回収（強奪）しました。巡回に戻ります。");
 
             // 移動停止
-            agent.isStopped = true;
-            agent.ResetPath();
+            if (agent != null && agent.isOnNavMesh)
+            {
+                agent.isStopped = true;
+                agent.ResetPath();
+            }
 
-            // Coreを持てる状態にしてアタッチ
+            // プレイヤーが持っていた場合の強奪処理（安全な null チェック付き）
+            if (targetCore.carrier != null)
+            {
+                PlayerCoreCarrier playerCarrier = targetCore.carrier.GetComponent<PlayerCoreCarrier>();
+                if (playerCarrier != null)
+                {
+                    playerCarrier.ForceStealCore();
+                }
+            }
+
+            // アタッチ先の設定（coreHoldPoint が未設定の場合は自分自身の transform を使用）
             Transform attachTarget = (coreHoldPoint != null) ? coreHoldPoint : transform;
-            targetCore.AttachToEnemy(attachTarget);
-            carriedCore = targetCore;
 
-            // 回収完了後、敵は通常の巡回に戻る
+            // コアのアタッチと保持フラグの設定
+            Core coreToAttach = targetCore;
+            targetCore = null; // ターゲット参照をクリア
+
+            if (coreToAttach != null)
+            {
+                coreToAttach.AttachToEnemy(attachTarget);
+                carriedCore = coreToAttach;
+            }
+
+            // 巡回状態へ復帰
             ResetPatrolState();
+            isStopMove = false;
             enemyState = EnemyState.Patrol;
+        }
+    }
+
+    /// <summary>
+    /// 敵が持っているコアを地面にドロップする処理
+    /// </summary>
+    public void DropCarriedCore()
+    {
+        if (carriedCore != null)
+        {
+            carriedCore.ResetCore();
+
+            // 敵の少し前に落とす
+            carriedCore.transform.position = transform.position + transform.forward * 0.5f + Vector3.up * 0.2f;
+            carriedCore = null;
         }
     }
 
@@ -943,6 +1032,9 @@ public class EnemyManager : MonoBehaviour
     {
         animEnemy.SetTrigger("Stun");
 
+        // 攻撃を受けて倒れたら保持しているコアをドロップ
+        DropCarriedCore();
+
         var col = GetComponent<Collider>();
         if (col != null)
         {
@@ -991,12 +1083,18 @@ public class EnemyManager : MonoBehaviour
         _alertTarget = null;
         isStopMove = false;
         isFoundPlayer = false;
+
         isAlerted = false;
+        isHearingSound = false;
+        alertTimer = 0f;
         currentAlertCount = alertCount;
+        lastSoundPosition = Vector3.zero;
 
         // コア関係をリセット
         targetCore = null;
-        carriedCore = null;
+        //carriedCore = null;
+
+        enemyState = EnemyState.Patrol;
 
         // 次のポイントを再設定
         StartPoint();
@@ -1150,6 +1248,16 @@ public class EnemyManager : MonoBehaviour
         InitPoint();                                // 開始ポイント決定
     }
 
+    private void OnDisable()
+    {
+        DropCarriedCore();
+    }
+
+    private void OnDestroy()
+    {
+        DropCarriedCore();
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -1178,12 +1286,14 @@ public class EnemyManager : MonoBehaviour
             }
         }
 
-        SearchCore();                               // 範囲内のコアを捜す処理
         if (enemyState == EnemyState.FocusCore)
         {
-            print("コアを追従します");
             FocusCore();
             return;
+        }
+        else if (enemyState == EnemyState.Patrol && carriedCore == null)
+        {
+            SearchCore(); // コアを持っていない巡回中のみ索敵
         }
 
         if (isRemoteControlled) return;             // ゲスト側はAIを動かさない（WebSocketClientが位置を受信して動かす）

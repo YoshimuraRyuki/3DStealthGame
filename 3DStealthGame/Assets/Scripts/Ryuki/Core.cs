@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 
 public class Core : MonoBehaviour
@@ -10,15 +11,14 @@ public class Core : MonoBehaviour
     /// <summary>
     /// 敵がCoreを狙う・確保するときに呼ぶ
     /// </summary>
-    public bool ClaimCore(Transform enemy)
+    public bool ClaimCore(Transform requester)
     {
-        // すでに自分がターゲット中ならそのまま通す
-        if (carrier == enemy) return true;
-
         // 誰かに確保されている場合は失敗
-        if (isCarried || carrier != null) return false;
+        if (isCarried && carrier != null && carrier.GetComponent<EnemyManager>() != null)
+        {
+            return false;
+        }
 
-        carrier = enemy;
         return true;
     }
 
@@ -35,7 +35,19 @@ public class Core : MonoBehaviour
 
         // コライダーを再有効化
         Collider col = GetComponent<Collider>();
-        if (col != null) col.enabled = true;
+        if (col != null)
+        {
+            col.enabled = true;
+            col.isTrigger = false; // 必要に応じて
+        }
+
+        // 物理挙動を復元
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = false;
+            rb.useGravity = true;
+        }
 
         Debug.Log("Coreの状態がリセットされました。再び誰でも確保可能です。");
     }
@@ -49,7 +61,7 @@ public class Core : MonoBehaviour
         Vector3 originalLossyScale = transform.lossyScale;
 
         transform.SetParent(attachPoint);
-        transform.localPosition = Vector3.zero; // アタッチ位置にリセット
+        transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
 
         // 敵のスケールに左右されないよう、元の大きさに補正してセット
