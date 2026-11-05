@@ -117,8 +117,8 @@ public class PlayerController : MonoBehaviour
         dash = GetComponent<PlayerDashController>();
         if (dash == null && playerInput != null) dash = gameObject.AddComponent<PlayerDashController>();
 
-        if (playerInput != null && GetComponent<PlayerCombatController>() == null)
-            gameObject.AddComponent<PlayerCombatController>();
+        /*if (playerInput != null && GetComponent<PlayerCombatController>() == null)
+            gameObject.AddComponent<PlayerCombatController>();*/
 
     }
 

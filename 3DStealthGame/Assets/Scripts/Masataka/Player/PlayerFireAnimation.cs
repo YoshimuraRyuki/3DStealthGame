@@ -9,7 +9,7 @@ public sealed class PlayerFireAnimation : MonoBehaviour
     private const string TimeParameter = "FirePoseTime";
     private const float ClipSeconds = 0.45f;
     private const float ReleasePoseSeconds = 7f / 60f;
-    private const float RecoveryIdleSeconds = 0.04f;
+    private const float RecoveryIdleSeconds = 0.01f;
 
     public float GetMovementLockSeconds(float windup)
     {
