@@ -140,15 +140,9 @@ public sealed class EnemyHealthBar : MonoBehaviour
         float scale = Mathf.Max(0.01f, sharedCanvas.scaleFactor);
         // Include the shadow, bracket stroke and denial shake in the clearance.
         float halfHeight = (barSize.y + 4f) * scale * 0.5f;
-        float halfWidth = (barSize.x + 4f) * scale * 0.5f;
         float gap = Mathf.Max(10f, screenOffset.y * scale);
         Vector2 screen = new Vector2((frameMin.x + frameMax.x) * 0.5f + screenOffset.x * scale,
             frameMax.y + gap + halfHeight);
-        if (screen.y + halfHeight > Screen.height)
-            screen.y = frameMin.y - gap - halfHeight;
-        if (screen.y - halfHeight < 0f || screen.y + halfHeight > Screen.height || halfWidth * 2f > Screen.width)
-        { Hide(); return; }
-        screen.x = Mathf.Clamp(screen.x, halfWidth, Screen.width - halfWidth);
         if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(sharedCanvas.GetComponent<RectTransform>(),
             screen, null, out Vector2 position)) { Hide(); return; }
         panel.anchoredPosition = position;
